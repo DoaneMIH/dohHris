@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_application/pages/user_details.dart';
+import 'package:mobile_application/pages/navigation.dart';
 import '../services/auth_service.dart';
 import '../config/api_config.dart';
 
@@ -58,15 +58,26 @@ class _LoginPageState extends State<LoginPage> {
           print('✅ [LoginPage] Login successful, navigating to UserDetailsPage...');
           print('🎫 [LoginPage] Token will be used to fetch profile');
 
+          // Navigator.pushReplacement(
+          //   context,
+          //   MaterialPageRoute(
+          //     builder: (context) => UserDetailsPageContent(
+          //       token: token,
+          //       baseUrl: ApiConfig.baseUrl,
+          //     ),
+          //   ),
+          // );
+
           Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => UserDetailsPage(
-                token: token,
-                baseUrl: ApiConfig.baseUrl,
-              ),
-            ),
-          );
+  context,
+  MaterialPageRoute(
+    builder: (context) => MainNavigation(
+      token: token,
+      baseUrl: ApiConfig.baseUrl,
+      initialIndex: 1, // 0 = Home, 1 = Profile
+    ),
+  ),
+);
         } else {
           print('❌ [LoginPage] Login failed, showing error message');
           ScaffoldMessenger.of(context).showSnackBar(

@@ -18,10 +18,9 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
       ),
-       home: Splash2(),
+      home: Splash2(),
       initialRoute: MyRoutes.splashPage,
-      routes: MyRoutes.routes,
-      
+      routes: MyRoutes.routes,      
     );
   }
 }
