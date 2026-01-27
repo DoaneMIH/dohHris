@@ -9,6 +9,5 @@ class MyRoutes {
  static final routes = <String, WidgetBuilder>{
     splashPage: (context) => Splash2(),
     loginPage: (context) => const LoginPage(),
-
  };
 }

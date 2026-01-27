@@ -16,7 +16,6 @@ class MyApp extends StatelessWidget {
       title: 'HRIS Login',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-     
         useMaterial3: true,
       ),
        home: Splash2(),
