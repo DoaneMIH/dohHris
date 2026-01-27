@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import '../services/user_service.dart';
 import '../widgets/info_card.dart';
@@ -5,13 +6,11 @@ import 'login_page.dart';
 
 class UserDetailsPage extends StatefulWidget {
   final String token;
-  final int userId;
   final String baseUrl;
 
   const UserDetailsPage({
     Key? key,
     required this.token,
-    required this.userId,
     required this.baseUrl,
   }) : super(key: key);
 
@@ -28,28 +27,44 @@ class _UserDetailsPageState extends State<UserDetailsPage> {
   @override
   void initState() {
     super.initState();
+    print('\n📄 [UserDetailsPage] Page initialized');
+    print('🎫 [UserDetailsPage] Token: ${widget.token.substring(0, 20)}...');
+    print('🌐 [UserDetailsPage] Base URL: ${widget.baseUrl}');
     _fetchUserDetails();
   }
 
   Future<void> _fetchUserDetails() async {
+    print('⏳ [UserDetailsPage] Fetching user profile with token...');
+    
     setState(() {
       _isLoading = true;
       _error = null;
     });
 
-    final result = await _userService.getUserDetails(widget.token, widget.userId);
+    final result = await _userService.getUserDetails(widget.token);
+
+    print('📦 [UserDetailsPage] Result received from UserService');
+    print('📦 [UserDetailsPage] Success: ${result['success']}');
 
     setState(() {
       if (result['success']) {
         _userDetails = result['data'];
+        print('✅ [UserDetailsPage] User profile loaded successfully');
+        print('👤 [UserDetailsPage] User name: ${_userDetails?['name']}');
       } else {
         _error = result['error'];
+        print('❌ [UserDetailsPage] Error loading user profile: $_error');
       }
       _isLoading = false;
     });
+    
+    print('🏁 [UserDetailsPage] Fetch user profile completed\n');
   }
 
   void _logout() {
+    print('🚪 [UserDetailsPage] Logout button pressed');
+    print('🔄 [UserDetailsPage] Navigating back to LoginPage...');
+    
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const LoginPage()),

@@ -26,37 +26,49 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _login() async {
+    print('\n🚀 [LoginPage] Login button pressed');
+    
     if (!_formKey.currentState!.validate()) {
+      print('❌ [LoginPage] Form validation failed');
       return;
     }
+
+    print('✅ [LoginPage] Form validation passed');
+    print('📧 [LoginPage] Email: ${_emailController.text.trim()}');
 
     setState(() {
       _isLoading = true;
     });
 
     try {
+      print('⏳ [LoginPage] Calling AuthService.login()...');
       final result = await _authService.login(
         _emailController.text.trim(),
         _passwordController.text,
       );
 
+      print('📦 [LoginPage] Result received from AuthService');
+      print('📦 [LoginPage] Success: ${result['success']}');
+
       if (mounted) {
         if (result['success']) {
           final data = result['data'];
           final token = data['token'];
-          final userId = data['employee']['id'];
+
+          print('✅ [LoginPage] Login successful, navigating to UserDetailsPage...');
+          print('🎫 [LoginPage] Token will be used to fetch profile');
 
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
               builder: (context) => UserDetailsPage(
                 token: token,
-                userId: userId,
                 baseUrl: ApiConfig.baseUrl,
               ),
             ),
           );
         } else {
+          print('❌ [LoginPage] Login failed, showing error message');
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(result['error']),
@@ -70,6 +82,7 @@ class _LoginPageState extends State<LoginPage> {
         setState(() {
           _isLoading = false;
         });
+        print('🏁 [LoginPage] Login process completed\n');
       }
     }
   }
