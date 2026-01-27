@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'pages/login_page.dart';
+import 'package:mobile_application/widgets/routes.dart';
+import 'package:mobile_application/widgets/splash.dart';
+
 
 void main() {
   runApp(const MyApp());
@@ -14,10 +16,13 @@ class MyApp extends StatelessWidget {
       title: 'HRIS Login',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+     
         useMaterial3: true,
       ),
-      home: const LoginPage(),
+       home: Splash2(),
+      initialRoute: MyRoutes.splashPage,
+      routes: MyRoutes.routes,
+      
     );
   }
 }
