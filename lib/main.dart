@@ -20,7 +20,8 @@ class MyApp extends StatelessWidget {
       ),
       home: Splash2(),
       initialRoute: MyRoutes.splashPage,
-      routes: MyRoutes.routes,      
+      routes: MyRoutes.routes,
+      // home: UserDetailsPageContentDummy()      
     );
   }
 }
