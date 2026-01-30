@@ -140,33 +140,87 @@ class _LoginPageState extends State<LoginPage> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 15),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 420),
               child: Form(
                 key: _formKey,
-                child: Column(
+               child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Image.asset('assets/logo.png', height: 200),
-                    const SizedBox(height: 14),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircleAvatar(
+                          radius: 40,
+                          backgroundColor: Colors.transparent,
+                          child: Image.asset(
+                            'assets/logo.png',
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        CircleAvatar(
+                          radius: 40,
+                          backgroundColor: Colors.transparent,
+                          child: Image.asset(
+                            'assets/bp_logo.png',
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 25),
                     Text(
-                      'Login to your account',
+                      'Department of Health',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF27592D),
+                        fontSize: 18,
+                        letterSpacing: 0.5,
+                        height: 1.2,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    Text(
+                      'Western Visayas',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        color: const Color(0xFF27592D),
+                        fontSize: 25,
+                        letterSpacing: 0.5,
+                        height: 1.2,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                     Text(
+                      'Center for Health Development',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF27592D),
+                        fontSize: 18,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 15),
+                    Text(
+                      'Human Resource Information System',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Colors.black,
-                        fontSize: 30,
+                        fontSize: 19,
                       ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 24),
 
+                
                     // EMAIL
                     TextFormField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                       decoration: _fieldDecoration(
-                        hint: 'Email',
+                        hint: 'Enter Your Email',
                         icon: Icons.person,
                       ),
                       validator: (value) {
@@ -212,38 +266,6 @@ class _LoginPageState extends State<LoginPage> {
                       },
                     ),
 
-                    const SizedBox(height: 20),
-
-                    // // FORGOT / RESET
-                    // Align(
-                    //   alignment: Alignment.centerRight,
-                    //   child: Wrap(
-                    //     crossAxisAlignment: WrapCrossAlignment.center,
-                    //     children: [
-                    //       Text(
-                    //         'Forgot Password? ',
-                    //         style: TextStyle(
-                    //           fontSize: 12,
-                    //           color: Colors.grey.shade700,
-                    //         ),
-                    //       ),
-                    //       GestureDetector(
-                    //         onTap: () {
-                    //           // UI only — put your reset navigation here later if needed
-                    //           // Navigator.pushNamed(context, MyRoutes.resetPage);
-                    //         },
-                    //         child: const Text(
-                    //           'Reset',
-                    //           style: TextStyle(
-                    //             fontSize: 12,
-                    //             color: green,
-                    //             fontWeight: FontWeight.w700,
-                    //           ),
-                    //         ),
-                    //       ),
-                    //     ],
-                    //   ),
-                    // ),
 
                     const SizedBox(height: 16),
 
@@ -282,6 +304,7 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                       ),
                     ),
+               
 
                     const SizedBox(height: 18),
 
