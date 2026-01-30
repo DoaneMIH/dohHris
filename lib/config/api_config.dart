@@ -7,5 +7,6 @@ class ApiConfig {
   static const String getEmployeeEndpoint = '/admin/get-user';
   static const String refreshTokenEndpoint = '/auth/refresh-token';
   static const String getEmployeePhoto = '/employee/image';
+  static const String dtrEndpoint = '/adminuser/api/v1/dtr';
  
 }

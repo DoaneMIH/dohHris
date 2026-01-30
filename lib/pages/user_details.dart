@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_application/pages/dtr_page.dart';
 import 'package:mobile_application/services/authenticated_photo.dart';
 import '../services/user_service.dart';
 import 'login_page.dart';
@@ -492,6 +493,11 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                 Icons.info,
                 _selectedMenu == 'Other Information',
               ),
+              _buildDrawerItem(
+                'Daily Time Record',
+                Icons.access_time,
+                _selectedMenu == 'Daily Time Record',
+              ),
             ],
           ),
         ),
@@ -539,175 +545,6 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
       ),
     );
   }
-  // @override
-  // Widget build(BuildContext context) {
-  //   return Container(
-  //     decoration: const BoxDecoration(
-  //       gradient: LinearGradient(
-  //         begin: Alignment.topCenter,
-  //         end: Alignment.bottomCenter,
-  //         colors: [
-  //           Color.fromARGB(255, 255, 255, 255),
-  //           Color.fromARGB(255, 230, 255, 230),
-  //         ],
-  //       ),
-  //     ),
-  //     child: Scaffold(
-  //       resizeToAvoidBottomInset: false,
-  //       backgroundColor: Colors.transparent,
-  //       appBar: AppBar(
-  //         title: Row(
-  //           children: [
-  //             PopupMenuButton<String>(
-  //               icon: const Icon(Icons.menu, color: Colors.white),
-  //               onSelected: (value) {
-  //                 setState(() {
-  //                   _selectedMenu = value;
-  //                 });
-  //               },
-  //               itemBuilder: (context) => const [
-  //                 PopupMenuItem(
-  //                   value: 'Personal Information',
-  //                   child: Text('Personal Information'),
-  //                 ),
-  //                 PopupMenuItem(
-  //                   value: 'Family Background',
-  //                   child: Text('Family Background'),
-  //                 ),
-  //                 PopupMenuItem(
-  //                   value: 'Educational Background',
-  //                   child: Text('Educational Background'),
-  //                 ),
-  //                 PopupMenuItem(
-  //                   value: 'Civil Service Eligibility',
-  //                   child: Text('Civil Service Eligibility'),
-  //                 ),
-  //                 PopupMenuItem(
-  //                   value: 'Work Experience',
-  //                   child: Text('Work Experience'),
-  //                 ),
-  //                 PopupMenuItem(
-  //                   value: 'Voluntary Work',
-  //                   child: Text('Voluntary Work'),
-  //                 ),
-  //                 PopupMenuItem(
-  //                   value: 'Learning and Development',
-  //                   child: Text('Learning and Development'),
-  //                 ),
-  //                 PopupMenuItem(
-  //                   value: 'Other Information',
-  //                   child: Text('Other Information'),
-  //                 ),
-  //               ],
-  //             ),
-
-  //             SizedBox(width: 10),
-  //             CircleAvatar(
-  //               backgroundColor: Colors.transparent,
-  //               child: Image.asset(
-  //                 'assets/logo.png',
-  //                 width: 200,
-  //                 height: 200,
-  //                 fit: BoxFit.cover,
-  //               ),
-  //             ),
-  //             SizedBox(width: 7),
-  //             CircleAvatar(
-  //               backgroundColor: Colors.transparent,
-  //               child: Image.asset(
-  //                 'assets/bp_logo.png',
-  //                 width: 100,
-  //                 height: 100,
-  //                 fit: BoxFit.cover,
-  //               ),
-  //             ),
-
-  //             SizedBox(width: 20),
-  //             Column(
-  //               mainAxisSize: MainAxisSize.min,
-  //               crossAxisAlignment: CrossAxisAlignment.start,
-  //               children: const [
-  //                 Text(
-  //                   'DOH WV CHD',
-  //                   textAlign: TextAlign.left,
-  //                   style: TextStyle(
-  //                     color: Colors.white,
-  //                     fontSize: 14,
-  //                     fontWeight: FontWeight.w600,
-  //                     letterSpacing: 0.9,
-  //                   ),
-  //                 ),
-  //                 Text(
-  //                   'HRIS',
-  //                   textAlign: TextAlign.left,
-  //                   style: TextStyle(
-  //                     color: Colors.white,
-  //                     fontSize: 22,
-  //                     fontWeight: FontWeight.w800,
-  //                     letterSpacing: 1.2,
-  //                   ),
-  //                 ),
-  //               ],
-  //             ),
-  //           ],
-  //         ),
-  //         automaticallyImplyLeading: false,
-  //         backgroundColor: const Color(0xFF00674F),
-  //         actions: [
-  //           Padding(
-  //             padding: const EdgeInsets.all(10.0),
-  //             child: IconButton(
-  //               icon: const Icon(Icons.logout, color: Colors.white),
-  //               onPressed: _logout,
-  //               tooltip: 'Logout',
-  //             ),
-  //           ),
-  //         ],
-  //       ),
-  //       body: _isLoading
-  //           ? const Center(child: CircularProgressIndicator())
-  //           : _error != null
-  //           ? Center(
-  //               child: Column(
-  //                 mainAxisAlignment: MainAxisAlignment.center,
-  //                 children: [
-  //                   Icon(
-  //                     Icons.error_outline,
-  //                     size: 64,
-  //                     color: Colors.red.shade300,
-  //                   ),
-  //                   const SizedBox(height: 16),
-  //                   Text(_error!, textAlign: TextAlign.center),
-  //                   const SizedBox(height: 16),
-  //                   ElevatedButton(
-  //                     onPressed: _fetchUserDetails,
-  //                     child: const Text('Retry'),
-  //                   ),
-  //                 ],
-  //               ),
-  //             )
-  //                    : SingleChildScrollView(
-  //               child: Column(
-  //                 children: [
-  //                   // SCROLLABLE HEADER - Profile Section (Scrolls with content)
-  //                   _buildProfileHeader(),
-                    
-  //                   // SWITCHABLE CONTENT - Based on selected menu
-  //                   Padding(
-  //                     padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-  //                     child: Column(
-  //                       children: [
-  //                         _buildSelectedContent(),
-  //                         const SizedBox(height: 80),
-  //                       ],
-  //                     ),
-  //                   ),
-  //                 ],
-  //               ),
-  //             ),
-  //     ),
-  //   );
-  // }
 
   // FIXED PROFILE HEADER - Always visible at the top
   Widget _buildProfileHeader() {
@@ -817,6 +654,8 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
         return _buildLearningDevelopmentCard();
       case 'Other Information':
         return _buildOtherInformationCard();
+      case 'Daily Time Record':
+        return _buildDailyTimeRecordCard();
       default:
         return _buildPersonalInformationCard();
     }
@@ -3514,6 +3353,14 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
       ),
     );
   }
+
+  Widget _buildDailyTimeRecordCard() {
+  return DtrWidget(
+    token: widget.token,
+    baseUrl: widget.baseUrl,
+    userId: _userDetails?['employee']?['employeeId'] ??'N/A',
+  );
+}
       
     
 
@@ -3595,105 +3442,29 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
     );
   }
 
-  // Editable Field Widget
-  Widget _buildEditableField(
-    String label,
-    String? value,
-    Function(String) onChanged,
-  ) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: Color(0xFF2C5F4F)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 10, top: 8, right: 10),
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                color: Colors.grey[600],
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          TextField(
-            controller: TextEditingController(text: value ?? ''),
-            onChanged: onChanged,
-            style: const TextStyle(
-              fontSize: 13,
-              color: Color.fromARGB(221, 0, 0, 0),
-              fontWeight: FontWeight.bold,
-            ),
-            decoration: const InputDecoration(
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              isDense: true,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildTwoColumnRow(
-    String leftLabel,
-    dynamic leftValue,
-    String rightLabel,
-    dynamic rightValue,
-  ) {
-    return Row(
-      children: [
-        Expanded(child: _buildInfoField(leftLabel, leftValue)),
-        const SizedBox(width: 12),
-        Expanded(child: _buildInfoField(rightLabel, rightValue)),
-      ],
-    );
-  }
-
-  Widget _buildInfoField(String label, dynamic value) {
-    String displayValue = '';
-    if (value != null &&
-        value.toString().isNotEmpty &&
-        value.toString() != 'null') {
-      displayValue = value.toString();
-    }
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: Colors.grey[200]!),
+// Helper method for drawer menu items
+  Widget _buildDrawerItem(String title, IconData icon, bool isSelected) {
+    return ListTile(
+      leading: Icon(
+        icon,
+        color: isSelected ? const Color(0xFF00674F) : Colors.grey[600],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 15,
-              color: Colors.grey[600],
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            displayValue,
-            style: const TextStyle(
-              fontSize: 15,
-              color: Colors.black87,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
+      title: Text(
+        title,
+        style: TextStyle(
+          color: isSelected ? const Color(0xFF00674F) : Colors.black87,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        ),
       ),
+      selected: isSelected,
+      selectedTileColor: const Color(0xFF00674F).withOpacity(0.1),
+      onTap: () {
+        setState(() {
+          _selectedMenu = title;
+        });
+        Navigator.pop(context); // Close the drawer
+      },
     );
   }
 }
