@@ -87,9 +87,8 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
   String _selectedMenu = 'Personal Information';
 
   // Drawer menu expansion states
-  bool _isInformationExpanded = true;
-  bool _isServicesExpanded = true;
-
+  bool _isInformationExpanded = false;
+  bool _isServicesExpanded = false;
 
   @override
   void initState() {
@@ -447,22 +446,30 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
           child: ListView(
             padding: EdgeInsets.zero,
             children: [
-              DrawerHeader(
-                decoration: const BoxDecoration(
-                  color: Color(0xFF00674F),
-                ),
-                child: const Text(
-                  'Menu',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+              SizedBox(
+                height: 80,
+                child: DrawerHeader(
+                  margin: EdgeInsets.zero,
+                  decoration: const BoxDecoration(color: Color(0xFF00674F)),
+                  child: const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Menu',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
               ),
               // Information Section with Dropdown
               ExpansionTile(
-                leading: const Icon(Icons.info_outline, color: Color(0xFF00674F)),
+                leading: const Icon(
+                  Icons.info_outline,
+                  color: Color(0xFF00674F),
+                ),
                 title: const Text(
                   'Information',
                   style: TextStyle(
@@ -521,7 +528,10 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
               ),
               // Services Section with Dropdown
               ExpansionTile(
-                leading: const Icon(Icons.room_service, color: Color(0xFF00674F)),
+                leading: const Icon(
+                  Icons.room_service,
+                  color: Color(0xFF00674F),
+                ),
                 title: const Text(
                   'Services',
                   style: TextStyle(
@@ -543,7 +553,6 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                   ),
                 ],
               ),
-             
             ],
           ),
         ),
@@ -569,12 +578,12 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                   ],
                 ),
               )
-                     : SingleChildScrollView(
+            : SingleChildScrollView(
                 child: Column(
                   children: [
                     // SCROLLABLE HEADER - Profile Section (Scrolls with content)
                     _buildProfileHeader(),
-                    
+
                     // SWITCHABLE CONTENT - Based on selected menu
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
@@ -597,7 +606,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
     return Container(
       height: 290,
       padding: const EdgeInsets.all(16.0),
-    
+
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -648,7 +657,8 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                     Icon(Icons.badge, size: 18, weight: 200),
                     const SizedBox(width: 6),
                     Text(
-                      _userDetails?['employee']?['designation']?['desigCode'] ?? 'N/A',
+                      _userDetails?['employee']?['designation']?['desigCode'] ??
+                          'N/A',
                       style: TextStyle(fontSize: 14),
                     ),
                   ],
@@ -658,16 +668,9 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.apartment,
-                      size: 18,
-                      weight: 200,
-                    ),
+                    Icon(Icons.apartment, size: 18, weight: 200),
                     const SizedBox(width: 6),
-                    Text(
-                      'ICTU',
-                      style: TextStyle(fontSize: 14),
-                    ),
+                    Text('ICTU', style: TextStyle(fontSize: 14)),
                   ],
                 ),
               ],
@@ -679,10 +682,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
   }
 
   // SWITCHABLE CONTENT - Returns the appropriate widget based on selected menu
-  Widget _buildSelectedContent()
-
-   {
-
+  Widget _buildSelectedContent() {
     switch (_selectedMenu) {
       case 'Personal Information':
         return _buildPersonalInformationCard();
@@ -706,167 +706,181 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
         return _buildPersonalInformationCard();
     }
   }
- 
+
   Widget _buildPersonalInformationCard() {
-  return Container(
-    padding: EdgeInsets.all(8),
-    child: Column(
-      children: [
-        Container(
-          margin: const EdgeInsets.all(15),
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              // Header Section
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: const BoxDecoration(
-                  color: Color(0xFF2C5F4F),
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(8),
-                    topRight: Radius.circular(8),
+    return Container(
+      padding: EdgeInsets.all(8),
+      child: Column(
+        children: [
+          Container(
+            margin: const EdgeInsets.all(15),
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                // Header Section
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF2C5F4F),
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(8),
+                      topRight: Radius.circular(8),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'PERSONAL INFORMATION',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'PERSONAL INFORMATION',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5,
+                // Content Section
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildInfoFieldInline(
+                        'Date of Birth',
+                        _userDetails?['employee']?['birthdate'],
                       ),
-                    ),
-                    
-                  ],
+                      const SizedBox(height: 20),
+                      _buildInfoFieldInline(
+                        'Place of Birth',
+                        _userDetails?['employee']?['birthplace'],
+                      ),
+                      const SizedBox(height: 20),
+                      _buildInfoFieldInline(
+                        'Civil Status',
+                        _userDetails?['employee']?['civilStatus'],
+                      ),
+                      const SizedBox(height: 20),
+                      _buildInfoFieldInline(
+                        'Citizenship',
+                        _userDetails?['employee']?['citizenship'],
+                      ),
+                      const SizedBox(height: 20),
+                      _buildInfoFieldInline(
+                        'Sex at Birth',
+                        _userDetails?['employee']?['sex'],
+                      ),
+                      const SizedBox(height: 20),
+                      _buildInfoFieldInline(
+                        'Blood Type',
+                        _userDetails?['employee']?['bloodType'],
+                      ),
+                      const SizedBox(height: 20),
+                      _buildInfoFieldInline(
+                        'Height (cm)',
+                        _userDetails?['employee']?['height'],
+                      ),
+                      const SizedBox(height: 20),
+                      _buildInfoFieldInline(
+                        'Weight (kg)',
+                        _userDetails?['employee']?['weight'],
+                      ),
+                      const SizedBox(height: 20),
+                      _buildInfoFieldInline(
+                        'Residential Address',
+                        "${_userDetails?['employee']?['barangay'] ?? ''}, "
+                            "${_userDetails?['employee']?['municipality'] ?? ''}, "
+                            "${_userDetails?['employee']?['province'] ?? ''}, "
+                            "${_userDetails?['employee']?['zipCode'] ?? ''}",
+                      ),
+                      const SizedBox(height: 20),
+                      _buildInfoFieldInline(
+                        'Permanent Address',
+                        "${_userDetails?['employee']?['barangay'] ?? ''}, "
+                            "${_userDetails?['employee']?['municipality'] ?? ''}, "
+                            "${_userDetails?['employee']?['province'] ?? ''}, "
+                            "${_userDetails?['employee']?['zipCode'] ?? ''}",
+                      ),
+                      const SizedBox(height: 20),
+                      // _buildInfoFieldInline(
+                      //   'Telephone No.',
+                      //   _userDetails?['employee']?['telephoneNo'],
+                      // ),
+                      _buildInfoFieldInline(
+                        'Telephone No.',
+                        ((_userDetails?['employee']?['telephoneNo'] ?? '')
+                                .toString()
+                                .trim()
+                                .isNotEmpty)
+                            ? _userDetails?['employee']?['telephoneNo']
+                            : 'N/A',
+                      ),
+                      const SizedBox(height: 20),
+                      _buildInfoFieldInline(
+                        'Mobile No.',
+                        _userDetails?['employee']?['mobileNo'],
+                      ),
+                      const SizedBox(height: 20),
+                      _buildInfoFieldInline(
+                        'Email Address',
+                        _userDetails?['email'],
+                      ),
+                      const SizedBox(height: 20),
+                      _buildInfoFieldInline(
+                        'Agency Employee No.',
+                        _userDetails?['employee']?['employeeId'],
+                      ),
+                      const SizedBox(height: 20),
+                      _buildInfoFieldInline(
+                        'UMID ID No.',
+                        _userDetails?['employee']?['umid'],
+                      ),
+                      const SizedBox(height: 20),
+                      _buildInfoFieldInline(
+                        'Pag-ibig No.',
+                        _userDetails?['employee']?['pagibig'],
+                      ),
+                      const SizedBox(height: 20),
+                      _buildInfoFieldInline(
+                        'PhilHealth No.',
+                        _userDetails?['employee']?['phic'],
+                      ),
+                      const SizedBox(height: 20),
+                      _buildInfoFieldInline(
+                        'PhilSys No. (PSN)',
+                        _userDetails?['employee']?['philsys'],
+                      ),
+                      const SizedBox(height: 20),
+                      _buildInfoFieldInline(
+                        'TIN No.',
+                        _userDetails?['employee']?['tin'],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              // Content Section
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildInfoFieldInline(
-                      'Date of Birth',
-                      _userDetails?['employee']?['birthdate'],
-                    ),
-                    const SizedBox(height: 20),
-                    _buildInfoFieldInline(
-                      'Place of Birth',
-                      _userDetails?['employee']?['birthplace'],
-                    ),
-                    const SizedBox(height: 20),
-                    _buildInfoFieldInline(
-                      'Civil Status',
-                      _userDetails?['employee']?['civilStatus'],
-                    ),
-                    const SizedBox(height: 20),
-                    _buildInfoFieldInline(
-                      'Citizenship',
-                      _userDetails?['employee']?['citizenship'],
-                    ),
-                    const SizedBox(height: 20),
-                    _buildInfoFieldInline(
-                      'Sex at Birth',
-                      _userDetails?['employee']?['sex'],
-                    ),
-                    const SizedBox(height: 20),
-                    _buildInfoFieldInline(
-                      'Blood Type',
-                      _userDetails?['employee']?['bloodType'],
-                    ),
-                    const SizedBox(height: 20),
-                    _buildInfoFieldInline(
-                      'Height (cm)',
-                      _userDetails?['employee']?['height'],
-                    ),
-                    const SizedBox(height: 20),
-                    _buildInfoFieldInline(
-                      'Weight (kg)',
-                      _userDetails?['employee']?['weight'],
-                    ),
-                    const SizedBox(height: 20),
-                    _buildInfoFieldInline(
-                      'Residential Address',
-                      "${_userDetails?['employee']?['barangay'] ?? ''}, "
-                          "${_userDetails?['employee']?['municipality'] ?? ''}, "
-                          "${_userDetails?['employee']?['province'] ?? ''}, "
-                          "${_userDetails?['employee']?['zipCode'] ?? ''}",
-                    ),
-                    const SizedBox(height: 20),
-                    _buildInfoFieldInline(
-                      'Permanent Address',
-                      "${_userDetails?['employee']?['barangay'] ?? ''}, "
-                          "${_userDetails?['employee']?['municipality'] ?? ''}, "
-                          "${_userDetails?['employee']?['province'] ?? ''}, "
-                          "${_userDetails?['employee']?['zipCode'] ?? ''}",
-                    ),
-                    const SizedBox(height: 20),
-                    _buildInfoFieldInline(
-                      'Telephone No.',
-                      _userDetails?['employee']?['telephoneNo'],
-                    ),
-                    const SizedBox(height: 20),
-                    _buildInfoFieldInline(
-                      'Mobile No.',
-                      _userDetails?['employee']?['mobileNo'],
-                    ),
-                    const SizedBox(height: 20),
-                    _buildInfoFieldInline('Email Address', _userDetails?['email']),
-                    const SizedBox(height: 20),
-                    _buildInfoFieldInline(
-                      'Agency Employee No.',
-                      _userDetails?['employee']?['employeeId'],
-                    ),
-                    const SizedBox(height: 20),
-                    _buildInfoFieldInline(
-                      'UMID ID No.',
-                      _userDetails?['employee']?['umid'],
-                    ),
-                    const SizedBox(height: 20),
-                    _buildInfoFieldInline(
-                      'Pag-ibig No.',
-                      _userDetails?['employee']?['pagibig'],
-                    ),
-                    const SizedBox(height: 20),
-                    _buildInfoFieldInline(
-                      'PhilHealth No.',
-                      _userDetails?['employee']?['phic'],
-                    ),
-                    const SizedBox(height: 20),
-                    _buildInfoFieldInline(
-                      'PhilSys No. (PSN)',
-                      _userDetails?['employee']?['philsys'],
-                    ),
-                    const SizedBox(height: 20),
-                    _buildInfoFieldInline(
-                      'TIN No.',
-                      _userDetails?['employee']?['tin'],
-                    ),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
 
   // Family Background Card Widget
   Widget _buildFamilyBackgroundCard() {
@@ -1176,18 +1190,17 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: Colors.grey[200]!),
               boxShadow: [
-                          // A list of shadows to apply
-                          BoxShadow(
-                           color: Colors.black.withOpacity(0.1),
-                            spreadRadius: 1, 
-                            blurRadius: 12, 
-                            offset: Offset(
-                              0,
-                              1,
-                            ), // Changes the position of the shadow (x, y)
-                          ),
-                        ],
-              
+                // A list of shadows to apply
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  spreadRadius: 1,
+                  blurRadius: 12,
+                  offset: Offset(
+                    0,
+                    1,
+                  ), // Changes the position of the shadow (x, y)
+                ),
+              ],
             ),
             child: Column(
               children: [
@@ -1245,14 +1258,20 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                 const SizedBox(height: 8),
                 Container(
                   // spacing around each child box
-                  margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 6,
+                  ),
                   // inner spacing of the white box
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
                   width: double.infinity,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(6),
-                    ),
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -1277,122 +1296,137 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                                 _childrenData[index]['birthday'] = value;
                               },
                             )
-                        : _buildInfoFieldInline('Birthday (MM/DD/YYYY)', child['birthday']),
-                  ],
+                          : _buildInfoFieldInline(
+                              'Birthday (MM/DD/YYYY)',
+                              child['birthday'],
+                            ),
+                    ],
+                  ),
                 ),
+              ],
+            ),
+          );
+        }).toList(),
+      ],
+    );
+  }
+
+  // Father Section
+  Widget _buildFatherSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'FATHER',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: Colors.black,
+              ),
+            ),
+            IconButton(
+              icon: Icon(
+                _isEditingFather ? Icons.check : Icons.edit,
+                size: 20,
+                color: const Color(0xFF2C5F4F),
+              ),
+              onPressed: () {
+                setState(() {
+                  _isEditingFather = !_isEditingFather;
+                });
+              },
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        // Single container with all fields in grid layout
+        Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(12),
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey[200]!),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.5),
+                spreadRadius: 1,
+                blurRadius: 12,
+                offset: const Offset(0, 1),
               ),
             ],
           ),
-        );
-      }).toList(),
-    ],
-  );
-}
-
-  // Father Section
- Widget _buildFatherSection() {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Text(
-            'FATHER',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: Colors.black,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _isEditingFather
+                      ? _buildEditableFieldInline(
+                          'First Name',
+                          _fatherData['firstName'],
+                          (value) {
+                            _fatherData['firstName'] = value;
+                          },
+                        )
+                      : _buildInfoFieldInline(
+                          'First Name',
+                          _fatherData['firstName'],
+                        ),
+                  const SizedBox(height: 12),
+                  _isEditingFather
+                      ? _buildEditableFieldInline(
+                          'Middle Name',
+                          _fatherData['middleName'],
+                          (value) {
+                            _fatherData['middleName'] = value;
+                          },
+                        )
+                      : _buildInfoFieldInline(
+                          'Middle Name',
+                          _fatherData['middleName'],
+                        ),
+                  const SizedBox(height: 12),
+                  _isEditingFather
+                      ? _buildEditableFieldInline(
+                          'Last Name',
+                          _fatherData['lastName'],
+                          (value) {
+                            _fatherData['lastName'] = value;
+                          },
+                        )
+                      : _buildInfoFieldInline(
+                          'Last Name',
+                          _fatherData['lastName'],
+                        ),
+                  const SizedBox(height: 12),
+                  _isEditingFather
+                      ? _buildEditableFieldInline(
+                          'Name Extension',
+                          _fatherData['nameExtension'],
+                          (value) {
+                            _fatherData['nameExtension'] = value;
+                          },
+                        )
+                      : _buildInfoFieldInline(
+                          'Name Extension',
+                          _fatherData['nameExtension'],
+                        ),
+                ],
+              ),
+            ],
           ),
-          IconButton(
-            icon: Icon(
-              _isEditingFather ? Icons.check : Icons.edit,
-              size: 20,
-              color: const Color(0xFF2C5F4F),
-            ),
-            onPressed: () {
-              setState(() {
-                _isEditingFather = !_isEditingFather;
-              });
-            },
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-          ),
-        ],
-      ),
-      const SizedBox(height: 12),
-      // Single container with all fields in grid layout
-      Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(12),
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey[200]!),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.5),
-              spreadRadius: 1,
-              blurRadius: 12,
-              offset: const Offset(0, 1),
-            ),
-          ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _isEditingFather
-                ? _buildEditableFieldInline(
-                    'First Name',
-                    _fatherData['firstName'],
-                    (value) {
-                      _fatherData['firstName'] = value;
-                    },
-                  )
-                : _buildInfoFieldInline('First Name', _fatherData['firstName']),
-            const SizedBox(height: 12),
-            _isEditingFather
-                ? _buildEditableFieldInline(
-                    'Middle Name',
-                    _fatherData['middleName'],
-                    (value) {
-                      _fatherData['middleName'] = value;
-                    },
-                  )
-                : _buildInfoFieldInline('Middle Name', _fatherData['middleName']),
-            const SizedBox(height: 12),
-            _isEditingFather
-                ? _buildEditableFieldInline(
-                    'Last Name',
-                    _fatherData['lastName'],
-                    (value) {
-                      _fatherData['lastName'] = value;
-                    },
-                  )
-                : _buildInfoFieldInline('Last Name', _fatherData['lastName']),
-            const SizedBox(height: 12),
-            _isEditingFather
-                ? _buildEditableFieldInline(
-                    'Name Extension',
-                    _fatherData['nameExtension'],
-                    (value) {
-                      _fatherData['nameExtension'] = value;
-                    },
-                  )
-                : _buildInfoFieldInline('Name Extension', _fatherData['nameExtension']),
-          ],
-                          ),
-          ],
-        ),
-      ),
-    ],
-  );
-}
+      ],
+    );
+  }
 
   // Mother Section
   Widget _buildMotherSection() {
@@ -1426,52 +1460,76 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
             ),
           ],
         ),
-         const SizedBox(height: 12),
+        const SizedBox(height: 12),
         Container(
           padding: const EdgeInsets.all(12),
           width: double.infinity,
           decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey[200]!),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.5),
-              spreadRadius: 1,
-              blurRadius: 12,
-              offset: const Offset(0, 1),
-            ),
-          ],
-        ),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey[200]!),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.5),
+                spreadRadius: 1,
+                blurRadius: 12,
+                offset: const Offset(0, 1),
+              ),
+            ],
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _isEditingMother
-                  ? _buildEditableFieldInline('First Name', _motherData['firstName'], (value) {
-                      _motherData['firstName'] = value;
-                    })
-                  : _buildInfoFieldInline('First Name', _motherData['firstName']),
+                  ? _buildEditableFieldInline(
+                      'First Name',
+                      _motherData['firstName'],
+                      (value) {
+                        _motherData['firstName'] = value;
+                      },
+                    )
+                  : _buildInfoFieldInline(
+                      'First Name',
+                      _motherData['firstName'],
+                    ),
               const SizedBox(height: 12),
               _isEditingMother
-                  ? _buildEditableFieldInline('Middle Name', _motherData['middleName'], (value) {
-                      _motherData['middleName'] = value;
-                    })
-                  : _buildInfoFieldInline('Middle Name', _motherData['middleName']),
+                  ? _buildEditableFieldInline(
+                      'Middle Name',
+                      _motherData['middleName'],
+                      (value) {
+                        _motherData['middleName'] = value;
+                      },
+                    )
+                  : _buildInfoFieldInline(
+                      'Middle Name',
+                      _motherData['middleName'],
+                    ),
               const SizedBox(height: 12),
               _isEditingMother
-                  ? _buildEditableFieldInline('Last Name', _motherData['lastName'], (value) {
-                      _motherData['lastName'] = value;
-                    })
+                  ? _buildEditableFieldInline(
+                      'Last Name',
+                      _motherData['lastName'],
+                      (value) {
+                        _motherData['lastName'] = value;
+                      },
+                    )
                   : _buildInfoFieldInline('Last Name', _motherData['lastName']),
               const SizedBox(height: 12),
               _isEditingMother
-                  ? _buildEditableFieldInline('Name Extension', _motherData['nameExtension'], (value) {
-                      _motherData['nameExtension'] = value;
-                    })
-                  : _buildInfoFieldInline('Name Extension', _motherData['nameExtension']),
+                  ? _buildEditableFieldInline(
+                      'Name Extension',
+                      _motherData['nameExtension'],
+                      (value) {
+                        _motherData['nameExtension'] = value;
+                      },
+                    )
+                  : _buildInfoFieldInline(
+                      'Name Extension',
+                      _motherData['nameExtension'],
+                    ),
             ],
           ),
-        
         ),
       ],
     );
@@ -1541,16 +1599,16 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
               margin: const EdgeInsets.all(10),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-            ],
-          ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -1612,8 +1670,9 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                                 ),
                                 onPressed: () {
                                   setState(() {
-                                    _editingEducationIndex =
-                                        isEditing ? null : index;
+                                    _editingEducationIndex = isEditing
+                                        ? null
+                                        : index;
                                   });
                                 },
                                 padding: EdgeInsets.zero,
@@ -1625,7 +1684,6 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                       ),
                     );
                   }).toList(),
-
                 ],
               ),
             ),
@@ -1817,12 +1875,11 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(4),
-                              
                             ),
                             child: Column(
-                               crossAxisAlignment: CrossAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                      isEditing
+                                isEditing
                                     ? _buildEditableFieldInline(
                                         'Career Service/ RA 1080 (Board/ Bar) Under Special Laws/ CES/ CSEE Barangay Eligibility / Driver\'s License',
                                         service['careerService'],
@@ -1837,35 +1894,69 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                                 const SizedBox(height: 20),
                                 // Rating
                                 isEditing
-                                    ? _buildEditableFieldInline('Rating', service['rating'], (value) {
-                                        service['rating'] = value;
-                                      })
-                                    : _buildInfoFieldInline('Rating', service['rating']),
+                                    ? _buildEditableFieldInline(
+                                        'Rating',
+                                        service['rating'],
+                                        (value) {
+                                          service['rating'] = value;
+                                        },
+                                      )
+                                    : _buildInfoFieldInline(
+                                        'Rating',
+                                        service['rating'],
+                                      ),
                                 const SizedBox(height: 20),
                                 isEditing
-                                    ? _buildEditableFieldInline('Date of Exam', service['dateOfExam'], (value) {
-                                        service['dateOfExam'] = value;
-                                      })
-                                    : _buildInfoFieldInline('Date of Exam', service['dateOfExam']),
+                                    ? _buildEditableFieldInline(
+                                        'Date of Exam',
+                                        service['dateOfExam'],
+                                        (value) {
+                                          service['dateOfExam'] = value;
+                                        },
+                                      )
+                                    : _buildInfoFieldInline(
+                                        'Date of Exam',
+                                        service['dateOfExam'],
+                                      ),
                                 const SizedBox(height: 20),
-                                 isEditing
-                                    ? _buildEditableFieldInline('Place of Exam', service['placeOfExam'], (value) {
-                                        service['placeOfExam'] = value;
-                                      })
-                                    : _buildInfoFieldInline('Place of Exam', service['placeOfExam']),
-                                const SizedBox(height: 20),    
                                 isEditing
-                                    ? _buildEditableFieldInline('License Number', service['licenseNumber'], (value) {
-                                        service['licenseNumber'] = value;
-                                      })
-                                    : _buildInfoFieldInline('License Number', service['licenseNumber']),
-                                const SizedBox(height: 20),       
+                                    ? _buildEditableFieldInline(
+                                        'Place of Exam',
+                                        service['placeOfExam'],
+                                        (value) {
+                                          service['placeOfExam'] = value;
+                                        },
+                                      )
+                                    : _buildInfoFieldInline(
+                                        'Place of Exam',
+                                        service['placeOfExam'],
+                                      ),
+                                const SizedBox(height: 20),
                                 isEditing
-                                    ? _buildEditableFieldInline('Validity', service['validity'], (value) {
-                                        service['validity'] = value;
-                                      })
-                                    : _buildInfoFieldInline('Validity', service['validity']),
-                              
+                                    ? _buildEditableFieldInline(
+                                        'License Number',
+                                        service['licenseNumber'],
+                                        (value) {
+                                          service['licenseNumber'] = value;
+                                        },
+                                      )
+                                    : _buildInfoFieldInline(
+                                        'License Number',
+                                        service['licenseNumber'],
+                                      ),
+                                const SizedBox(height: 20),
+                                isEditing
+                                    ? _buildEditableFieldInline(
+                                        'Validity',
+                                        service['validity'],
+                                        (value) {
+                                          service['validity'] = value;
+                                        },
+                                      )
+                                    : _buildInfoFieldInline(
+                                        'Validity',
+                                        service['validity'],
+                                      ),
                               ],
                             ),
                           ),
@@ -1980,7 +2071,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                   ),
                   const SizedBox(height: 12),
 
-                   ..._educationData.asMap().entries.map((entry) {
+                  ..._educationData.asMap().entries.map((entry) {
                     int index = entry.key;
                     Map<String, dynamic> education = entry.value;
                     bool isEditing = _editingEducationIndex == index;
@@ -2037,11 +2128,13 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                                 icon: Icon(
                                   isEditing ? Icons.check : Icons.edit,
                                   size: 18,
-                                  color: const Color(0xFF2C5F4F),  
+                                  color: const Color(0xFF2C5F4F),
                                 ),
                                 onPressed: () {
                                   setState(() {
-                                    _editingEducationIndex = isEditing ? null : index;
+                                    _editingEducationIndex = isEditing
+                                        ? null
+                                        : index;
                                   });
                                 },
                                 padding: EdgeInsets.zero,
@@ -2175,7 +2268,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                       ),
                     ],
                   ),
-                     ..._voluntaryWorkData.asMap().entries.map((entry) {
+                  ..._voluntaryWorkData.asMap().entries.map((entry) {
                     int index = entry.key;
                     Map<String, dynamic> voluntary = entry.value;
                     bool isEditing = _editingVoluntaryWorkIndex == index;
@@ -2183,24 +2276,23 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12),
                       padding: const EdgeInsets.all(12),
-                       decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey[200]!),
-              boxShadow: [
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.grey[200]!),
+                        boxShadow: [
                           // A list of shadows to apply
                           BoxShadow(
-                           color: Colors.black.withOpacity(0.1),
-                            spreadRadius: 1, 
-                            blurRadius: 12, 
+                            color: Colors.black.withOpacity(0.1),
+                            spreadRadius: 1,
+                            blurRadius: 12,
                             offset: Offset(
                               0,
                               1,
                             ), // Changes the position of the shadow (x, y)
                           ),
                         ],
-              
-            ),
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -2228,8 +2320,9 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                                     ),
                                     onPressed: () {
                                       setState(() {
-                                        _editingVoluntaryWorkIndex =
-                                            isEditing ? null : index;
+                                        _editingVoluntaryWorkIndex = isEditing
+                                            ? null
+                                            : index;
                                       });
                                     },
                                     padding: EdgeInsets.zero,
@@ -2245,7 +2338,8 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                                     onPressed: () {
                                       setState(() {
                                         _voluntaryWorkData.removeAt(index);
-                                        if (_editingVoluntaryWorkIndex == index) {
+                                        if (_editingVoluntaryWorkIndex ==
+                                            index) {
                                           _editingVoluntaryWorkIndex = null;
                                         }
                                       });
@@ -2287,8 +2381,8 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                                       'Number of Hours',
                                       voluntary['numberOfHours'],
                                       (value) {
-                                        _voluntaryWorkData[index]
-                                            ['numberOfHours'] = value;
+                                        _voluntaryWorkData[index]['numberOfHours'] =
+                                            value;
                                       },
                                     ),
                                     const SizedBox(height: 8),
@@ -2296,8 +2390,8 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                                       'Position / Nature of Work',
                                       voluntary['positionNature'],
                                       (value) {
-                                        _voluntaryWorkData[index]
-                                            ['positionNature'] = value;
+                                        _voluntaryWorkData[index]['positionNature'] =
+                                            value;
                                       },
                                     ),
                                   ],
@@ -2305,15 +2399,25 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                               : Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    _buildInfoFieldInline('Date From', voluntary['dateFrom']),
-                                    const SizedBox(height: 8),
-                                    _buildInfoFieldInline('Date To', voluntary['dateTo']),
+                                    _buildInfoFieldInline(
+                                      'Date From',
+                                      voluntary['dateFrom'],
+                                    ),
                                     const SizedBox(height: 8),
                                     _buildInfoFieldInline(
-                                        'Number of Hours', voluntary['numberOfHours']),
+                                      'Date To',
+                                      voluntary['dateTo'],
+                                    ),
                                     const SizedBox(height: 8),
                                     _buildInfoFieldInline(
-                                        'Position / Nature of Work', voluntary['positionNature']),
+                                      'Number of Hours',
+                                      voluntary['numberOfHours'],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    _buildInfoFieldInline(
+                                      'Position / Nature of Work',
+                                      voluntary['positionNature'],
+                                    ),
                                   ],
                                 ),
                         ],
@@ -2436,7 +2540,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                     ),
                   ),
                   const SizedBox(height: 12),
-        ..._learningDevelopmentData.asMap().entries.map((entry) {
+                  ..._learningDevelopmentData.asMap().entries.map((entry) {
                     int index = entry.key;
                     Map<String, dynamic> training = entry.value;
                     bool isEditing = _editingLearningDevelopmentIndex == index;
@@ -2451,9 +2555,9 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                         boxShadow: [
                           // A list of shadows to apply
                           BoxShadow(
-                           color: Colors.black.withOpacity(0.1),
-                            spreadRadius: 1, 
-                            blurRadius: 12, 
+                            color: Colors.black.withOpacity(0.1),
+                            spreadRadius: 1,
+                            blurRadius: 12,
                             offset: Offset(
                               0,
                               1,
@@ -2470,10 +2574,18 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                             children: [
                               Expanded(
                                 child: isEditing
-                                    ? _buildEditableFieldInline('', training['title'], (value) {
-                                        _learningDevelopmentData[index]['title'] = value;
-                                      })
-                                    : _buildInfoFieldInline('', training['title']),
+                                    ? _buildEditableFieldInline(
+                                        '',
+                                        training['title'],
+                                        (value) {
+                                          _learningDevelopmentData[index]['title'] =
+                                              value;
+                                        },
+                                      )
+                                    : _buildInfoFieldInline(
+                                        '',
+                                        training['title'],
+                                      ),
                               ),
                               const SizedBox(width: 8),
                               Row(
@@ -2501,9 +2613,13 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                                     ),
                                     onPressed: () {
                                       setState(() {
-                                        _learningDevelopmentData.removeAt(index);
-                                        if (_editingLearningDevelopmentIndex == index) {
-                                          _editingLearningDevelopmentIndex = null;
+                                        _learningDevelopmentData.removeAt(
+                                          index,
+                                        );
+                                        if (_editingLearningDevelopmentIndex ==
+                                            index) {
+                                          _editingLearningDevelopmentIndex =
+                                              null;
                                         }
                                       });
                                     },
@@ -2524,7 +2640,8 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                                     'Date From',
                                     training['dateFrom'],
                                     (value) {
-                                      _learningDevelopmentData[index]['dateFrom'] = value;
+                                      _learningDevelopmentData[index]['dateFrom'] =
+                                          value;
                                     },
                                   ),
                                 ),
@@ -2534,7 +2651,8 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                                     'Date To',
                                     training['dateTo'],
                                     (value) {
-                                      _learningDevelopmentData[index]['dateTo'] = value;
+                                      _learningDevelopmentData[index]['dateTo'] =
+                                          value;
                                     },
                                   ),
                                 ),
@@ -2548,7 +2666,8 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                                     'Number of Hours',
                                     training['numberOfHours'],
                                     (value) {
-                                      _learningDevelopmentData[index]['numberOfHours'] = value;
+                                      _learningDevelopmentData[index]['numberOfHours'] =
+                                          value;
                                     },
                                   ),
                                 ),
@@ -2558,7 +2677,8 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                                     'Type of LD',
                                     training['typeOfLD'],
                                     (value) {
-                                      _learningDevelopmentData[index]['typeOfLD'] = value;
+                                      _learningDevelopmentData[index]['typeOfLD'] =
+                                          value;
                                     },
                                   ),
                                 ),
@@ -2569,20 +2689,36 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                               'Conducted / Sponsored By',
                               training['conductedBy'],
                               (value) {
-                                _learningDevelopmentData[index]['conductedBy'] = value;
+                                _learningDevelopmentData[index]['conductedBy'] =
+                                    value;
                               },
                             ),
                           ] else ...[
                             const SizedBox(height: 8),
-                            _buildInfoFieldInline('Date From', training['dateFrom']),
+                            _buildInfoFieldInline(
+                              'Date From',
+                              training['dateFrom'],
+                            ),
                             const SizedBox(height: 8),
-                            _buildInfoFieldInline('Date To', training['dateTo']),
+                            _buildInfoFieldInline(
+                              'Date To',
+                              training['dateTo'],
+                            ),
                             const SizedBox(height: 8),
-                            _buildInfoFieldInline('Number of Hours', training['numberOfHours']),
+                            _buildInfoFieldInline(
+                              'Number of Hours',
+                              training['numberOfHours'],
+                            ),
                             const SizedBox(height: 8),
-                            _buildInfoFieldInline('Type of LD', training['typeOfLD']),
+                            _buildInfoFieldInline(
+                              'Type of LD',
+                              training['typeOfLD'],
+                            ),
                             const SizedBox(height: 8),
-                            _buildInfoFieldInline('Conducted / Sponsored By', training['conductedBy']),
+                            _buildInfoFieldInline(
+                              'Conducted / Sponsored By',
+                              training['conductedBy'],
+                            ),
                           ],
                         ],
                       ),
@@ -2675,8 +2811,6 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
                               color: Colors.grey,
-
-                              
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -2726,11 +2860,14 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                         children: [
                           Expanded(
                             child: isEditing
-                                ? _buildEditableFieldInline('', skill['skill'], (
-                                    value,
-                                  ) {
-                                    _specialSkillsData[index]['skill'] = value;
-                                  })
+                                ? _buildEditableFieldInline(
+                                    '',
+                                    skill['skill'],
+                                    (value) {
+                                      _specialSkillsData[index]['skill'] =
+                                          value;
+                                    },
+                                  )
                                 : _buildInfoFieldInline('', skill['skill']),
                           ),
                           const SizedBox(width: 8),
@@ -2827,7 +2964,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                         _editingNonAcademicDistinctionIndex == index;
 
                     return Container(
-                        margin: const EdgeInsets.only(bottom: 8),
+                      margin: const EdgeInsets.only(bottom: 8),
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: Colors.white,
@@ -2951,7 +3088,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                     bool isEditing = _editingMembershipIndex == index;
 
                     return Container(
-                        margin: const EdgeInsets.only(bottom: 8),
+                      margin: const EdgeInsets.only(bottom: 8),
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: Colors.white,
@@ -3177,9 +3314,9 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                         boxShadow: [
                           // A list of shadows to apply
                           BoxShadow(
-                           color: Colors.black.withOpacity(0.1),
-                            spreadRadius: 1, 
-                            blurRadius: 12, 
+                            color: Colors.black.withOpacity(0.1),
+                            spreadRadius: 1,
+                            blurRadius: 12,
                             offset: Offset(
                               0,
                               1,
@@ -3202,7 +3339,10 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                                               value;
                                         },
                                       )
-                                    : _buildInfoFieldInline('', reference['name']),
+                                    : _buildInfoFieldInline(
+                                        '',
+                                        reference['name'],
+                                      ),
                               ),
                               const SizedBox(width: 8),
                               Expanded(
@@ -3216,7 +3356,10 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                                               value;
                                         },
                                       )
-                                    : _buildInfoFieldInline('', reference['address']),
+                                    : _buildInfoFieldInline(
+                                        '',
+                                        reference['address'],
+                                      ),
                               ),
                               const SizedBox(width: 8),
                               Row(
@@ -3307,7 +3450,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                   ),
                   const SizedBox(height: 12),
 
-                   Container(
+                  Container(
                     padding: const EdgeInsets.all(12),
                     width: double.infinity,
                     decoration: BoxDecoration(
@@ -3339,7 +3482,8 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                             'Unified Multi-Purpose ID',
                             _governmentIDData['unifiedMultiPurposeID'],
                             (value) {
-                              _governmentIDData['unifiedMultiPurposeID'] = value;
+                              _governmentIDData['unifiedMultiPurposeID'] =
+                                  value;
                             },
                           ),
                           const SizedBox(height: 12),
@@ -3367,7 +3511,10 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                             },
                           ),
                         ] else ...[
-                          _buildInfoFieldInline('Issued ID', _governmentIDData['issuedID']),
+                          _buildInfoFieldInline(
+                            'Issued ID',
+                            _governmentIDData['issuedID'],
+                          ),
                           const SizedBox(height: 12),
                           _buildInfoFieldInline(
                             'Unified Multi-Purpose ID',
@@ -3401,15 +3548,12 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
   }
 
   Widget _buildDailyTimeRecordCard() {
-  return DtrWidget(
-    token: widget.token,
-    baseUrl: widget.baseUrl,
-    userId: _userDetails?['employee']?['employeeId'] ??'N/A',
-  );
-}
-      
-    
-
+    return DtrWidget(
+      token: widget.token,
+      baseUrl: widget.baseUrl,
+      userId: _userDetails?['employee']?['employeeId'] ?? 'N/A',
+    );
+  }
 
   // Helper method for inline field (no background, just label and value)
   Widget _buildInfoFieldInline(String label, dynamic value) {
@@ -3488,8 +3632,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
     );
   }
 
-
-// Helper method for drawer menu items
+  // Helper method for drawer menu items
   Widget _buildDrawerItem(String title, IconData icon, bool isSelected) {
     return ListTile(
       leading: Icon(

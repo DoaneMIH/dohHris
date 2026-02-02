@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:mobile_application/config/api_config.dart';
-import 'dart:convert';
-import '../services/token_manager.dart';
+import 'package:mobile_application/services/dtr_service.dart';
 
 class DtrWidget extends StatefulWidget {
   final String? token;
@@ -21,6 +19,7 @@ class DtrWidget extends StatefulWidget {
 }
 
 class _DtrWidgetState extends State<DtrWidget> {
+  late DtrService _dtrService;
   List<Map<String, dynamic>> _dtrRecords = [];
   List<Map<String, dynamic>> _filteredRecords = [];
   bool _isLoading = false;
@@ -33,6 +32,10 @@ class _DtrWidgetState extends State<DtrWidget> {
   @override
   void initState() {
     super.initState();
+    _dtrService = DtrService(
+      baseUrl: widget.baseUrl,
+      token: widget.token,
+    );
     _fetchDtrRecords();
   }
 
@@ -43,65 +46,27 @@ class _DtrWidgetState extends State<DtrWidget> {
     });
 
     try {
-      // Build the DTR URL
-      final dtrUrl = '${widget.baseUrl}${ApiConfig.dtrEndpoint}/${widget.userId}';
-      
-      print('📅 [DTR] Fetching from: $dtrUrl');
+      // Use the service to fetch records
+      final response = await _dtrService.fetchDtrRecords(widget.userId);
 
-      // Get current token
-      final token = TokenManager().token ?? widget.token;
-
-      // Fetch DTR data with authentication
-      final response = await http.get(
-        Uri.parse(dtrUrl),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      print('📅 [DTR] Response status: ${response.statusCode}');
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        
-        if (data['message'] == 'Successful' && data['dtrList'] != null) {
-          setState(() {
-            _dtrRecords = List<Map<String, dynamic>>.from(data['dtrList']);
-            // Sort records by date (latest first)
-            _dtrRecords.sort((a, b) {
-              try {
-                DateTime dateA = DateTime.parse(a['date']);
-                DateTime dateB = DateTime.parse(b['date']);
-                return dateB.compareTo(dateA); // Descending order
-              } catch (e) {
-                return 0;
-              }
-            });
-            _extractAvailableYearsAndMonths();
-            _applyFilters();
-            _isLoading = false;
-          });
-          print('✅ [DTR] Loaded ${_dtrRecords.length} records');
-        } else {
-          setState(() {
-            _error = 'No DTR records found';
-            _isLoading = false;
-          });
-        }
-      } else {
+      if (response.success && response.records != null) {
         setState(() {
-          _error = 'Failed to load DTR: ${response.statusCode}';
+          _dtrRecords = response.records!;
+          _extractAvailableYearsAndMonths();
+          _applyFilters();
           _isLoading = false;
         });
-        print('❌ [DTR] Failed: ${response.statusCode}');
+      } else {
+        setState(() {
+          _error = response.error ?? 'Failed to load DTR records';
+          _isLoading = false;
+        });
       }
     } catch (e) {
       setState(() {
         _error = 'Error loading DTR: $e';
         _isLoading = false;
       });
-      print('❌ [DTR] Error: $e');
     }
   }
 
@@ -323,6 +288,24 @@ class _DtrWidgetState extends State<DtrWidget> {
       return '0';
     }
     return minutes.toString();
+  }
+
+  String _formatDateWithDay(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty) {
+      return 'N/A';
+    }
+    
+    try {
+      DateTime date = DateTime.parse(dateStr);
+      List<String> days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+      String dayOfWeek = days[date.weekday - 1];
+      
+      // Format: 2026-01-06 (Monday)
+      return '$dateStr ($dayOfWeek)';
+    } catch (e) {
+      print('Error formatting date: $e');
+      return dateStr;
+    }
   }
 
   @override
@@ -552,7 +535,7 @@ class _DtrWidgetState extends State<DtrWidget> {
                     const Icon(Icons.calendar_today, size: 20, color: Color(0xFF00674F)),
                     const SizedBox(width: 8),
                     Text(
-                      record['date'] ?? 'N/A',
+                      _formatDateWithDay(record['date']),
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,

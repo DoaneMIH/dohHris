@@ -9,7 +9,8 @@ class UserService {
     
     // Use the current token from TokenManager (in case it was refreshed)
     final currentToken = TokenManager().token ?? token;
-    print('🎫 [UserService] Token: ${currentToken.substring(0, 20)}...');
+    // print('🎫 [UserService] Token: ${currentToken.substring(0, 20)}...');
+    print("🎫 [UserService] Token: ${currentToken.toString()}");
     print('🌐 [UserService] API URL: ${ApiConfig.baseUrl}${ApiConfig.getUserEndpoint}');
     
     try {
