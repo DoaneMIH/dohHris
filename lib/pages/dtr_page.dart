@@ -22,8 +22,13 @@ class DtrWidget extends StatefulWidget {
 
 class _DtrWidgetState extends State<DtrWidget> {
   List<Map<String, dynamic>> _dtrRecords = [];
+  List<Map<String, dynamic>> _filteredRecords = [];
   bool _isLoading = false;
   String? _error;
+  int? _selectedMonth;
+  int? _selectedYear;
+  List<int> _availableYears = [];
+  List<int> _availableMonths = [];
 
   @override
   void initState() {
@@ -63,6 +68,18 @@ class _DtrWidgetState extends State<DtrWidget> {
         if (data['message'] == 'Successful' && data['dtrList'] != null) {
           setState(() {
             _dtrRecords = List<Map<String, dynamic>>.from(data['dtrList']);
+            // Sort records by date (latest first)
+            _dtrRecords.sort((a, b) {
+              try {
+                DateTime dateA = DateTime.parse(a['date']);
+                DateTime dateB = DateTime.parse(b['date']);
+                return dateB.compareTo(dateA); // Descending order
+              } catch (e) {
+                return 0;
+              }
+            });
+            _extractAvailableYearsAndMonths();
+            _applyFilters();
             _isLoading = false;
           });
           print('✅ [DTR] Loaded ${_dtrRecords.length} records');
@@ -86,6 +103,185 @@ class _DtrWidgetState extends State<DtrWidget> {
       });
       print('❌ [DTR] Error: $e');
     }
+  }
+
+  void _extractAvailableYearsAndMonths() {
+    // Generate years from 2025 to current year
+    int currentYear = DateTime.now().year;
+    _availableYears = [];
+    for (int year = currentYear; year >= 2025; year--) {
+      _availableYears.add(year);
+    }
+
+    // Extract months from records and sort descending
+    Set<int> months = {};
+    for (var record in _dtrRecords) {
+      try {
+        DateTime date = DateTime.parse(record['date']);
+        months.add(date.month);
+      } catch (e) {
+        print('Error parsing date: ${record['date']}');
+      }
+    }
+
+    _availableMonths = months.toList()..sort((a, b) => b.compareTo(a)); // Descending
+    
+    // Set default filter to latest month and year if not already set
+    if (_selectedMonth == null && _selectedYear == null && _dtrRecords.isNotEmpty) {
+      _setDefaultFilter();
+    }
+  }
+
+  void _setDefaultFilter() {
+    // Find the latest date in records
+    if (_dtrRecords.isNotEmpty) {
+      try {
+        DateTime latestDate = DateTime.parse(_dtrRecords.first['date']);
+        _selectedMonth = latestDate.month;
+        _selectedYear = latestDate.year;
+      } catch (e) {
+        print('Error setting default filter: $e');
+      }
+    }
+  }
+
+  void _applyFilters() {
+    if (_selectedYear == null && _selectedMonth == null) {
+      _filteredRecords = List.from(_dtrRecords);
+    } else {
+      _filteredRecords = _dtrRecords.where((record) {
+        try {
+          DateTime date = DateTime.parse(record['date']);
+          bool yearMatch = _selectedYear == null || date.year == _selectedYear;
+          bool monthMatch = _selectedMonth == null || date.month == _selectedMonth;
+          return yearMatch && monthMatch;
+        } catch (e) {
+          return false;
+        }
+      }).toList();
+    }
+  }
+
+  void _showFilterDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        int? tempMonth = _selectedMonth;
+        int? tempYear = _selectedYear;
+
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              title: const Text(
+                'Filter DTR Records',
+                style: TextStyle(
+                  color: Color(0xFF00674F),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Year Dropdown
+                  DropdownButtonFormField<int>(
+                    value: tempYear,
+                    decoration: const InputDecoration(
+                      labelText: 'Year',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.calendar_today, color: Color(0xFF00674F)),
+                    ),
+                    hint: const Text('Select Year'),
+                    items: [
+                      const DropdownMenuItem<int>(
+                        value: null,
+                        child: Text('All Years'),
+                      ),
+                      ..._availableYears.map((year) {
+                        return DropdownMenuItem<int>(
+                          value: year,
+                          child: Text(year.toString()),
+                        );
+                      }).toList(),
+                    ],
+                    onChanged: (value) {
+                      setDialogState(() {
+                        tempYear = value;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  // Month Dropdown
+                  DropdownButtonFormField<int>(
+                    value: tempMonth,
+                    decoration: const InputDecoration(
+                      labelText: 'Month',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.date_range, color: Color(0xFF00674F)),
+                    ),
+                    hint: const Text('Select Month'),
+                    items: [
+                      const DropdownMenuItem<int>(
+                        value: null,
+                        child: Text('All Months'),
+                      ),
+                      // Generate months in descending order (12 to 1)
+                      ...List.generate(12, (index) {
+                        int month = 12 - index; // Start from December (12) down to January (1)
+                        return DropdownMenuItem<int>(
+                          value: month,
+                          child: Text(_getMonthName(month)),
+                        );
+                      }),
+                    ],
+                    onChanged: (value) {
+                      setDialogState(() {
+                        tempMonth = value;
+                      });
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Cancel', style: TextStyle(color: Colors.black)),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _selectedMonth = tempMonth;
+                      _selectedYear = tempYear;
+                      _applyFilters();
+                    });
+                    Navigator.of(context).pop();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF00674F),
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Apply'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  String _getMonthName(int month) {
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    return months[month - 1];
   }
 
   String _formatTime(dynamic timeValue) {
@@ -171,7 +367,9 @@ class _DtrWidgetState extends State<DtrWidget> {
         child: Center(
           child: Text(
             'No DTR records available',
-            style: TextStyle(fontSize: 16, color: Colors.grey),
+            style: TextStyle(fontSize: 16, 
+            // color: Colors.grey
+            ),
           ),
         ),
       );
@@ -197,7 +395,7 @@ class _DtrWidgetState extends State<DtrWidget> {
             ),
             child: Column(
               children: [
-                // Header section with refresh button
+                // Header section with filter and refresh buttons
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: const BoxDecoration(
@@ -219,26 +417,110 @@ class _DtrWidgetState extends State<DtrWidget> {
                           letterSpacing: 0.5,
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.refresh, color: Colors.white, size: 20),
-                        onPressed: _fetchDtrRecords,
-                        tooltip: 'Refresh',
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
+                      Row(
+                        children: [
+                          // Filter button
+                          Stack(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.filter_list, color: Colors.white, size: 20),
+                                onPressed: _showFilterDialog,
+                                tooltip: 'Filter by Month/Year',
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                              ),
+                              // Badge to show active filters
+                              if (_selectedMonth != null || _selectedYear != null)
+                                Positioned(
+                                  right: 0,
+                                  top: 0,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(2),
+                                    constraints: const BoxConstraints(
+                                      minWidth: 8,
+                                      minHeight: 8,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(width: 12),
+                          // Refresh button
+                          IconButton(
+                            icon: const Icon(Icons.refresh, color: Colors.white, size: 20),
+                            onPressed: _fetchDtrRecords,
+                            tooltip: 'Refresh',
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ),
                 
+                // Active filters display
+                // if (_selectedMonth != null || _selectedYear != null)
+                //   Container(
+                //     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                //     color: Colors.blue.shade50,
+                //     child: Row(
+                //       children: [
+                //         const Icon(Icons.filter_alt, size: 16, color: Colors.blue),
+                //         const SizedBox(width: 8),
+                //         Expanded(
+                //           child: Text(
+                //             'Filtered: ${_selectedMonth != null ? _getMonthName(_selectedMonth!) : 'All Months'} ${_selectedYear != null ? _selectedYear : 'All Years'}',
+                //             style: const TextStyle(
+                //               fontSize: 12,
+                //               color: Colors.blue,
+                //             ),
+                //           ),
+                //         ),
+                //         TextButton(
+                //           onPressed: () {
+                //             setState(() {
+                //               _selectedMonth = null;
+                //               _selectedYear = null;
+                //               _applyFilters();
+                //             });
+                //           },
+                //           style: TextButton.styleFrom(
+                //             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                //             minimumSize: Size.zero,
+                //             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                //           ),
+                //           child: const Text(
+                //             'Clear',
+                //             style: TextStyle(fontSize: 12),
+                //           ),
+                //         ),
+                //       ],
+                //     ),
+                //   ),
+                
                 // DTR records list
                 Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: List.generate(_dtrRecords.length, (index) {
-                      final record = _dtrRecords[index];
-                      return _buildDtrCard(record);
-                    }),
-                  ),
+                  child: _filteredRecords.isEmpty
+                      ? const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(20.0),
+                            child: Text(
+                              'No records found for selected filters',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Color.fromARGB(255, 255, 255, 255),
+                              ),
+                            ),
+                          ),
+                        )
+                      : Column(
+                          children: List.generate(_filteredRecords.length, (index) {
+                            final record = _filteredRecords[index];
+                            return _buildDtrCard(record);
+                          }),
+                        ),
                 ),
               ],
             ),
@@ -252,6 +534,7 @@ class _DtrWidgetState extends State<DtrWidget> {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 2,
+      color: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
       ),
@@ -321,17 +604,17 @@ class _DtrWidgetState extends State<DtrWidget> {
                 _buildHoursInfo(
                   'Undertime',
                   _formatMinutes(record['undertime']),
-                  Colors.orange,
+                  const Color.fromARGB(255, 126, 126, 126),
                 ),
                 _buildHoursInfo(
                   'OT Hours',
                   _formatMinutes(record['utHours']),
-                  Colors.blue,
+                  const Color.fromARGB(255, 126, 126, 126),
                 ),
                 _buildHoursInfo(
                   'OT Minutes',
                   _formatMinutes(record['utMinutes']),
-                  Colors.blue,
+                  const Color.fromARGB(255, 126, 126, 126),
                 ),
               ],
             ),
@@ -345,7 +628,7 @@ class _DtrWidgetState extends State<DtrWidget> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Colors.grey.shade200),
       ),

@@ -86,6 +86,11 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
   // Selected menu state
   String _selectedMenu = 'Personal Information';
 
+  // Drawer menu expansion states
+  bool _isInformationExpanded = true;
+  bool _isServicesExpanded = true;
+
+
   @override
   void initState() {
     super.initState();
@@ -371,6 +376,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
         resizeToAvoidBottomInset: false,
         backgroundColor: Colors.transparent,
         appBar: AppBar(
+          iconTheme: const IconThemeData(color: Colors.white),
           title: Row(
             children: [
               SizedBox(width: 10),
@@ -427,7 +433,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
           backgroundColor: const Color(0xFF00674F),
           actions: [
             Padding(
-              padding: const EdgeInsets.all(10.0),
+              padding: const EdgeInsets.all(5.0),
               child: IconButton(
                 icon: const Icon(Icons.logout, color: Colors.white),
                 onPressed: _logout,
@@ -437,6 +443,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
           ],
         ),
         drawer: Drawer(
+          width: 300,
           child: ListView(
             padding: EdgeInsets.zero,
             children: [
@@ -453,51 +460,90 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                   ),
                 ),
               ),
-              _buildDrawerItem(
-                'Personal Information',
-                Icons.person,
-                _selectedMenu == 'Personal Information',
+              // Information Section with Dropdown
+              ExpansionTile(
+                leading: const Icon(Icons.info_outline, color: Color(0xFF00674F)),
+                title: const Text(
+                  'Information',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF00674F),
+                  ),
+                ),
+                initiallyExpanded: _isInformationExpanded,
+                onExpansionChanged: (expanded) {
+                  setState(() {
+                    _isInformationExpanded = expanded;
+                  });
+                },
+                children: [
+                  _buildDrawerItem(
+                    'Personal Information',
+                    Icons.person,
+                    _selectedMenu == 'Personal Information',
+                  ),
+                  _buildDrawerItem(
+                    'Family Background',
+                    Icons.family_restroom,
+                    _selectedMenu == 'Family Background',
+                  ),
+                  _buildDrawerItem(
+                    'Educational Background',
+                    Icons.school,
+                    _selectedMenu == 'Educational Background',
+                  ),
+                  _buildDrawerItem(
+                    'Civil Service Eligibility',
+                    Icons.verified,
+                    _selectedMenu == 'Civil Service Eligibility',
+                  ),
+                  _buildDrawerItem(
+                    'Work Experience',
+                    Icons.work,
+                    _selectedMenu == 'Work Experience',
+                  ),
+                  _buildDrawerItem(
+                    'Voluntary Work',
+                    Icons.volunteer_activism,
+                    _selectedMenu == 'Voluntary Work',
+                  ),
+                  _buildDrawerItem(
+                    'Learning and Development',
+                    Icons.psychology,
+                    _selectedMenu == 'Learning and Development',
+                  ),
+                  _buildDrawerItem(
+                    'Other Information',
+                    Icons.info,
+                    _selectedMenu == 'Other Information',
+                  ),
+                ],
               ),
-              _buildDrawerItem(
-                'Family Background',
-                Icons.family_restroom,
-                _selectedMenu == 'Family Background',
+              // Services Section with Dropdown
+              ExpansionTile(
+                leading: const Icon(Icons.room_service, color: Color(0xFF00674F)),
+                title: const Text(
+                  'Services',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF00674F),
+                  ),
+                ),
+                initiallyExpanded: _isServicesExpanded,
+                onExpansionChanged: (expanded) {
+                  setState(() {
+                    _isServicesExpanded = expanded;
+                  });
+                },
+                children: [
+                  _buildDrawerItem(
+                    'Daily Time Record',
+                    Icons.access_time,
+                    _selectedMenu == 'Daily Time Record',
+                  ),
+                ],
               ),
-              _buildDrawerItem(
-                'Educational Background',
-                Icons.school,
-                _selectedMenu == 'Educational Background',
-              ),
-              _buildDrawerItem(
-                'Civil Service Eligibility',
-                Icons.verified,
-                _selectedMenu == 'Civil Service Eligibility',
-              ),
-              _buildDrawerItem(
-                'Work Experience',
-                Icons.work,
-                _selectedMenu == 'Work Experience',
-              ),
-              _buildDrawerItem(
-                'Voluntary Work',
-                Icons.volunteer_activism,
-                _selectedMenu == 'Voluntary Work',
-              ),
-              _buildDrawerItem(
-                'Learning and Development',
-                Icons.psychology,
-                _selectedMenu == 'Learning and Development',
-              ),
-              _buildDrawerItem(
-                'Other Information',
-                Icons.info,
-                _selectedMenu == 'Other Information',
-              ),
-              _buildDrawerItem(
-                'Daily Time Record',
-                Icons.access_time,
-                _selectedMenu == 'Daily Time Record',
-              ),
+             
             ],
           ),
         ),
@@ -847,7 +893,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
               });
             },
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
               decoration: const BoxDecoration(
                 color: Color(0xFF2C5F4F),
                 borderRadius: BorderRadius.only(
