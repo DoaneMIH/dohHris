@@ -343,6 +343,9 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
         print('❌ [UserDetailsPage] Error loading user profile: $_error');
       }
       _isLoading = false;
+
+
+      
     });
 
     print('🏁 [UserDetailsPage] Fetch user profile completed\n');

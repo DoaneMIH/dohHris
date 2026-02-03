@@ -1,3 +1,5 @@
+
+
 import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -9,79 +11,93 @@ class TokenManager {
   TokenManager._internal();
 
   String? _token;
+  String? _email;
+  String? _password;
   Timer? _refreshTimer;
   Function? _onTokenExpired;
-  
-  // Token refresh interval (4 minutes 30 seconds to refresh before 5 min expiry)
-  static const Duration refreshInterval = Duration(minutes: 4, seconds: 30);
+
+  // Refresh at 3 min 30 sec so the new token arrives well before the 4-min window closes
+  static const Duration refreshInterval = Duration(minutes: 4);
 
   String? get token => _token;
 
-  /// Initialize token manager with initial token
-  void initialize(String token, {Function? onTokenExpired}) {
+  /// Initialize token manager with the first token AND the credentials
+  /// that produced it so we can re-login silently on every refresh cycle.
+  void initialize(
+    String token, {
+    required String email,
+    required String password,
+    Function? onTokenExpired,
+  }) {
     print('🔄 [TokenManager] Initializing with new token');
     _token = token;
+    _email = email;
+    _password = password;
     _onTokenExpired = onTokenExpired;
-    
-    // Cancel any existing timer
+
+    // Cancel any existing timer before starting a new one
     _refreshTimer?.cancel();
-    
-    // Start automatic refresh
+
     _startAutoRefresh();
   }
 
-  /// Start automatic token refresh timer
+  /// Start the periodic refresh timer
   void _startAutoRefresh() {
     print('⏰ [TokenManager] Starting auto-refresh timer');
-    print('⏰ [TokenManager] Will refresh every ${refreshInterval.inMinutes} minutes ${refreshInterval.inSeconds % 60} seconds');
-    
+    print(
+        '⏰ [TokenManager] Will refresh every ${refreshInterval.inMinutes} min '
+        '${refreshInterval.inSeconds % 60} sec');
+
     _refreshTimer = Timer.periodic(refreshInterval, (timer) async {
       print('🔄 [TokenManager] Auto-refresh triggered');
       await refreshToken();
     });
   }
 
-  /// Manually refresh the token
+  /// Re-login using stored credentials to get a brand-new token.
+  /// This hits POST /auth/login — the same endpoint the app uses on first login.
   Future<bool> refreshToken() async {
-    if (_token == null) {
-      print('❌ [TokenManager] No token to refresh');
+    if (_email == null || _password == null) {
+      print('❌ [TokenManager] No stored credentials — cannot refresh');
+      _handleTokenExpired();
       return false;
     }
 
-    print('🔄 [TokenManager] Refreshing token...');
-    print('🎫 [TokenManager] Current token: ${_token!.substring(0, 20)}...');
-    print('🌐 [TokenManager] API URL: ${ApiConfig.baseUrl}/auth/refresh-token');
+    print('🔄 [TokenManager] Refreshing token via /auth/login ...');
+    print('🌐 [TokenManager] API URL: ${ApiConfig.baseUrl}${ApiConfig.loginEndpoint}');
 
     try {
       final response = await http.post(
-        Uri.parse('${ApiConfig.baseUrl}/auth/refresh-token'),
-        headers: {
-          'Authorization': 'Bearer $_token',
-          'Content-Type': 'application/json',
-        },
+        Uri.parse('${ApiConfig.baseUrl}${ApiConfig.loginEndpoint}'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': _email,
+          'password': _password,
+        }),
       );
 
       print('📥 [TokenManager] Response status code: ${response.statusCode}');
-      print('📥 [TokenManager] Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        
+
         if (data['token'] != null) {
           _token = data['token'];
           print('✅ [TokenManager] Token refreshed successfully!');
           print('🎫 [TokenManager] New token: ${_token!.substring(0, 20)}...');
           return true;
         } else {
-          print('❌ [TokenManager] No token in response');
+          print('❌ [TokenManager] No token field in login response');
           return false;
         }
       } else if (response.statusCode == 401) {
-        print('❌ [TokenManager] Token expired or invalid - cannot refresh');
+        // Credentials are no longer valid (e.g. password changed)
+        print('❌ [TokenManager] Re-login failed (401) — credentials invalid');
         _handleTokenExpired();
         return false;
       } else {
-        print('❌ [TokenManager] Token refresh failed: ${response.statusCode}');
+        print('❌ [TokenManager] Re-login failed: ${response.statusCode}');
+        print('📥 [TokenManager] Body: ${response.body}');
         return false;
       }
     } catch (e) {
@@ -91,32 +107,34 @@ class TokenManager {
     }
   }
 
-  /// Handle token expiration
+  /// Handle token expiration / invalid credentials
   void _handleTokenExpired() {
-    print('⚠️ [TokenManager] Token expired - logging out user');
-    
-    // Stop the refresh timer
+    print('⚠️ [TokenManager] Token expired — logging out user');
+
     _refreshTimer?.cancel();
     _refreshTimer = null;
-    
-    // Clear token
+
     _token = null;
-    
-    // Call the callback to handle logout
+    // Keep credentials cleared so nothing can silently re-login
+    _email = null;
+    _password = null;
+
     if (_onTokenExpired != null) {
       _onTokenExpired!();
     }
   }
 
-  /// Stop auto-refresh (call on logout)
+  /// Stop auto-refresh and wipe everything (call on explicit logout)
   void dispose() {
     print('🛑 [TokenManager] Disposing token manager');
     _refreshTimer?.cancel();
     _refreshTimer = null;
     _token = null;
+    _email = null;
+    _password = null;
     _onTokenExpired = null;
   }
 
-  /// Check if token is still valid (optional - for manual checks)
+  /// Quick check — true when a token is present and non-empty
   bool get hasValidToken => _token != null && _token!.isNotEmpty;
 }
