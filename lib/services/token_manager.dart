@@ -16,7 +16,7 @@ class TokenManager {
   Timer? _refreshTimer;
   Function? _onTokenExpired;
 
-  // Refresh at 3 min 30 sec so the new token arrives well before the 4-min window closes
+  // Refresh at 4 min so the new token arrives well before the 5-min window closes
   static const Duration refreshInterval = Duration(minutes: 4);
 
   String? get token => _token;

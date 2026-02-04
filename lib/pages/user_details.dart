@@ -89,6 +89,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
   // Drawer menu expansion states
   bool _isInformationExpanded = false;
   bool _isServicesExpanded = false;
+  
 
   @override
   void initState() {
@@ -343,9 +344,6 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
         print('❌ [UserDetailsPage] Error loading user profile: $_error');
       }
       _isLoading = false;
-
-
-      
     });
 
     print('🏁 [UserDetailsPage] Fetch user profile completed\n');
@@ -365,14 +363,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Color.fromARGB(255, 255, 255, 255),
-            Color.fromARGB(255, 230, 255, 230),
-          ],
-        ),
+      color: Colors.white,
       ),
       child: Scaffold(
         resizeToAvoidBottomInset: false,
@@ -446,11 +437,12 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
         ),
         drawer: Drawer(
           width: 300,
+          backgroundColor: Colors.white,
           child: ListView(
             padding: EdgeInsets.zero,
             children: [
               SizedBox(
-                height: 80,
+                height: 80, 
                 child: DrawerHeader(
                   margin: EdgeInsets.zero,
                   decoration: const BoxDecoration(color: Color(0xFF00674F)),
@@ -480,6 +472,8 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                     color: Color(0xFF00674F),
                   ),
                 ),
+                iconColor: const Color.fromARGB(255, 0, 0, 0), 
+                collapsedIconColor: const Color.fromARGB(255, 0, 0, 0),
                 initiallyExpanded: _isInformationExpanded,
                 onExpansionChanged: (expanded) {
                   setState(() {
@@ -542,6 +536,8 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                     color: Color(0xFF00674F),
                   ),
                 ),
+                iconColor: const Color.fromARGB(255, 0, 0, 0), 
+                collapsedIconColor: const Color.fromARGB(255, 0, 0, 0),
                 initiallyExpanded: _isServicesExpanded,
                 onExpansionChanged: (expanded) {
                   setState(() {
@@ -614,13 +610,22 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // Profile Photo
-          AuthenticatedProfilePhoto(
-            photoUrl: _userDetails?['employee']?['photoUrl'],
-            baseUrl: widget.baseUrl,
-            userName: (_userDetails?['name'] ?? 'User').toString(),
-            radius: 70,
-            token: widget.token,
-          ),
+          // AuthenticatedProfilePhoto(
+          //   photoUrl: _userDetails?['employee']?['photoUrl'],
+          //   baseUrl: widget.baseUrl,
+          //   userName: (_userDetails?['name'] ?? 'User').toString(),
+          //   radius: 70,
+          //   token: widget.token,
+          // ),
+            AuthenticatedProfilePhoto(
+  photoUrl: _userDetails?['employee']?['photoUrl'],
+  baseUrl: widget.baseUrl,
+  userName: (_userDetails?['name'] ?? 'User').toString(),
+  radius: 70,
+  token: widget.token,
+  employeeId: _userDetails?['employee']?['id']?.toString(), // Add employeeId
+  onPhotoUpdated: _fetchUserDetails, // Refresh user details after photo update
+),
           const SizedBox(width: 25, height: 10),
           // Name and Details
           Flexible(
@@ -712,31 +717,29 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
 
   Widget _buildPersonalInformationCard() {
     return Container(
-      padding: EdgeInsets.all(8),
+      padding: EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: Column(
         children: [
           Container(
-            margin: const EdgeInsets.all(15),
+            margin: const EdgeInsets.all(1),
             width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
+            
             child: Column(
               children: [
                 // Header Section
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
+                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
                   decoration: const BoxDecoration(
                     color: Color(0xFF2C5F4F),
                     borderRadius: BorderRadius.only(
@@ -821,18 +824,9 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                             "${_userDetails?['employee']?['zipCode'] ?? ''}",
                       ),
                       const SizedBox(height: 20),
-                      // _buildInfoFieldInline(
-                      //   'Telephone No.',
-                      //   _userDetails?['employee']?['telephoneNo'],
-                      // ),
                       _buildInfoFieldInline(
                         'Telephone No.',
-                        ((_userDetails?['employee']?['telephoneNo'] ?? '')
-                                .toString()
-                                .trim()
-                                .isNotEmpty)
-                            ? _userDetails?['employee']?['telephoneNo']
-                            : 'N/A',
+                        _userDetails?['employee']?['telephoneNo'],
                       ),
                       const SizedBox(height: 20),
                       _buildInfoFieldInline(
@@ -930,11 +924,11 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                       letterSpacing: 0.5,
                     ),
                   ),
-                  Icon(
-                    _isFamilyBackgroundExpanded ? Icons.remove : Icons.add,
-                    color: Colors.white,
-                    size: 20,
-                  ),
+                  // Icon(
+                  //   _isFamilyBackgroundExpanded ? Icons.remove : Icons.add,
+                  //   color: Colors.white,
+                  //   size: 20,
+                  // ),
                 ],
               ),
             ),
@@ -1027,17 +1021,14 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
         const SizedBox(height: 12),
         // Single container with all fields in grid layout
         Container(
+          
           padding: EdgeInsets.all(10),
+          margin: const EdgeInsets.symmetric(
+                    horizontal: 2,
+                  ),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(8),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
           ),
 
           child: Column(
@@ -1143,12 +1134,15 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                       'Business Address',
                       _spouseData['businessAddress'],
                     ),
+                    const SizedBox(height: 25),
+                    
             ],
           ),
         ),
       ],
     );
   }
+
 
   // Children Section
   Widget _buildChildrenSection() {
@@ -1179,31 +1173,17 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        
         ..._childrenData.asMap().entries.map((entry) {
           int index = entry.key;
           Map<String, dynamic> child = entry.value;
           bool isEditing = _editingChildIndex == index;
 
           return Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(12),
+            margin: const EdgeInsets.only(bottom: 5),
+            padding: const EdgeInsets.all(5),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey[200]!),
-              boxShadow: [
-                // A list of shadows to apply
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  spreadRadius: 1,
-                  blurRadius: 12,
-                  offset: Offset(
-                    0,
-                    1,
-                  ), // Changes the position of the shadow (x, y)
-                ),
-              ],
             ),
             child: Column(
               children: [
@@ -1236,7 +1216,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
                         ),
-                        const SizedBox(width: 8),
+                        
                         IconButton(
                           icon: const Icon(
                             Icons.delete,
@@ -1258,17 +1238,17 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+               
                 Container(
                   // spacing around each child box
                   margin: const EdgeInsets.symmetric(
-                    horizontal: 8,
+                    horizontal: 2,
                     vertical: 6,
                   ),
                   // inner spacing of the white box
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
+                    horizontal: 10,
+                    
                   ),
                   width: double.infinity,
                   decoration: BoxDecoration(
@@ -1303,6 +1283,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                               'Birthday (MM/DD/YYYY)',
                               child['birthday'],
                             ),
+                            
                     ],
                   ),
                 ),
@@ -1319,9 +1300,12 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        const SizedBox(height: 20),
+        
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
+            
             const Text(
               'FATHER',
               style: TextStyle(
@@ -1346,7 +1330,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 5),
         // Single container with all fields in grid layout
         Container(
           margin: const EdgeInsets.only(bottom: 12),
@@ -1355,15 +1339,6 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey[200]!),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.5),
-                spreadRadius: 1,
-                blurRadius: 12,
-                offset: const Offset(0, 1),
-              ),
-            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1422,6 +1397,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                           'Name Extension',
                           _fatherData['nameExtension'],
                         ),
+                        const SizedBox(height: 10),
                 ],
               ),
             ],
@@ -1463,22 +1439,14 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        
         Container(
           padding: const EdgeInsets.all(12),
           width: double.infinity,
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey[200]!),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.5),
-                spreadRadius: 1,
-                blurRadius: 12,
-                offset: const Offset(0, 1),
-              ),
-            ],
+          
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1587,11 +1555,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                       letterSpacing: 0.5,
                     ),
                   ),
-                  Icon(
-                    _isEducationalBackgroundExpanded ? Icons.remove : Icons.add,
-                    color: Colors.white,
-                    size: 20,
-                  ),
+                 
                 ],
               ),
             ),
@@ -1604,13 +1568,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(8),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+             
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1740,11 +1698,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                       letterSpacing: 0.5,
                     ),
                   ),
-                  Icon(
-                    _isCivilServiceExpanded ? Icons.remove : Icons.add,
-                    color: Colors.white,
-                    size: 20,
-                  ),
+                 
                 ],
               ),
             ),
@@ -1803,19 +1757,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.grey[200]!),
-                        boxShadow: [
-                          // A list of shadows to apply
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            spreadRadius: 1,
-                            blurRadius: 12,
-                            offset: Offset(
-                              0,
-                              1,
-                            ), // Changes the position of the shadow (x, y)
-                          ),
-                        ],
+                        
                       ),
                       child: Column(
                         children: [
@@ -2019,11 +1961,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                       letterSpacing: 0.5,
                     ),
                   ),
-                  Icon(
-                    _isWorkExperienceExpanded ? Icons.remove : Icons.add,
-                    color: Colors.white,
-                    size: 20,
-                  ),
+                  
                 ],
               ),
             ),
@@ -2084,15 +2022,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.grey[200]!),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
+                       
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2221,11 +2151,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                       ),
                     ),
                   ),
-                  Icon(
-                    _isVoluntaryWorkExpanded ? Icons.remove : Icons.add,
-                    color: Colors.white,
-                    size: 20,
-                  ),
+                 
                 ],
               ),
             ),
@@ -2282,19 +2208,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.grey[200]!),
-                        boxShadow: [
-                          // A list of shadows to apply
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            spreadRadius: 1,
-                            blurRadius: 12,
-                            offset: Offset(
-                              0,
-                              1,
-                            ), // Changes the position of the shadow (x, y)
-                          ),
-                        ],
+                        
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2482,11 +2396,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                       ),
                     ),
                   ),
-                  Icon(
-                    _isLearningDevelopmentExpanded ? Icons.remove : Icons.add,
-                    color: Colors.white,
-                    size: 20,
-                  ),
+                  
                 ],
               ),
             ),
@@ -2554,19 +2464,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: Colors.grey[200]!),
-                        boxShadow: [
-                          // A list of shadows to apply
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            spreadRadius: 1,
-                            blurRadius: 12,
-                            offset: Offset(
-                              0,
-                              1,
-                            ), // Changes the position of the shadow (x, y)
-                          ),
-                        ],
+                        
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2779,11 +2677,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                       letterSpacing: 0.5,
                     ),
                   ),
-                  Icon(
-                    _isOtherInformationExpanded ? Icons.remove : Icons.add,
-                    color: Colors.white,
-                    size: 20,
-                  ),
+                 
                 ],
               ),
             ),
@@ -2837,27 +2731,18 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 5),
                   ..._specialSkillsData.asMap().entries.map((entry) {
                     int index = entry.key;
                     Map<String, dynamic> skill = entry.value;
                     bool isEditing = _editingSpecialSkillIndex == index;
 
                     return Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.all(12),
+                     
+                      padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.grey[200]!),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.06),
-                            blurRadius: 8,
-                            spreadRadius: 1,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
+                        
                       ),
                       child: Row(
                         children: [
@@ -2912,7 +2797,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                     );
                   }).toList(),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 50),
 
                   // Non-Academic Distinctions Section
                   Row(
@@ -2959,7 +2844,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  
                   ..._nonAcademicDistinctionsData.asMap().entries.map((entry) {
                     int index = entry.key;
                     Map<String, dynamic> distinction = entry.value;
@@ -2971,16 +2856,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.grey[200]!),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.06),
-                            blurRadius: 8,
-                            spreadRadius: 1,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
+                        
                       ),
                       child: Row(
                         children: [
@@ -3039,7 +2915,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                     );
                   }).toList(),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 50),
 
                   // Membership Section
                   Row(
@@ -3095,16 +2971,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.grey[200]!),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.06),
-                            blurRadius: 8,
-                            spreadRadius: 1,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
+                        
                       ),
                       child: Row(
                         children: [
@@ -3162,13 +3029,13 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                     );
                   }).toList(),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 50),
 
                   // Other Information Inquiry Section
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.grey[100],
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Row(
@@ -3236,7 +3103,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                     ),
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 50),
 
                   // References Section
                   Row(
@@ -3247,7 +3114,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
-                          color: Colors.black,
+                          color: Color.fromARGB(255, 97, 97, 97),
                         ),
                       ),
                       IconButton(
@@ -3301,31 +3168,18 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                       const SizedBox(width: 30),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 5),
                   ..._referencesData.asMap().entries.map((entry) {
                     int index = entry.key;
                     Map<String, dynamic> reference = entry.value;
                     bool isEditing = _editingReferenceIndex == index;
 
                     return Container(
-                      margin: const EdgeInsets.only(bottom: 12),
+                      margin: const EdgeInsets.only(bottom: 5),
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: Colors.grey[200]!),
-                        boxShadow: [
-                          // A list of shadows to apply
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            spreadRadius: 1,
-                            blurRadius: 12,
-                            offset: Offset(
-                              0,
-                              1,
-                            ), // Changes the position of the shadow (x, y)
-                          ),
-                        ],
+                        
                       ),
                       child: Column(
                         children: [
@@ -3419,7 +3273,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                     );
                   }).toList(),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 50),
 
                   // Government Issued ID Section
                   Row(
@@ -3431,7 +3285,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
-                            color: Colors.black,
+                            color: Color.fromARGB(255, 97, 97, 97),
                           ),
                         ),
                       ),
@@ -3458,16 +3312,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                     width: double.infinity,
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey[200]!),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
-                          blurRadius: 10,
-                          spreadRadius: 1,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
+                      
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -3560,7 +3405,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
 
   // Helper method for inline field (no background, just label and value)
   Widget _buildInfoFieldInline(String label, dynamic value) {
-    String displayValue = '';
+    String displayValue = 'N/A'; // Default to N/A
     if (value != null &&
         value.toString().isNotEmpty &&
         value.toString() != 'null') {

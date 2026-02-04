@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:mobile_application/config/api_config.dart';
-import 'package:mobile_application/services/dtr_service.dart';
+import 'dart:convert';
+import '../services/token_manager.dart';
 
 class DtrWidget extends StatefulWidget {
   final String? token;
@@ -19,7 +21,6 @@ class DtrWidget extends StatefulWidget {
 }
 
 class _DtrWidgetState extends State<DtrWidget> {
-  late DtrService _dtrService;
   List<Map<String, dynamic>> _dtrRecords = [];
   List<Map<String, dynamic>> _filteredRecords = [];
   bool _isLoading = false;
@@ -32,10 +33,6 @@ class _DtrWidgetState extends State<DtrWidget> {
   @override
   void initState() {
     super.initState();
-    _dtrService = DtrService(
-      baseUrl: widget.baseUrl,
-      token: widget.token,
-    );
     _fetchDtrRecords();
   }
 
@@ -46,27 +43,65 @@ class _DtrWidgetState extends State<DtrWidget> {
     });
 
     try {
-      // Use the service to fetch records
-      final response = await _dtrService.fetchDtrRecords(widget.userId);
+      // Build the DTR URL
+      final dtrUrl = '${widget.baseUrl}${ApiConfig.dtrEndpoint}/${widget.userId}';
+      
+      print('📅 [DTR] Fetching from: $dtrUrl');
 
-      if (response.success && response.records != null) {
-        setState(() {
-          _dtrRecords = response.records!;
-          _extractAvailableYearsAndMonths();
-          _applyFilters();
-          _isLoading = false;
-        });
+      // Get current token
+      final token = TokenManager().token ?? widget.token;
+
+      // Fetch DTR data with authentication
+      final response = await http.get(
+        Uri.parse(dtrUrl),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      print('📅 [DTR] Response status: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        
+        if (data['message'] == 'Successful' && data['dtrList'] != null) {
+          setState(() {
+            _dtrRecords = List<Map<String, dynamic>>.from(data['dtrList']);
+            // Sort records by date (latest first)
+            _dtrRecords.sort((a, b) {
+              try {
+                DateTime dateA = DateTime.parse(a['date']);
+                DateTime dateB = DateTime.parse(b['date']);
+                return dateB.compareTo(dateA); // Descending order
+              } catch (e) {
+                return 0;
+              }
+            });
+            _extractAvailableYearsAndMonths();
+            _applyFilters();
+            _isLoading = false;
+          });
+          print('✅ [DTR] Loaded ${_dtrRecords.length} records');
+        } else {
+          setState(() {
+            _error = 'No DTR records found';
+            _isLoading = false;
+          });
+        }
       } else {
         setState(() {
-          _error = response.error ?? 'Failed to load DTR records';
+          _error = 'Failed to load DTR: ${response.statusCode}';
           _isLoading = false;
         });
+        print('❌ [DTR] Failed: ${response.statusCode}');
       }
     } catch (e) {
       setState(() {
         _error = 'Error loading DTR: $e';
         _isLoading = false;
       });
+      print('❌ [DTR] Error: $e');
     }
   }
 
@@ -155,24 +190,27 @@ class _DtrWidgetState extends State<DtrWidget> {
                   // Year Dropdown
                   DropdownButtonFormField<int>(
                     value: tempYear,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Year',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.calendar_today, color: Color(0xFF00674F)),
+                      border: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey.shade400),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey.shade400),
+                      ),
+                      focusedBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Color(0xFF00674F), width: 2),
+                      ),
+                      labelStyle: const TextStyle(color: Color(0xFF00674F)),
+                      prefixIcon: const Icon(Icons.calendar_today, color: Color(0xFF00674F)),
                     ),
                     hint: const Text('Select Year'),
-                    items: [
-                      const DropdownMenuItem<int>(
-                        value: null,
-                        child: Text('All Years'),
-                      ),
-                      ..._availableYears.map((year) {
-                        return DropdownMenuItem<int>(
-                          value: year,
-                          child: Text(year.toString()),
-                        );
-                      }).toList(),
-                    ],
+                    items: _availableYears.map((year) {
+                      return DropdownMenuItem<int>(
+                        value: year,
+                        child: Text(year.toString()),
+                      );
+                    }).toList(),
                     onChanged: (value) {
                       setDialogState(() {
                         tempYear = value;
@@ -183,26 +221,28 @@ class _DtrWidgetState extends State<DtrWidget> {
                   // Month Dropdown
                   DropdownButtonFormField<int>(
                     value: tempMonth,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Month',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.date_range, color: Color(0xFF00674F)),
+                      border: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey.shade400),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey.shade400),
+                      ),
+                      focusedBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Color(0xFF00674F), width: 2),
+                      ),
+                      labelStyle: const TextStyle(color: Color(0xFF00674F)),
+                      prefixIcon: const Icon(Icons.date_range, color: Color(0xFF00674F)),
                     ),
                     hint: const Text('Select Month'),
-                    items: [
-                      const DropdownMenuItem<int>(
-                        value: null,
-                        child: Text('All Months'),
-                      ),
-                      // Generate months in descending order (12 to 1)
-                      ...List.generate(12, (index) {
-                        int month = 12 - index; // Start from December (12) down to January (1)
-                        return DropdownMenuItem<int>(
-                          value: month,
-                          child: Text(_getMonthName(month)),
-                        );
-                      }),
-                    ],
+                    items: List.generate(12, (index) {
+                      int month = 12 - index; // Start from December (12) down to January (1)
+                      return DropdownMenuItem<int>(
+                        value: month,
+                        child: Text(_getMonthName(month)),
+                      );
+                    }),
                     onChanged: (value) {
                       setDialogState(() {
                         tempMonth = value;
@@ -359,33 +399,37 @@ class _DtrWidgetState extends State<DtrWidget> {
     }
 
     return Container(
-      padding: EdgeInsets.all(8),
+      padding: EdgeInsets.all(1),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: Column(
         children: [
           Container(
-            margin: const EdgeInsets.all(15),
+            margin: const EdgeInsets.all(12),
             width: double.infinity,
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
             ),
             child: Column(
               children: [
                 // Header section with filter and refresh buttons
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 1),
                   decoration: const BoxDecoration(
                     color: Color(0xFF2C5F4F),
                     borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(10),
-                      topRight: Radius.circular(10),
+                      topLeft: Radius.circular(8),
+                      topRight: Radius.circular(8),
                     ),
                   ),
                   child: Row(
@@ -420,7 +464,7 @@ class _DtrWidgetState extends State<DtrWidget> {
                                   child: Container(
                                     padding: const EdgeInsets.all(2),
                                     constraints: const BoxConstraints(
-                                      minWidth: 8,
+                                      minWidth: 5,
                                       minHeight: 8,
                                     ),
                                   ),
@@ -442,45 +486,6 @@ class _DtrWidgetState extends State<DtrWidget> {
                   ),
                 ),
                 
-                // Active filters display
-                // if (_selectedMonth != null || _selectedYear != null)
-                //   Container(
-                //     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                //     color: Colors.blue.shade50,
-                //     child: Row(
-                //       children: [
-                //         const Icon(Icons.filter_alt, size: 16, color: Colors.blue),
-                //         const SizedBox(width: 8),
-                //         Expanded(
-                //           child: Text(
-                //             'Filtered: ${_selectedMonth != null ? _getMonthName(_selectedMonth!) : 'All Months'} ${_selectedYear != null ? _selectedYear : 'All Years'}',
-                //             style: const TextStyle(
-                //               fontSize: 12,
-                //               color: Colors.blue,
-                //             ),
-                //           ),
-                //         ),
-                //         TextButton(
-                //           onPressed: () {
-                //             setState(() {
-                //               _selectedMonth = null;
-                //               _selectedYear = null;
-                //               _applyFilters();
-                //             });
-                //           },
-                //           style: TextButton.styleFrom(
-                //             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                //             minimumSize: Size.zero,
-                //             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                //           ),
-                //           child: const Text(
-                //             'Clear',
-                //             style: TextStyle(fontSize: 12),
-                //           ),
-                //         ),
-                //       ],
-                //     ),
-                //   ),
                 
                 // DTR records list
                 Padding(
@@ -515,12 +520,9 @@ class _DtrWidgetState extends State<DtrWidget> {
 
   Widget _buildDtrCard(Map<String, dynamic> record) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      elevation: 2,
+      margin: const EdgeInsets.only(bottom: 10),
+      elevation: 0,
       color: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -528,12 +530,12 @@ class _DtrWidgetState extends State<DtrWidget> {
           children: [
             // Header with date
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              
               children: [
                 Row(
                   children: [
                     const Icon(Icons.calendar_today, size: 20, color: Color(0xFF00674F)),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 5),
                     Text(
                       _formatDateWithDay(record['date']),
                       style: const TextStyle(
@@ -544,41 +546,22 @@ class _DtrWidgetState extends State<DtrWidget> {
                     ),
                   ],
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: record['isUpdated'] == true 
-                        ? Colors.orange.shade100 
-                        : Colors.green.shade100,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    record['isUpdated'] == true ? 'Updated' : 'OLD',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: record['isUpdated'] == true 
-                          ? Colors.orange.shade900 
-                          : Colors.green.shade900,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 10),
             
             // Time entries
             _buildTimeSection('Morning', 
               'In: ${_formatTime(record['amIn'])}',
               'Out: ${_formatTime(record['amOut'])}',
             ),
-            const SizedBox(height: 12),
+           
             _buildTimeSection('Afternoon', 
               'In: ${_formatTime(record['pmIn'])}',
               'Out: ${_formatTime(record['pmOut'])}',
             ),
             
-            const Divider(height: 24),
+            const SizedBox(height: 12),
             
             // Hours summary
             Row(
@@ -601,6 +584,8 @@ class _DtrWidgetState extends State<DtrWidget> {
                 ),
               ],
             ),
+            const SizedBox(height: 20),
+             const Divider(height: 20),
           ],
         ),
       ),
@@ -609,14 +594,14 @@ class _DtrWidgetState extends State<DtrWidget> {
 
   Widget _buildTimeSection(String title, String timeIn, String timeOut) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade200),
+        
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        
         children: [
           Text(
             title,
@@ -635,7 +620,7 @@ class _DtrWidgetState extends State<DtrWidget> {
                   color: Colors.grey.shade700,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
               Text(
                 timeOut,
                 style: TextStyle(

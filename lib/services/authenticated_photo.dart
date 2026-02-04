@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:typed_data';
+import 'package:image_picker/image_picker.dart';
 import '../services/token_manager.dart';
 
 class AuthenticatedProfilePhoto extends StatefulWidget {
@@ -9,6 +10,8 @@ class AuthenticatedProfilePhoto extends StatefulWidget {
   final String userName;
   final double radius;
   final String? token;
+  final String? employeeId; // Add employeeId for update endpoint
+  final VoidCallback? onPhotoUpdated; // Callback after successful update
 
   const AuthenticatedProfilePhoto({
     Key? key,
@@ -17,6 +20,8 @@ class AuthenticatedProfilePhoto extends StatefulWidget {
     required this.userName,
     this.radius = 50,
     this.token,
+    this.employeeId,
+    this.onPhotoUpdated,
   }) : super(key: key);
 
   @override
@@ -27,6 +32,7 @@ class _AuthenticatedProfilePhotoState extends State<AuthenticatedProfilePhoto> {
   Uint8List? _imageBytes;
   bool _isLoading = false;
   bool _hasError = false;
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -92,6 +98,143 @@ class _AuthenticatedProfilePhotoState extends State<AuthenticatedProfilePhoto> {
     }
   }
 
+  Future<void> _pickAndUploadImage() async {
+    try {
+      // Show option dialog for camera or gallery
+      final ImageSource? source = await showDialog<ImageSource>(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Select Image Source'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.camera_alt),
+                  title: const Text('Camera'),
+                  onTap: () => Navigator.pop(context, ImageSource.camera),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.photo_library),
+                  title: const Text('Gallery'),
+                  onTap: () => Navigator.pop(context, ImageSource.gallery),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+
+      if (source == null) return;
+
+      // Pick image
+      final XFile? image = await _picker.pickImage(
+        source: source,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 85,
+      );
+
+      if (image == null) return;
+
+      // Show loading
+      setState(() {
+        _isLoading = true;
+      });
+
+      // Upload image
+      await _uploadPhoto(image);
+    } catch (e) {
+      print('❌ [AuthProfilePhoto] Error picking image: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error selecting image: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _uploadPhoto(XFile imageFile) async {
+    try {
+      if (widget.employeeId == null) {
+        throw Exception('Employee ID is required to update photo');
+      }
+
+      final token = TokenManager().token ?? widget.token;
+      if (token == null) {
+        throw Exception('No authentication token available');
+      }
+
+      // Read image bytes
+      final bytes = await imageFile.readAsBytes();
+      
+      // Get file extension
+      final fileName = imageFile.name;
+      final fileExtension = fileName.split('.').last;
+
+      // Create multipart request
+      final uri = Uri.parse('${widget.baseUrl}/adminuser/update-employee-photo/${widget.employeeId}');
+      final request = http.MultipartRequest('PUT', uri);
+      print('📷 [AuthProfilePhoto] Upload URI: $uri');
+      // Add headers
+      request.headers['Authorization'] = 'Bearer $token';
+      
+      // Add file
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          'photo',
+          bytes,
+          filename: fileName,
+        ),
+      );
+
+      print('📤 [AuthProfilePhoto] Uploading photo to: $uri');
+      
+      // Send request
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      print('📷 [AuthProfilePhoto] Upload response status: ${response.statusCode}');
+      print('📷 [AuthProfilePhoto] Upload response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        // Successfully uploaded
+        setState(() {
+          _imageBytes = bytes;
+          _isLoading = false;
+        });
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Profile photo updated successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+
+        // Call callback if provided
+        widget.onPhotoUpdated?.call();
+      } else {
+        throw Exception('Failed to upload photo: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('❌ [AuthProfilePhoto] Error uploading photo: $e');
+      setState(() {
+        _isLoading = false;
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update photo: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Get the first letter for fallback
@@ -99,33 +242,57 @@ class _AuthenticatedProfilePhotoState extends State<AuthenticatedProfilePhoto> {
         ? widget.userName[0].toUpperCase() 
         : 'U';
 
-    if (_isLoading) {
-      return _buildLoadingAvatar();
-    }
-
-    if (_hasError || _imageBytes == null) {
-      return _buildLetterAvatar(firstLetter);
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(4.0),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: const Color.fromARGB(255, 236, 236, 236),
-      ),
-      child: CircleAvatar(
-        radius: widget.radius,
-        backgroundColor: Colors.blue.shade100,
-        child: ClipOval(
-          child: Image.memory(
-            _imageBytes!,
-            width: widget.radius * 2,
-            height: widget.radius * 2,
-            fit: BoxFit.cover,
-            
+    return Stack(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(4.0),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: const Color.fromARGB(255, 236, 236, 236),
           ),
+          child: _isLoading
+              ? _buildLoadingAvatar()
+              : (_hasError || _imageBytes == null)
+                  ? _buildLetterAvatar(firstLetter)
+                  : CircleAvatar(
+                      radius: widget.radius,
+                      backgroundColor: Colors.blue.shade100,
+                      child: ClipOval(
+                        child: Image.memory(
+                          _imageBytes!,
+                          width: widget.radius * 2,
+                          height: widget.radius * 2,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
         ),
-      ),
+        // Edit icon button
+        if (widget.employeeId != null) // Only show edit icon if employeeId is provided
+          Positioned(
+            right: 0,
+            bottom: 0,
+            child: GestureDetector(
+              onTap: _pickAndUploadImage,
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF00674F),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white,
+                    width: 2,
+                  ),
+                ),
+                child: const Icon(
+                  Icons.edit,
+                  color: Colors.white,
+                  size: 16,
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 
@@ -152,4 +319,3 @@ class _AuthenticatedProfilePhotoState extends State<AuthenticatedProfilePhoto> {
     );
   }
 }
-
