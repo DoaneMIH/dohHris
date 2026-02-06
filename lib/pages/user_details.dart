@@ -32,10 +32,14 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
   Map<String, dynamic> _motherData = {};
 
   // Edit mode flags
+  bool _isEditingPersonalInfo = false;
   bool _isEditingSpouse = false;
   bool _isEditingFather = false;
   bool _isEditingMother = false;
   int? _editingChildIndex;
+
+  // Personal information data for editing
+  Map<String, dynamic> _personalInfoData = {};
 
   // Educational background data
   bool _isEducationalBackgroundExpanded = true;
@@ -89,7 +93,6 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
   // Drawer menu expansion states
   bool _isInformationExpanded = false;
   bool _isServicesExpanded = false;
-  
 
   @override
   void initState() {
@@ -319,6 +322,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
   }
 
   Future<void> _fetchUserDetails() async {
+    print('\n🔄🔄🔄 [UserDetailsPage] FETCHING USER DETAILS 🔄🔄🔄');
     print('⏳ [UserDetailsPage] Fetching user profile with token...');
 
     setState(() {
@@ -330,6 +334,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
 
     print('📦 [UserDetailsPage] Result received from UserService');
     print('📦 [UserDetailsPage] Success: ${result['success']}');
+    print('📦 [UserDetailsPage] Full result data: $result');
 
     setState(() {
       if (result['success']) {
@@ -337,8 +342,52 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
         print('✅ [UserDetailsPage] User profile loaded successfully');
         print('👤 [UserDetailsPage] User name: ${_userDetails?['name']}');
         print(
-          '📷 [UserDetailsPage] Profile photo: ${_userDetails?['photoUrl'] ?? 'No photo'}',
+          '📅 [UserDetailsPage] Employee birthdate: ${_userDetails?['employee']?['birthdate']}',
         );
+        print(
+          '🏠 [UserDetailsPage] Employee birthplace: ${_userDetails?['employee']?['birthplace']}',
+        );
+        print(
+          '💍 [UserDetailsPage] Employee civilStatus: ${_userDetails?['employee']?['civilStatus']}',
+        );
+        print(
+          '🌍 [UserDetailsPage] Employee citizenship: ${_userDetails?['employee']?['citizenship']}',
+        );
+        print(
+          '📷 [UserDetailsPage] Profile photo: ${_userDetails?['employee']?['photoUrl'] ?? 'No photo'}',
+        );
+
+        //     // ⭐ ADD THESE 3 LINES:
+        // if (_userDetails?['employee'] != null) {
+        //   _personalInfoData = Map<String, dynamic>.from(_userDetails!['employee']);
+        // }
+
+        if (_userDetails?['employee'] != null) {
+          _personalInfoData = Map<String, dynamic>.from(
+            _userDetails!['employee'],
+          );
+
+          // ⭐ Remove photo-related fields - they should NEVER be in personalInfoData
+          final photoFields = [
+            'photo',
+            'photoUrl',
+            'profilePhoto',
+            'image',
+            'profileImage',
+            'photo_url',
+          ];
+          photoFields.forEach((field) => _personalInfoData.remove(field));
+
+          // ⭐ Remove protected fields - they should NEVER be modified via personal info updates
+          final protectedFields = ['employmentStatus', 'employment_status'];
+          protectedFields.forEach((field) => _personalInfoData.remove(field));
+
+          print(
+            '✅ [UserDetailsPage] Personal info initialized (${_personalInfoData.length} fields, photo and protected fields excluded)',
+          );
+        }
+
+        print('✅ [UserDetailsPage] User profile loaded successfully');
       } else {
         _error = result['error'];
         print('❌ [UserDetailsPage] Error loading user profile: $_error');
@@ -346,7 +395,124 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
       _isLoading = false;
     });
 
-    print('🏁 [UserDetailsPage] Fetch user profile completed\n');
+    print('🏁 [UserDetailsPage] Fetch user profile completed');
+    print('🔄🔄🔄 END FETCHING USER DETAILS 🔄🔄🔄\n');
+  }
+
+  Future<void> _savePersonalInformation() async {
+    print('\n========================================');
+    print('💾 [UserDetailsPage] SAVE PERSONAL INFORMATION');
+    print('========================================');
+
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return const Center(child: CircularProgressIndicator());
+      },
+    );
+
+    try {
+      // Get employee ID
+      final employeeId = _userDetails?['employee']?['id'];
+      print('📋 [UserDetailsPage] Employee ID: $employeeId');
+
+      if (employeeId == null) {
+        throw Exception('Employee ID not found in user details');
+      }
+
+      print('📝 [UserDetailsPage] Personal Information Data to Save:');
+      _personalInfoData.forEach((key, value) {
+        print('   - $key: $value');
+      });
+      print('----------------------------------------');
+
+      print(
+        '⏳ [UserDetailsPage] Calling UserService.updatePersonalInformation...',
+      );
+
+      // Call the user service to update personal information
+      final response = await _userService.updatePersonalInformation(
+        widget.token,
+        employeeId.toString(),
+        _personalInfoData,
+      );
+
+      print('📥 [UserDetailsPage] Response received from UserService');
+      print('📥 [UserDetailsPage] Success: ${response['success']}');
+      if (response['error'] != null) {
+        print('📥 [UserDetailsPage] Error: ${response['error']}');
+      }
+      print('----------------------------------------');
+
+      // Close loading dialog
+      if (mounted) {
+        print('🔄 [UserDetailsPage] Closing loading dialog...');
+        Navigator.pop(context);
+      }
+
+      if (response['success']) {
+        print(
+          '✅ [UserDetailsPage] Save successful! Refreshing user details...',
+        );
+
+        // Refresh user details
+        await _fetchUserDetails();
+
+        print('✅ [UserDetailsPage] User details refreshed');
+
+        // Exit edit mode
+        if (mounted) {
+          setState(() {
+            _isEditingPersonalInfo = false;
+          });
+          print('✅ [UserDetailsPage] Exited edit mode');
+        }
+        if (mounted) {
+          print('✅ [UserDetailsPage] Showing success SnackBar');
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Personal information updated successfully'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+
+        print('✅ [UserDetailsPage] Personal information saved successfully');
+        print('========================================\n');
+      } else {
+        print('❌ [UserDetailsPage] Save failed');
+        throw Exception(
+          response['error'] ?? 'Failed to update personal information',
+        );
+      }
+    } catch (e, stackTrace) {
+      print('💥 [UserDetailsPage] ERROR SAVING PERSONAL INFORMATION');
+      print('💥 [UserDetailsPage] Error: $e');
+      print('💥 [UserDetailsPage] Error Type: ${e.runtimeType}');
+      print('💥 [UserDetailsPage] Stack Trace:');
+      print(stackTrace);
+      print('========================================\n');
+
+      // Close loading dialog if still open
+      if (mounted) {
+        print('🔄 [UserDetailsPage] Closing loading dialog (error state)...');
+        Navigator.of(context, rootNavigator: true).pop();
+      }
+
+      if (mounted) {
+        print('❌ [UserDetailsPage] Showing error SnackBar');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
   }
 
   void _logout() {
@@ -362,9 +528,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-      color: Colors.white,
-      ),
+      decoration: const BoxDecoration(color: Colors.white),
       child: Scaffold(
         resizeToAvoidBottomInset: false,
         backgroundColor: Colors.transparent,
@@ -442,7 +606,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
             padding: EdgeInsets.zero,
             children: [
               SizedBox(
-                height: 80, 
+                height: 80,
                 child: DrawerHeader(
                   margin: EdgeInsets.zero,
                   decoration: const BoxDecoration(color: Color(0xFF00674F)),
@@ -472,7 +636,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                     color: Color(0xFF00674F),
                   ),
                 ),
-                iconColor: const Color.fromARGB(255, 0, 0, 0), 
+                iconColor: const Color.fromARGB(255, 0, 0, 0),
                 collapsedIconColor: const Color.fromARGB(255, 0, 0, 0),
                 initiallyExpanded: _isInformationExpanded,
                 onExpansionChanged: (expanded) {
@@ -536,7 +700,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                     color: Color(0xFF00674F),
                   ),
                 ),
-                iconColor: const Color.fromARGB(255, 0, 0, 0), 
+                iconColor: const Color.fromARGB(255, 0, 0, 0),
                 collapsedIconColor: const Color.fromARGB(255, 0, 0, 0),
                 initiallyExpanded: _isServicesExpanded,
                 onExpansionChanged: (expanded) {
@@ -609,23 +773,18 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Profile Photo
-          // AuthenticatedProfilePhoto(
-          //   photoUrl: _userDetails?['employee']?['photoUrl'],
-          //   baseUrl: widget.baseUrl,
-          //   userName: (_userDetails?['name'] ?? 'User').toString(),
-          //   radius: 70,
-          //   token: widget.token,
-          // ),
-            AuthenticatedProfilePhoto(
-  photoUrl: _userDetails?['employee']?['photoUrl'],
-  baseUrl: widget.baseUrl,
-  userName: (_userDetails?['name'] ?? 'User').toString(),
-  radius: 70,
-  token: widget.token,
-  employeeId: _userDetails?['employee']?['id']?.toString(), // Add employeeId
-  onPhotoUpdated: _fetchUserDetails, // Refresh user details after photo update
-),
+          AuthenticatedProfilePhoto(
+            photoUrl: _userDetails?['employee']?['photoUrl'],
+            // photoUrl: _userDetails?['photoUrl'],  // Remove ['employee']
+            baseUrl: widget.baseUrl,
+            userName: (_userDetails?['name'] ?? 'User').toString(),
+            radius: 70,
+            token: widget.token,
+            employeeId: _userDetails?['employee']?['id']
+                ?.toString(), // Add employeeId
+            onPhotoUpdated:
+                _fetchUserDetails, // Refresh user details after photo update
+          ),
           const SizedBox(width: 25, height: 10),
           // Name and Details
           Flexible(
@@ -654,7 +813,8 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      _userDetails?['employee']?['employeeId'] ?? 'N/A',
+                      _userDetails?['employee']?['employeeId']?.toString() ??
+                          'N/A',
                       style: TextStyle(fontSize: 14),
                     ),
                   ],
@@ -734,12 +894,15 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
           Container(
             margin: const EdgeInsets.all(1),
             width: double.infinity,
-            
+
             child: Column(
               children: [
                 // Header Section
                 Container(
-                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 11,
+                  ),
                   decoration: const BoxDecoration(
                     color: Color(0xFF2C5F4F),
                     borderRadius: BorderRadius.only(
@@ -759,6 +922,102 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                           letterSpacing: 0.5,
                         ),
                       ),
+                      Row(
+                        children: [
+                          IconButton(
+                            icon: Icon(
+                              _isEditingPersonalInfo ? Icons.check : Icons.edit,
+                              size: 20,
+                              color: Colors.white,
+                            ),
+                            onPressed: () async {
+                              if (_isEditingPersonalInfo) {
+                                // Save changes (this will automatically exit edit mode)
+                                await _savePersonalInformation();
+                              } else {
+                                if (_userDetails?['employee'] != null) {
+                                  final employee = _userDetails!['employee'];
+
+                                  _personalInfoData = {
+                                    // Name fields
+                                    'lastName': employee['lastName'] ?? '',
+                                    'firstName': employee['firstName'] ?? '',
+                                    'middleName': employee['middleName'] ?? '',
+                                    'suffix': employee['suffix'] ?? '',
+                                    'photoUrl': employee['photoUrl'] ?? '',
+
+                                    // Personal info
+                                    'sex': employee['sex'] ?? '',
+                                    'civilStatus':
+                                        employee['civilStatus'] ?? '',
+                                    'citizenship':
+                                        employee['citizenship'] ?? '',
+                                    'birthdate': employee['birthdate'] ?? '',
+                                    'birthplace': employee['birthplace'] ?? '',
+                                    'employeeId': employee['employeeId'] ?? '',
+
+                                    // Physical attributes
+                                    'height': employee['height'] ?? 0,
+                                    'weight': employee['weight'] ?? 0,
+                                    'bloodType': employee['bloodType'] ?? '',
+
+                                    // Address fields (permanent)
+                                    'houseNo': employee['houseNo'] ?? '',
+                                    'street': employee['street'] ?? '',
+                                    'village': employee['village'] ?? '',
+                                    'barangay': employee['barangay'] ?? '',
+                                    'municipality':
+                                        employee['municipality'] ?? '',
+                                    'province': employee['province'] ?? '',
+                                    'zipCode': employee['zipCode'] ?? '',
+
+                                    // Address fields (residential)
+                                    'resHouseNo': employee['resHouseNo'] ?? '',
+                                    'resStreet': employee['resStreet'] ?? '',
+                                    'resVillage': employee['resVillage'] ?? '',
+                                    'resBarangay':
+                                        employee['resBarangay'] ?? '',
+                                    'resMunicipality':
+                                        employee['resMunicipality'] ?? '',
+                                    'resProvince':
+                                        employee['resProvince'] ?? '',
+                                    'resZipCode': employee['resZipCode'] ?? '',
+
+                                    // Contact info
+                                    'telephoneNo':
+                                        employee['telephoneNo'] ?? '',
+                                    'mobileNo': employee['mobileNo'] ?? '',
+                                    'email': employee['email'] ?? '',
+
+                                    // Government IDs (only if you want them editable in personal info)
+                                    'tin': employee['tin'] ?? '',
+                                    'phic': employee['phic'] ?? '',
+                                    'sss': employee['sss'] ?? '',
+                                    'pagibig': employee['pagibig'] ?? '',
+                                    'gsis': employee['gsis'] ?? '',
+                                    'umid': employee['umid'] ?? '',
+                                    'philsys': employee['philsys'] ?? '',
+
+                                    'employmentStatus':
+                                        employee['employmentStatus'] ?? 'true',
+                                  };
+
+                                  // Note: employmentStatus and photo fields are intentionally NOT included
+
+                                  print(
+                                    '✅ [UserDetailsPage] Personal info initialized with ${_personalInfoData.length} editable fields',
+                                  );
+                                }
+                                setState(() {
+                                  _isEditingPersonalInfo = true;
+                                });
+                              }
+                            },
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
@@ -768,53 +1027,166 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildInfoFieldInline(
-                        'Date of Birth',
-                        _userDetails?['employee']?['birthdate'],
-                      ),
+                      _isEditingPersonalInfo
+                          ? _buildEditableFieldInline(
+                              'Date of Birth',
+                              _personalInfoData['birthdate'],
+                              (value) => setState(
+                                () => _personalInfoData['birthdate'] = value,
+                              ),
+                            )
+                          : _buildInfoFieldInline(
+                              'Date of Birth',
+                              _userDetails?['employee']?['birthdate'],
+                            ),
                       const SizedBox(height: 20),
-                      _buildInfoFieldInline(
-                        'Place of Birth',
-                        _userDetails?['employee']?['birthplace'],
-                      ),
+                      _isEditingPersonalInfo
+                          ? _buildEditableFieldInline(
+                              'Place of Birth',
+                              _personalInfoData['birthplace'],
+                              (value) => setState(
+                                () => _personalInfoData['birthplace'] = value,
+                              ),
+                            )
+                          : _buildInfoFieldInline(
+                              'Place of Birth',
+                              _userDetails?['employee']?['birthplace'],
+                            ),
                       const SizedBox(height: 20),
-                      _buildInfoFieldInline(
-                        'Civil Status',
-                        _userDetails?['employee']?['civilStatus'],
-                      ),
+                      _isEditingPersonalInfo
+                          ? _buildEditableFieldInline(
+                              'Civil Status',
+                              _personalInfoData['civilStatus'],
+                              (value) => setState(
+                                () => _personalInfoData['civilStatus'] = value,
+                              ),
+                            )
+                          : _buildInfoFieldInline(
+                              'Civil Status',
+                              _userDetails?['employee']?['civilStatus'],
+                            ),
                       const SizedBox(height: 20),
-                      _buildInfoFieldInline(
-                        'Citizenship',
-                        _userDetails?['employee']?['citizenship'],
-                      ),
+                      _isEditingPersonalInfo
+                          ? _buildEditableFieldInline(
+                              'Citizenship',
+                              _personalInfoData['citizenship'],
+                              (value) => setState(
+                                () => _personalInfoData['citizenship'] = value,
+                              ),
+                            )
+                          : _buildInfoFieldInline(
+                              'Citizenship',
+                              _userDetails?['employee']?['citizenship'],
+                            ),
                       const SizedBox(height: 20),
-                      _buildInfoFieldInline(
-                        'Sex at Birth',
-                        _userDetails?['employee']?['sex'],
-                      ),
+                      _isEditingPersonalInfo
+                          ? _buildEditableFieldInline(
+                              'Sex at Birth',
+                              _personalInfoData['sex'],
+                              (value) => setState(
+                                () => _personalInfoData['sex'] = value,
+                              ),
+                            )
+                          : _buildInfoFieldInline(
+                              'Sex at Birth',
+                              _userDetails?['employee']?['sex'],
+                            ),
                       const SizedBox(height: 20),
-                      _buildInfoFieldInline(
-                        'Blood Type',
-                        _userDetails?['employee']?['bloodType'],
-                      ),
+                      _isEditingPersonalInfo
+                          ? _buildEditableFieldInline(
+                              'Blood Type',
+                              _personalInfoData['bloodType'],
+                              (value) => setState(
+                                () => _personalInfoData['bloodType'] = value,
+                              ),
+                            )
+                          : _buildInfoFieldInline(
+                              'Blood Type',
+                              _userDetails?['employee']?['bloodType'],
+                            ),
                       const SizedBox(height: 20),
-                      _buildInfoFieldInline(
-                        'Height (cm)',
-                        _userDetails?['employee']?['height'],
-                      ),
+                      _isEditingPersonalInfo
+                          ? _buildEditableFieldInline(
+                              'Height (cm)',
+                              _personalInfoData['height']?.toString() ?? '',
+                              (value) => setState(
+                                () => _personalInfoData['height'] =
+                                    int.tryParse(value) ?? 0,
+                              ),
+                            )
+                          : _buildInfoFieldInline(
+                              'Height (cm)',
+                              _userDetails?['employee']?['height'],
+                            ),
                       const SizedBox(height: 20),
-                      _buildInfoFieldInline(
-                        'Weight (kg)',
-                        _userDetails?['employee']?['weight'],
-                      ),
+                      _isEditingPersonalInfo
+                          ? _buildEditableFieldInline(
+                              'Weight (kg)',
+                              _personalInfoData['weight']?.toString() ?? '',
+                              (value) => setState(
+                                () => _personalInfoData['weight'] =
+                                    int.tryParse(value) ?? 0,
+                              ),
+                            )
+                          : _buildInfoFieldInline(
+                              'Weight (kg)',
+                              _userDetails?['employee']?['weight'],
+                            ),
                       const SizedBox(height: 20),
-                      _buildInfoFieldInline(
-                        'Residential Address',
-                        "${_userDetails?['employee']?['barangay'] ?? ''}, "
-                            "${_userDetails?['employee']?['municipality'] ?? ''}, "
-                            "${_userDetails?['employee']?['province'] ?? ''}, "
-                            "${_userDetails?['employee']?['zipCode'] ?? ''}",
-                      ),
+                      _isEditingPersonalInfo
+                          ? Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Residential Address',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: Colors.grey,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                _buildEditableFieldInline(
+                                  'Barangay',
+                                  _personalInfoData['barangay'],
+                                  (value) => setState(
+                                    () => _personalInfoData['barangay'] = value,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                _buildEditableFieldInline(
+                                  'Municipality',
+                                  _personalInfoData['municipality'],
+                                  (value) => setState(
+                                    () => _personalInfoData['municipality'] =
+                                        value,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                _buildEditableFieldInline(
+                                  'Province',
+                                  _personalInfoData['province'],
+                                  (value) => setState(
+                                    () => _personalInfoData['province'] = value,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                _buildEditableFieldInline(
+                                  'Zip Code',
+                                  _personalInfoData['zipCode'],
+                                  (value) => setState(
+                                    () => _personalInfoData['zipCode'] = value,
+                                  ),
+                                ),
+                              ],
+                            )
+                          : _buildInfoFieldInline(
+                              'Residential Address',
+                              "${_userDetails?['employee']?['barangay'] ?? ''}, "
+                                  "${_userDetails?['employee']?['municipality'] ?? ''}, "
+                                  "${_userDetails?['employee']?['province'] ?? ''}, "
+                                  "${_userDetails?['employee']?['zipCode'] ?? ''}",
+                            ),
                       const SizedBox(height: 20),
                       _buildInfoFieldInline(
                         'Permanent Address',
@@ -824,15 +1196,31 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                             "${_userDetails?['employee']?['zipCode'] ?? ''}",
                       ),
                       const SizedBox(height: 20),
-                      _buildInfoFieldInline(
-                        'Telephone No.',
-                        _userDetails?['employee']?['telephoneNo'],
-                      ),
+                      _isEditingPersonalInfo
+                          ? _buildEditableFieldInline(
+                              'Telephone No.',
+                              _personalInfoData['telephoneNo'],
+                              (value) => setState(
+                                () => _personalInfoData['telephoneNo'] = value,
+                              ),
+                            )
+                          : _buildInfoFieldInline(
+                              'Telephone No.',
+                              _userDetails?['employee']?['telephoneNo'],
+                            ),
                       const SizedBox(height: 20),
-                      _buildInfoFieldInline(
-                        'Mobile No.',
-                        _userDetails?['employee']?['mobileNo'],
-                      ),
+                      _isEditingPersonalInfo
+                          ? _buildEditableFieldInline(
+                              'Mobile No.',
+                              _personalInfoData['mobileNo'],
+                              (value) => setState(
+                                () => _personalInfoData['mobileNo'] = value,
+                              ),
+                            )
+                          : _buildInfoFieldInline(
+                              'Mobile No.',
+                              _userDetails?['employee']?['mobileNo'],
+                            ),
                       const SizedBox(height: 20),
                       _buildInfoFieldInline(
                         'Email Address',
@@ -844,30 +1232,70 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                         _userDetails?['employee']?['employeeId'],
                       ),
                       const SizedBox(height: 20),
-                      _buildInfoFieldInline(
-                        'UMID ID No.',
-                        _userDetails?['employee']?['umid'],
-                      ),
+                      _isEditingPersonalInfo
+                          ? _buildEditableFieldInline(
+                              'UMID ID No.',
+                              _personalInfoData['umid'],
+                              (value) => setState(
+                                () => _personalInfoData['umid'] = value,
+                              ),
+                            )
+                          : _buildInfoFieldInline(
+                              'UMID ID No.',
+                              _userDetails?['employee']?['umid'],
+                            ),
                       const SizedBox(height: 20),
-                      _buildInfoFieldInline(
-                        'Pag-ibig No.',
-                        _userDetails?['employee']?['pagibig'],
-                      ),
+                      _isEditingPersonalInfo
+                          ? _buildEditableFieldInline(
+                              'Pag-ibig No.',
+                              _personalInfoData['pagibig'],
+                              (value) => setState(
+                                () => _personalInfoData['pagibig'] = value,
+                              ),
+                            )
+                          : _buildInfoFieldInline(
+                              'Pag-ibig No.',
+                              _userDetails?['employee']?['pagibig'],
+                            ),
                       const SizedBox(height: 20),
-                      _buildInfoFieldInline(
-                        'PhilHealth No.',
-                        _userDetails?['employee']?['phic'],
-                      ),
+                      _isEditingPersonalInfo
+                          ? _buildEditableFieldInline(
+                              'PhilHealth No.',
+                              _personalInfoData['phic'],
+                              (value) => setState(
+                                () => _personalInfoData['phic'] = value,
+                              ),
+                            )
+                          : _buildInfoFieldInline(
+                              'PhilHealth No.',
+                              _userDetails?['employee']?['phic'],
+                            ),
                       const SizedBox(height: 20),
-                      _buildInfoFieldInline(
-                        'PhilSys No. (PSN)',
-                        _userDetails?['employee']?['philsys'],
-                      ),
+                      _isEditingPersonalInfo
+                          ? _buildEditableFieldInline(
+                              'PhilSys No. (PSN)',
+                              _personalInfoData['philsys'],
+                              (value) => setState(
+                                () => _personalInfoData['philsys'] = value,
+                              ),
+                            )
+                          : _buildInfoFieldInline(
+                              'PhilSys No. (PSN)',
+                              _userDetails?['employee']?['philsys'],
+                            ),
                       const SizedBox(height: 20),
-                      _buildInfoFieldInline(
-                        'TIN No.',
-                        _userDetails?['employee']?['tin'],
-                      ),
+                      _isEditingPersonalInfo
+                          ? _buildEditableFieldInline(
+                              'TIN No.',
+                              _personalInfoData['tin'],
+                              (value) => setState(
+                                () => _personalInfoData['tin'] = value,
+                              ),
+                            )
+                          : _buildInfoFieldInline(
+                              'TIN No.',
+                              _userDetails?['employee']?['tin'],
+                            ),
                     ],
                   ),
                 ),
@@ -924,11 +1352,6 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                       letterSpacing: 0.5,
                     ),
                   ),
-                  // Icon(
-                  //   _isFamilyBackgroundExpanded ? Icons.remove : Icons.add,
-                  //   color: Colors.white,
-                  //   size: 20,
-                  // ),
                 ],
               ),
             ),
@@ -1021,11 +1444,8 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
         const SizedBox(height: 12),
         // Single container with all fields in grid layout
         Container(
-          
           padding: EdgeInsets.all(10),
-          margin: const EdgeInsets.symmetric(
-                    horizontal: 2,
-                  ),
+          margin: const EdgeInsets.symmetric(horizontal: 2),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(8),
@@ -1134,15 +1554,13 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                       'Business Address',
                       _spouseData['businessAddress'],
                     ),
-                    const SizedBox(height: 25),
-                    
+              const SizedBox(height: 25),
             ],
           ),
         ),
       ],
     );
   }
-
 
   // Children Section
   Widget _buildChildrenSection() {
@@ -1173,7 +1591,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
             ),
           ],
         ),
-        
+
         ..._childrenData.asMap().entries.map((entry) {
           int index = entry.key;
           Map<String, dynamic> child = entry.value;
@@ -1182,9 +1600,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
           return Container(
             margin: const EdgeInsets.only(bottom: 5),
             padding: const EdgeInsets.all(5),
-            decoration: BoxDecoration(
-              color: Colors.white,
-            ),
+            decoration: BoxDecoration(color: Colors.white),
             child: Column(
               children: [
                 Row(
@@ -1216,7 +1632,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
                         ),
-                        
+
                         IconButton(
                           icon: const Icon(
                             Icons.delete,
@@ -1238,7 +1654,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                     ),
                   ],
                 ),
-               
+
                 Container(
                   // spacing around each child box
                   margin: const EdgeInsets.symmetric(
@@ -1246,10 +1662,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                     vertical: 6,
                   ),
                   // inner spacing of the white box
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
                   width: double.infinity,
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -1283,7 +1696,6 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                               'Birthday (MM/DD/YYYY)',
                               child['birthday'],
                             ),
-                            
                     ],
                   ),
                 ),
@@ -1301,11 +1713,10 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 20),
-        
+
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            
             const Text(
               'FATHER',
               style: TextStyle(
@@ -1397,7 +1808,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                           'Name Extension',
                           _fatherData['nameExtension'],
                         ),
-                        const SizedBox(height: 10),
+                  const SizedBox(height: 10),
                 ],
               ),
             ],
@@ -1439,14 +1850,13 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
             ),
           ],
         ),
-        
+
         Container(
           padding: const EdgeInsets.all(12),
           width: double.infinity,
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
-          
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1555,7 +1965,6 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                       letterSpacing: 0.5,
                     ),
                   ),
-                 
                 ],
               ),
             ),
@@ -1568,7 +1977,6 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(8),
-             
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1698,7 +2106,6 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                       letterSpacing: 0.5,
                     ),
                   ),
-                 
                 ],
               ),
             ),
@@ -1757,7 +2164,6 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(8),
-                        
                       ),
                       child: Column(
                         children: [
@@ -1961,7 +2367,6 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                       letterSpacing: 0.5,
                     ),
                   ),
-                  
                 ],
               ),
             ),
@@ -2020,10 +2425,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12),
                       padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                       
-                      ),
+                      decoration: BoxDecoration(color: Colors.white),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -2151,7 +2553,6 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                       ),
                     ),
                   ),
-                 
                 ],
               ),
             ),
@@ -2208,7 +2609,6 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(8),
-                        
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2396,7 +2796,6 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                       ),
                     ),
                   ),
-                  
                 ],
               ),
             ),
@@ -2464,7 +2863,6 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(4),
-                        
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2677,7 +3075,6 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                       letterSpacing: 0.5,
                     ),
                   ),
-                 
                 ],
               ),
             ),
@@ -2738,12 +3135,8 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                     bool isEditing = _editingSpecialSkillIndex == index;
 
                     return Container(
-                     
                       padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        
-                      ),
+                      decoration: BoxDecoration(color: Colors.white),
                       child: Row(
                         children: [
                           Expanded(
@@ -2844,7 +3237,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                       ),
                     ],
                   ),
-                  
+
                   ..._nonAcademicDistinctionsData.asMap().entries.map((entry) {
                     int index = entry.key;
                     Map<String, dynamic> distinction = entry.value;
@@ -2854,10 +3247,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                     return Container(
                       margin: const EdgeInsets.only(bottom: 8),
                       padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        
-                      ),
+                      decoration: BoxDecoration(color: Colors.white),
                       child: Row(
                         children: [
                           Expanded(
@@ -2969,10 +3359,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                     return Container(
                       margin: const EdgeInsets.only(bottom: 8),
                       padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        
-                      ),
+                      decoration: BoxDecoration(color: Colors.white),
                       child: Row(
                         children: [
                           Expanded(
@@ -3177,10 +3564,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                     return Container(
                       margin: const EdgeInsets.only(bottom: 5),
                       padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        
-                      ),
+                      decoration: BoxDecoration(color: Colors.white),
                       child: Column(
                         children: [
                           Row(
@@ -3310,10 +3694,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      
-                    ),
+                    decoration: BoxDecoration(color: Colors.white),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -3454,8 +3835,8 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
           ),
         ),
         const SizedBox(height: 4),
-        TextField(
-          controller: TextEditingController(text: value ?? ''),
+        TextFormField(
+          initialValue: value ?? '',
           onChanged: onChanged,
           style: const TextStyle(
             fontSize: 13,
