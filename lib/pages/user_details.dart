@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:mobile_application/pages/dtr_page.dart';
 import 'package:mobile_application/services/authenticated_photo.dart';
 import '../services/user_service.dart';
@@ -1028,14 +1029,14 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _isEditingPersonalInfo
-                          ? _buildEditableFieldInline(
+                          ? _buildDateFieldInline(
                               'Date of Birth',
                               _personalInfoData['birthdate'],
                               (value) => setState(
                                 () => _personalInfoData['birthdate'] = value,
                               ),
                             )
-                          : _buildInfoFieldInline(
+                          :_buildInfoFieldInline(
                               'Date of Birth',
                               _userDetails?['employee']?['birthdate'],
                             ),
@@ -1197,7 +1198,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                       ),
                       const SizedBox(height: 20),
                       _isEditingPersonalInfo
-                          ? _buildEditableFieldInline(
+                          ? _buildPhoneFieldInline(
                               'Telephone No.',
                               _personalInfoData['telephoneNo'],
                               (value) => setState(
@@ -1210,7 +1211,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                             ),
                       const SizedBox(height: 20),
                       _isEditingPersonalInfo
-                          ? _buildEditableFieldInline(
+                          ? _buildPhoneFieldInline(
                               'Mobile No.',
                               _personalInfoData['mobileNo'],
                               (value) => setState(
@@ -1232,70 +1233,30 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                         _userDetails?['employee']?['employeeId'],
                       ),
                       const SizedBox(height: 20),
-                      _isEditingPersonalInfo
-                          ? _buildEditableFieldInline(
-                              'UMID ID No.',
-                              _personalInfoData['umid'],
-                              (value) => setState(
-                                () => _personalInfoData['umid'] = value,
-                              ),
-                            )
-                          : _buildInfoFieldInline(
-                              'UMID ID No.',
-                              _userDetails?['employee']?['umid'],
-                            ),
+                      _buildInfoFieldInline(
+                        'UMID ID No.',
+                        _userDetails?['employee']?['umid'],
+                      ),
                       const SizedBox(height: 20),
-                      _isEditingPersonalInfo
-                          ? _buildEditableFieldInline(
-                              'Pag-ibig No.',
-                              _personalInfoData['pagibig'],
-                              (value) => setState(
-                                () => _personalInfoData['pagibig'] = value,
-                              ),
-                            )
-                          : _buildInfoFieldInline(
-                              'Pag-ibig No.',
-                              _userDetails?['employee']?['pagibig'],
-                            ),
+                       _buildInfoFieldInline(
+                        'Pag-ibig No.',
+                        _userDetails?['employee']?['pagibig'],
+                      ),
                       const SizedBox(height: 20),
-                      _isEditingPersonalInfo
-                          ? _buildEditableFieldInline(
-                              'PhilHealth No.',
-                              _personalInfoData['phic'],
-                              (value) => setState(
-                                () => _personalInfoData['phic'] = value,
-                              ),
-                            )
-                          : _buildInfoFieldInline(
-                              'PhilHealth No.',
-                              _userDetails?['employee']?['phic'],
-                            ),
+                       _buildInfoFieldInline(
+                        'PhilHealth No.',
+                        _userDetails?['employee']?['phic'],
+                      ),
                       const SizedBox(height: 20),
-                      _isEditingPersonalInfo
-                          ? _buildEditableFieldInline(
-                              'PhilSys No. (PSN)',
-                              _personalInfoData['philsys'],
-                              (value) => setState(
-                                () => _personalInfoData['philsys'] = value,
-                              ),
-                            )
-                          : _buildInfoFieldInline(
-                              'PhilSys No. (PSN)',
-                              _userDetails?['employee']?['philsys'],
-                            ),
+                      _buildInfoFieldInline(
+                        'PhilSys No. (PSN)',
+                        _userDetails?['employee']?['philsys'],
+                      ),
                       const SizedBox(height: 20),
-                      _isEditingPersonalInfo
-                          ? _buildEditableFieldInline(
-                              'TIN No.',
-                              _personalInfoData['tin'],
-                              (value) => setState(
-                                () => _personalInfoData['tin'] = value,
-                              ),
-                            )
-                          : _buildInfoFieldInline(
-                              'TIN No.',
-                              _userDetails?['employee']?['tin'],
-                            ),
+                       _buildInfoFieldInline(
+                        'TIN No.',
+                        _userDetails?['employee']?['tin'],
+                      ),
                     ],
                   ),
                 ),
@@ -1517,7 +1478,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                     ),
               const SizedBox(height: 12),
               _isEditingSpouse
-                  ? _buildEditableFieldInline(
+                  ? _buildPhoneFieldInline(
                       'Telephone No.',
                       _spouseData['telephoneNo'],
                       (value) {
@@ -1685,7 +1646,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                             ),
                       const SizedBox(height: 8),
                       isEditing
-                          ? _buildEditableFieldInline(
+                          ? _buildDateFieldInline(
                               'Birthday (MM/DD/YYYY)',
                               child['birthday'],
                               (value) {
@@ -2258,7 +2219,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                                       ),
                                 const SizedBox(height: 20),
                                 isEditing
-                                    ? _buildEditableFieldInline(
+                                    ? _buildDateFieldInline(
                                         'Date of Exam',
                                         service['dateOfExam'],
                                         (value) {
@@ -2676,7 +2637,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                               ? Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    _buildEditableFieldInline(
+                                    _buildDateFieldInline(
                                       'Date From',
                                       voluntary['dateFrom'],
                                       (value) {
@@ -2685,7 +2646,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                                       },
                                     ),
                                     const SizedBox(height: 8),
-                                    _buildEditableFieldInline(
+                                    _buildDateFieldInline(
                                       'Date To',
                                       voluntary['dateTo'],
                                       (value) {
@@ -2935,7 +2896,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                             Row(
                               children: [
                                 Expanded(
-                                  child: _buildEditableFieldInline(
+                                  child: _buildDateFieldInline(
                                     'Date From',
                                     training['dateFrom'],
                                     (value) {
@@ -2946,7 +2907,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                                 ),
                                 const SizedBox(width: 8),
                                 Expanded(
-                                  child: _buildEditableFieldInline(
+                                  child: _buildDateFieldInline(
                                     'Date To',
                                     training['dateTo'],
                                     (value) {
@@ -3644,7 +3605,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                           ),
                           if (isEditing) ...[
                             const SizedBox(height: 8),
-                            _buildEditableFieldInline(
+                            _buildPhoneFieldInline(
                               'Telephone No.',
                               reference['telephoneNo'],
                               (value) {
@@ -3724,7 +3685,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                             },
                           ),
                           const SizedBox(height: 12),
-                          _buildEditableFieldInline(
+                          _buildDateFieldInline(
                             'Date Issued',
                             _governmentIDData['dateIssued'],
                             (value) {
@@ -3860,6 +3821,141 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
       ],
     );
   }
+
+Widget _buildDateFieldInline(
+  String label,
+  String? value,
+  Function(String) onChanged,
+) {
+  // Create a controller and set its text to the current value
+  final controller = TextEditingController(text: value ?? '');
+  
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        label,
+        style: TextStyle(
+          fontSize: 10,
+          color: Colors.grey[600],
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      GestureDetector(
+        onTap: () async {
+          // Parse existing date if available
+          DateTime? initialDate;
+          if (value != null && value.isNotEmpty) {
+            try {
+              final parts = value.split('/');
+              if (parts.length == 3) {
+                initialDate = DateTime(
+                  int.parse(parts[2]), // year
+                  int.parse(parts[0]), // month
+                  int.parse(parts[1]), // day
+                );
+              }
+            } catch (e) {
+              print('Error parsing date: $e');
+            }
+          }
+
+          // Show date picker
+          final DateTime? pickedDate = await showDatePicker(
+            context: context,
+            initialDate: initialDate ?? DateTime.now(),
+            firstDate: DateTime(1900),
+            lastDate: DateTime(2100),
+            builder: (context, child) {
+              return Theme(
+                data: Theme.of(context).copyWith(
+                  colorScheme: ColorScheme.light(
+                    primary: Color(0xFF2C5F4F),
+                    onPrimary: Colors.white,
+                    onSurface: Colors.black,
+                  ),
+                ),
+                child: child!,
+              );
+            },
+          );
+
+          // Format and update the date
+          if (pickedDate != null) {
+            final formattedDate = 
+                '${pickedDate.year}-'
+                '${pickedDate.month.toString().padLeft(2, '0')}-'
+                '${pickedDate.day.toString().padLeft(2, '0')}';
+            controller.text = formattedDate; // Update the controller
+            onChanged(formattedDate);
+          }
+        },
+        child: AbsorbPointer(
+          child: TextFormField(
+            controller: controller, // Use controller instead of initialValue
+            readOnly: true,
+            style: const TextStyle(
+              fontSize: 13,
+              color: Colors.black87,
+              fontWeight: FontWeight.bold,
+            ),
+            decoration: InputDecoration(
+              suffixIcon: Icon(
+                Icons.calendar_today,
+                size: 20,
+                color: Color(0xFF2C5F4F),
+              ),
+              contentPadding: const EdgeInsets.symmetric(vertical: 4),
+              isDense: true,
+            ),
+          ),
+        ),
+      ),
+    ],
+  );
+}
+
+
+    Widget _buildPhoneFieldInline(
+    String label,
+    String? value,
+    Function(String) onChanged,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            color: Colors.grey[600],
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 4),
+        TextFormField(
+          initialValue: value ?? '',
+          onChanged: onChanged,
+          keyboardType: TextInputType.phone, // Shows number keyboard
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly, // Only allows digits 0-9
+            LengthLimitingTextInputFormatter(11), // Maximum 11 digits
+          ],
+          style: const TextStyle(
+            fontSize: 13,
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+          ),
+          // decoration: InputDecoration(
+          //   hintText: '09XXXXXXXXX',
+          //   contentPadding: const EdgeInsets.symmetric(vertical: 4),
+          //   isDense: true,
+          // ),
+        ),
+      ],
+    );
+  }
+
 
   // Helper method for drawer menu items
   Widget _buildDrawerItem(String title, IconData icon, bool isSelected) {
