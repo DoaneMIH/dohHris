@@ -1,7 +1,7 @@
 class ApiConfig {
   // Update this to your actual backend URL
-  static const String baseUrl = 'http://10.0.2.2:8082';
-  // static const String baseUrl = 'http://localhost:8082';
+  // static const String baseUrl = 'http://10.0.2.2:8082';
+  static const String baseUrl = 'http://localhost:8082';
   //Hello Dianna
   
   static const String loginEndpoint = '/auth/login';
@@ -11,5 +11,12 @@ class ApiConfig {
   static const String dtrEndpoint = '/adminuser/api/v1/dtr';
   static const String updateEmployeePhotoEndpoint = '/adminuser/update-employee-photo/';
   static const String updateUserEndpoint = '/adminuser/employees/service-records/update-record/';
- 
-}
+  static const String getFamilyEndpoint = '/adminuser/family/get-all-family/';
+  static const String updateFamilyEndpoint = '/adminuser/family/update-family/';
+  static const String addFamilyEndpoint = '/adminuser/family/add-family/';
+  static const String deleteFamilyEndpoint = '/adminuser/family/delete-family/';
+  static const String getEducationEndpoint = '/adminuser/education/get-all-education/';
+  static const String addEducationEndpoint = '/adminuser/education/add-education/';
+  static const String updateEducationEndpoint = '/adminuser/education/update-education/';
+  static const String deleteEducationEndpoint = '/adminuser/education/delete-education/';
+  }
