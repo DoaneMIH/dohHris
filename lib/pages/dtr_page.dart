@@ -175,7 +175,7 @@ class _DtrWidgetState extends State<DtrWidget> {
             return AlertDialog(
               backgroundColor: Colors.white,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(10),
               ),
               title: const Text(
                 'Filter DTR Records',

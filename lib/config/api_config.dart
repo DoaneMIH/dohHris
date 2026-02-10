@@ -11,12 +11,34 @@ class ApiConfig {
   static const String dtrEndpoint = '/adminuser/api/v1/dtr';
   static const String updateEmployeePhotoEndpoint = '/adminuser/update-employee-photo/';
   static const String updateUserEndpoint = '/adminuser/employees/service-records/update-record/';
+
+
   static const String getFamilyEndpoint = '/adminuser/family/get-all-family/';
   static const String updateFamilyEndpoint = '/adminuser/family/update-family/';
   static const String addFamilyEndpoint = '/adminuser/family/add-family/';
   static const String deleteFamilyEndpoint = '/adminuser/family/delete-family/';
+
+
   static const String getEducationEndpoint = '/adminuser/education/get-all-education/';
   static const String addEducationEndpoint = '/adminuser/education/add-education/';
   static const String updateEducationEndpoint = '/adminuser/education/update-education/';
   static const String deleteEducationEndpoint = '/adminuser/education/delete-education/';
+
+
+  static const String getWorkExperienceEndpoint = '/adminuser/work-experience/get-all-work-experience/';
+  static const String addWorkExperienceEndpoint = '/adminuser/work-experience/add-work-experience/';
+  static const String updateWorkExperienceEndpoint = '/adminuser/work-experience/update-work-experience/';
+  static const String deleteWorkExperienceEndpoint = '/adminuser/work-experience/delete-work-experience/';
+
+
+  static const String getVoluntaryWorkEndpoint = '/adminuser/voluntary-work/get-all-voluntary-work/';
+  static const String addVoluntaryWorkEndpoint = '/adminuser/voluntary-work/add-voluntary-work/';
+  static const String updateVoluntaryWorkEndpoint = '/adminuser/voluntary-work/update-voluntary-work/';
+  static const String deleteVoluntaryWorkEndpoint = '/adminuser/voluntary-work/delete-voluntary-work/';
+
+
+  static const String getLearningEndpoint = '/adminuser/learn-dev/get-all-learn-dev/';
+  static const String addLearningEndpoint = '/adminuser/learn-dev/add-learn-dev/';
+  static const String updateLearningEndpoint = '/adminuser/learn-dev/update-learn-dev/';
+  static const String deleteLearningEndpoint = '/adminuser/learn-dev/delete-learn-dev/';
   }
