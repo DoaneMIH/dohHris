@@ -41,4 +41,23 @@ class ApiConfig {
   static const String addLearningEndpoint = '/adminuser/learn-dev/add-learn-dev/';
   static const String updateLearningEndpoint = '/adminuser/learn-dev/update-learn-dev/';
   static const String deleteLearningEndpoint = '/adminuser/learn-dev/delete-learn-dev/';
-  }
+
+  //Civil Service Eligibility
+  static const String getEligibilityEndpoint = '/adminuser/eligibility/get-all-eligibility/';
+  static const String addEligibilityEndpoint = '/adminuser/eligibility/add-eligibility/';
+  static const String updateEligibilityEndpoint = '/adminuser/eligibility/update-eligibility/';
+  static const String deleteEligibilityEndpoint = '/adminuser/eligibility/delete-eligibility/';
+
+  // Other Information
+  static const String getOtherInfoEndpoint = '/adminuser/other-info/get-other-info/';
+  static const String addOtherInfoEndpoint = '/adminuser/other-infor/add-other-info';
+  static const String updateOtherInfoEndpoint = '/adminuser/other-infor/update-other-information/';
+  static const String deleteOtherInfoEndpoint = '/adminuser/other-infor/delete-other-information/';
+
+  //Person Reference
+  static const String getPersonReferenceEndpoint = '/adminuser/person-reference/get-person-reference/';
+  static const String addPersonReferenceEndpoint = '/adminuser/person-reference/add-person-reference/';
+  static const String updatePersonReferenceEndpoint = '/adminuser/person-reference/update-person-reference/';
+  static const String deletePersonReferenceEndpoint = '/adminuser/person-reference/delete-person-reference/';
+}
+  

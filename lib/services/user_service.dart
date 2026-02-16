@@ -753,120 +753,141 @@ Future<Map<String, dynamic>> deleteVoluntaryWork(
 }
 
 //GET LEARNING AND DEVELOPMENT
-Future<Map<String, dynamic>> getLearningDevelopmentDetails(String token, String employeeId) async {
-  try {
-    print('\n📚 [UserService] Getting learning and development for employee: $employeeId');
-    
-    final url = Uri.parse('${ApiConfig.baseUrl}${ApiConfig.getLearningEndpoint}$employeeId');
+  Future<Map<String, dynamic>> getLearningDevelopmentDetails(
+      String token, String employeeId) async {
+    try {
+      print('\n📚 [UserService] Getting L&D for employee: $employeeId');
+
+      final currentToken = TokenManager().token ?? token;
+      final url = Uri.parse(
+          '${ApiConfig.baseUrl}${ApiConfig.getLearningEndpoint}$employeeId');
+
+      final response = await http.get(url, headers: {
+        'Authorization': 'Bearer $currentToken',
+        'Content-Type': 'application/json',
+      });
+
+      print('📡 [UserService] Status: ${response.statusCode}');
+      print('📦 [UserService] Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        return {'success': true, 'data': json.decode(response.body)};
+      } else {
+        return {'success': false, 'error': 'Failed: ${response.statusCode}'};
+      }
+    } catch (e) {
+      return {'success': false, 'error': 'Error: $e'};
+    }
+  }
+
+  // ⭐ ADD LEARNING DEVELOPMENT - Sends JSON in 'learnDevDataReq' part with proper content type
+  Future<Map<String, dynamic>> addLearningDevelopment(
+    String token,
+    String employeeId,
+    Map<String, dynamic> learningData,
+  ) async {
+    print('\n➕ [UserService] ADD L&D for employee: $employeeId');
+    print('📋 [UserService] Learning data received:');
+    learningData.forEach((key, value) => print('   $key: $value'));
+
     final currentToken = TokenManager().token ?? token;
+    final url =
+        '${ApiConfig.baseUrl}${ApiConfig.addLearningEndpoint}$employeeId';
 
-    final response = await http.get(
-      url,
-      headers: {
-        'Authorization': 'Bearer $currentToken',
-        'Content-Type': 'application/json',
-      },
-    );
+    print('🌐 [UserService] Full API URL: $url');
 
-    if (response.statusCode == 200) {
-      return {
-        'success': true,
-        'data': json.decode(response.body),
+    try {
+      // ⭐ Backend expects multipart/form-data with 'learnDevDataReq' part containing JSON
+      final request = http.MultipartRequest('POST', Uri.parse(url));
+      request.headers['Authorization'] = 'Bearer $currentToken';
+
+      // ⭐ Create the learning object with snake_case for certificate_url
+      final learningPayload = {
+        'title': learningData['title']?.toString() ?? '',
+        'attendedFrom': learningData['attendedFrom']?.toString() ?? '',
+        'attendedTo': learningData['attendedTo']?.toString() ?? '',
+        'hours': learningData['hours']?.toString() ?? '',
+        'ldType': learningData['ldType']?.toString() ?? '',
+        'conductedBy': learningData['conductedBy']?.toString() ?? '',
+        'certificate_url': learningData['certificate_url']?.toString() ?? 
+                           learningData['certificateUrl']?.toString() ?? '',
       };
-    } else {
-      return {
-        'success': false,
-        'error': 'Failed: ${response.statusCode}',
-      };
+
+      final jsonString = jsonEncode(learningPayload);
+      print('📤 [UserService] JSON payload to send:');
+      print('   $jsonString');
+
+      // ⭐ CRITICAL: Backend expects 'learnDevDataReq' for ADD (not 'addLearnDevRequest')
+      request.files.add(
+        http.MultipartFile.fromString(
+          'learnDevDataReq',  // ⭐ CORRECT part name for ADD
+          jsonString,
+          contentType: http.MediaType('application', 'json'),
+        ),
+      );
+
+      print('📤 [UserService] Sending as multipart file with application/json content type');
+      print('📤 [UserService] Part name: learnDevDataReq');
+
+      final streamed = await request.send();
+      final response = await http.Response.fromStream(streamed);
+
+      print('📥 [UserService] Response Status: ${response.statusCode}');
+      print('📥 [UserService] Response Body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print('✅ [UserService] L&D added successfully!');
+        return {'success': true, 'data': jsonDecode(response.body)};
+      } else {
+        print('❌ [UserService] Failed to add L&D');
+        return {
+          'success': false,
+          'error': 'Failed: ${response.statusCode} — ${response.body}',
+        };
+      }
+    } catch (e) {
+      print('💥 [UserService] Error adding L&D: $e');
+      return {'success': false, 'error': 'Error: $e'};
     }
-  } catch (e) {
-    return {
-      'success': false,
-      'error': 'Error: $e',
-    };
   }
-}
 
-// ADD LEARNING AND DEVELOPMENT
-Future<Map<String, dynamic>> addLearningDevelopment(
-  String token,
-  String employeeId,
-  Map<String, dynamic> learningData,
-) async {
-  print('\n➕ [UserService] ADD LEARNING AND DEVELOPMENT for employee: $employeeId');
-  
-  final currentToken = TokenManager().token ?? token;
-  final url = '${ApiConfig.baseUrl}${ApiConfig.addLearningEndpoint}$employeeId';
-  
-  try {
-    final response = await http.post(
-      Uri.parse(url),
-      headers: {
-        'Authorization': 'Bearer $currentToken',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode(learningData),
-    );
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      return {'success': true, 'data': jsonDecode(response.body)};
-    } else {
-      return {'success': false, 'error': 'Failed: ${response.statusCode}'};
-    }
-  } catch (e) {
-    return {'success': false, 'error': 'Error: $e'};
-  }
-}
-
-// UPDATE LEARNING AND DEVELOPMENT
-Future<Map<String, dynamic>> updateLearningDevelopment(
+  // ⭐ UPDATE LEARNING DEVELOPMENT - Sends JSON in 'updateLearnDevRequest' part
+  Future<Map<String, dynamic>> updateLearningDevelopment(
   String token,
   String learningId,
   Map<String, dynamic> learningData,
 ) async {
-  print('\n✏️ [UserService] UPDATE LEARNING AND DEVELOPMENT: $learningId');
-  
+  print('\n✏️ [UserService] UPDATE L&D: $learningId');
+
   final currentToken = TokenManager().token ?? token;
   final url = '${ApiConfig.baseUrl}${ApiConfig.updateLearningEndpoint}$learningId';
-  
+
   try {
-    final response = await http.put(
-      Uri.parse(url),
-      headers: {
-        'Authorization': 'Bearer $currentToken',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode(learningData),
+    final request = http.MultipartRequest('PUT', Uri.parse(url));
+    request.headers['Authorization'] = 'Bearer $currentToken';
+
+    // Create JSON payload
+    final learningPayload = {
+      'title': learningData['title']?.toString() ?? '',
+      'attendedFrom': learningData['attendedFrom']?.toString() ?? '',
+      'attendedTo': learningData['attendedTo']?.toString() ?? '',
+      'hours': learningData['hours']?.toString() ?? '',
+      'ldType': learningData['ldType']?.toString() ?? '',
+      'conductedBy': learningData['conductedBy']?.toString() ?? '',
+      'certificate_url': learningData['certificate_url']?.toString() ?? '',
+    };
+
+    // ⭐ Send as MultipartFile with application/json content type
+    request.files.add(
+      http.MultipartFile.fromString(
+        'updateLearnDevRequest',
+        jsonEncode(learningPayload),
+        contentType: http.MediaType('application', 'json'),
+      ),
     );
 
-    if (response.statusCode == 200) {
-      return {'success': true, 'data': jsonDecode(response.body)};
-    } else {
-      return {'success': false, 'error': 'Failed: ${response.statusCode}'};
-    }
-  } catch (e) {
-    return {'success': false, 'error': 'Error: $e'};
-  } 
-}
-
-// DELETE LEARNING AND DEVELOPMENT
-Future<Map<String, dynamic>> deleteLearningDevelopment(
-  String token,
-  String learningId,
-) async {
-  print('\n🗑️ [UserService] DELETE LEARNING AND DEVELOPMENT: $learningId');
-  
-  final currentToken = TokenManager().token ?? token;
-  final url = '${ApiConfig.baseUrl}${ApiConfig.deleteLearningEndpoint}$learningId';
-  
-  try {
-    final response = await http.delete(
-      Uri.parse(url),
-      headers: {
-        'Authorization': 'Bearer $currentToken',
-        'Content-Type': 'application/json',
-      },
-    );
+    final streamed = await request.send();
+    final response = await http.Response.fromStream(streamed);
 
     if (response.statusCode == 200) {
       return {'success': true, 'data': jsonDecode(response.body)};
@@ -877,5 +898,476 @@ Future<Map<String, dynamic>> deleteLearningDevelopment(
     return {'success': false, 'error': 'Error: $e'};
   }
 }
+
+  // DELETE
+  Future<Map<String, dynamic>> deleteLearningDevelopment(
+      String token, String learningId) async {
+    print('\n🗑️ [UserService] DELETE L&D: $learningId');
+
+    final currentToken = TokenManager().token ?? token;
+    final url =
+        '${ApiConfig.baseUrl}${ApiConfig.deleteLearningEndpoint}$learningId';
+
+    print('🌐 [UserService] Full API URL: $url');
+
+    try {
+      final response = await http.delete(Uri.parse(url), headers: {
+        'Authorization': 'Bearer $currentToken',
+        'Content-Type': 'application/json',
+      });
+
+      print('📥 [UserService] Response Status: ${response.statusCode}');
+      print('📥 [UserService] Response Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        print('✅ [UserService] L&D deleted successfully!');
+        return {'success': true, 'data': jsonDecode(response.body)};
+      } else {
+        print('❌ [UserService] Failed to delete L&D');
+        return {'success': false, 'error': 'Failed: ${response.statusCode}'};
+      }
+    } catch (e) {
+      print('💥 [UserService] Error deleting L&D: $e');
+      return {'success': false, 'error': 'Error: $e'};
+    }
+  }
+
+
+  //Get Civil Service Eligibility 
+  Future<Map<String, dynamic>> getCivilServiceEligibilityDetails(
+    String token,
+    String employeeId,
+  ) async {
+    try {
+      print(
+        '\n🔄 [UserService] Getting civil service eligibility for employee: $employeeId',
+      );
+
+      final url = Uri.parse(
+        '${ApiConfig.baseUrl}${ApiConfig.getEligibilityEndpoint}$employeeId',
+      );
+      final currentToken = TokenManager().token ?? token;
+
+      final response = await http.get(
+        url,
+        headers: {
+          'Authorization': 'Bearer $currentToken',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      print('📡 [UserService] Response status: ${response.statusCode}');
+      print('📦 [UserService] Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return {'success': true, 'data': data};
+      } else {
+        return {
+          'success': false,
+          'error':
+              'Failed to fetch civil service eligibility details: ${response.statusCode}',
+        };
+      }
+    } catch (e) {
+      print('💥 [UserService] Error getting civil service eligibility: $e');
+      return {'success': false, 'error': 'Error: $e'};
+    }
+  }
+
+  //Add Civil Service Eligibility
+  Future<Map<String, dynamic>> addCivilServiceEligibility(
+    String token,
+    String employeeId,
+    Map<String, dynamic> eligibilityData,
+  ) async {
+    print(
+      '\n➕ [UserService] ADD Civil Service Eligibility for employee: $employeeId',
+    );
+
+    final currentToken = TokenManager().token ?? token;
+    final url =
+        '${ApiConfig.baseUrl}${ApiConfig.addEligibilityEndpoint}$employeeId';
+
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $currentToken',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(eligibilityData),
+      );
+
+      print('📥 Response: ${response.statusCode}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return {'success': true, 'data': jsonDecode(response.body)};
+      } else {
+        return {'success': false, 'error': 'Failed: ${response.statusCode}'};
+      }
+    } catch (e) {
+      print('💥 Error: $e');
+      return {'success': false, 'error': 'Error: $e'};
+    }
+  }
+
+  //Delete Civil Service Eligibility
+  Future<Map<String, dynamic>> deleteCivilServiceEligibility(
+    String token,
+    String eligibilityId,
+  ) async {
+    print(
+      '\n🗑️ [UserService] DELETE Civil Service Eligibility: $eligibilityId',
+    );
+
+    final currentToken = TokenManager().token ?? token;
+    final url =
+        '${ApiConfig.baseUrl}${ApiConfig.deleteEligibilityEndpoint}$eligibilityId';
+
+    try {
+      final response = await http.delete(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $currentToken',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      print('📥 Response: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        return {'success': true, 'data': jsonDecode(response.body)};
+      } else {
+        return {'success': false, 'error': 'Failed: ${response.statusCode}'};
+      }
+    } catch (e) {
+      print('💥 Error: $e');
+      return {'success': false, 'error': 'Error: $e'};
+    }
+  }
+
+  //Update Civil Service Eligibility
+  Future<Map<String, dynamic>> updateCivilServiceEligibility(
+    String token,
+    String eligibilityId,
+    Map<String, dynamic> eligibilityData,
+  ) async {
+    print(
+      '\n✏️ [UserService] UPDATE Civil Service Eligibility: $eligibilityId',
+    );
+
+    final currentToken = TokenManager().token ?? token;
+    final url =
+        '${ApiConfig.baseUrl}${ApiConfig.updateEligibilityEndpoint}$eligibilityId';
+
+    try {
+      final response = await http.put(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $currentToken',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(eligibilityData),
+      );
+
+      print('📥 Response: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        return {'success': true, 'data': jsonDecode(response.body)};
+      } else {
+        return {'success': false, 'error': 'Failed: ${response.statusCode}'};
+      }
+    } catch (e) {
+      print('💥 Error: $e');
+      return {'success': false, 'error': 'Error: $e'};
+    }
+  }
+
+  // OTHER INFORMATION
+   /// GET  /adminuser/other-info/get-other-info/{employeeId}
+  Future<Map<String, dynamic>> getOtherInfo(
+    String token,
+    String employeeId,
+  ) async {
+    print('\n📋 [UserService] GET Other Info for employee: $employeeId');
+
+    final currentToken = TokenManager().token ?? token;
+    final url = Uri.parse(
+      '${ApiConfig.baseUrl}${ApiConfig.getOtherInfoEndpoint}$employeeId',
+    );
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Authorization': 'Bearer $currentToken',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      print('📡 [UserService] Response status: ${response.statusCode}');
+      print('📦 [UserService] Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {'success': true, 'data': data};
+      } else {
+        return {
+          'success': false,
+          'error': 'Failed to fetch other info: ${response.statusCode}',
+        };
+      }
+    } catch (e) {
+      print('💥 [UserService] Error getting other info: $e');
+      return {'success': false, 'error': 'Error: $e'};
+    }
+  }
+
+  /// POST  /adminuser/other-infor/add-other-info{employeeId}
+  Future<Map<String, dynamic>> addOtherInfo(
+    String token,
+    String employeeId,
+    Map<String, dynamic> otherInfoData,
+  ) async {
+    print('\n➕ [UserService] ADD Other Info for employee: $employeeId');
+
+    final currentToken = TokenManager().token ?? token;
+    final url =
+        '${ApiConfig.baseUrl}${ApiConfig.addOtherInfoEndpoint}$employeeId';
+
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $currentToken',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(otherInfoData),
+      );
+
+      print('📥 Response: ${response.statusCode} — ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return {'success': true, 'data': jsonDecode(response.body)};
+      } else {
+        return {'success': false, 'error': 'Failed: ${response.statusCode}'};
+      }
+    } catch (e) {
+      print('💥 Error: $e');
+      return {'success': false, 'error': 'Error: $e'};
+    }
+  }
+
+  /// PUT  /adminuser/other-infor/update-other-information/{otherInfoId}
+  Future<Map<String, dynamic>> updateOtherInfo(
+    String token,
+    String otherInfoId,
+    Map<String, dynamic> otherInfoData,
+  ) async {
+    print('\n✏️ [UserService] UPDATE Other Info id: $otherInfoId');
+
+    final currentToken = TokenManager().token ?? token;
+    final url =
+        '${ApiConfig.baseUrl}${ApiConfig.updateOtherInfoEndpoint}$otherInfoId';
+
+    try {
+      final response = await http.put(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $currentToken',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(otherInfoData),
+      );
+
+      print('📥 Response: ${response.statusCode} — ${response.body}');
+
+      if (response.statusCode == 200) {
+        return {'success': true, 'data': jsonDecode(response.body)};
+      } else {
+        return {'success': false, 'error': 'Failed: ${response.statusCode}'};
+      }
+    } catch (e) {
+      print('💥 Error: $e');
+      return {'success': false, 'error': 'Error: $e'};
+    }
+  }
+
+  /// DELETE  /adminuser/other-infor/delete-other-information/{otherInfoId}
+  Future<Map<String, dynamic>> deleteOtherInfo(
+    String token,
+    String otherInfoId,
+  ) async {
+    print('\n🗑️ [UserService] DELETE Other Info id: $otherInfoId');
+
+    final currentToken = TokenManager().token ?? token;
+    final url =
+        '${ApiConfig.baseUrl}${ApiConfig.deleteOtherInfoEndpoint}$otherInfoId';
+
+    try {
+      final response = await http.delete(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $currentToken',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      print('📥 Response: ${response.statusCode} — ${response.body}');
+
+      if (response.statusCode == 200) {
+        return {'success': true, 'data': jsonDecode(response.body)};
+      } else {
+        return {'success': false, 'error': 'Failed: ${response.statusCode}'};
+      }
+    } catch (e) {
+      print('💥 Error: $e');
+      return {'success': false, 'error': 'Error: $e'};
+    }
+  }
+
+  /// GET  /adminuser/person-reference/get-person-reference/{employeeId}
+  Future<Map<String, dynamic>> getPersonReference(
+    String token,
+    String employeeId,
+  ) async {
+    print('\n👥 [UserService] GET Person Reference for employee: $employeeId');
+
+    final currentToken = TokenManager().token ?? token;
+    final url = Uri.parse(
+      '${ApiConfig.baseUrl}${ApiConfig.getPersonReferenceEndpoint}$employeeId',
+    );
+    print('🌐 [UserService] Request URL Personal Reference: $url');
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Authorization': 'Bearer $currentToken',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      print('📡 [UserService] Response status: ${response.statusCode}');
+      print('📦 [UserService] Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {'success': true, 'data': data};
+      } else {
+        return {
+          'success': false,
+          'error': 'Failed to fetch person reference: ${response.statusCode}',
+        };
+      }
+    } catch (e) {
+      print('💥 [UserService] Error getting person reference: $e');
+      return {'success': false, 'error': 'Error: $e'};
+    }
+  }
+
+  /// POST  /adminuser/person-reference/add-person-reference/{employeeId}
+  Future<Map<String, dynamic>> addPersonReference(
+    String token,
+    String employeeId,
+    Map<String, dynamic> referenceData,
+  ) async {
+    print('\n➕ [UserService] ADD Person Reference for employee: $employeeId');
+
+    final currentToken = TokenManager().token ?? token;
+    final url =
+        '${ApiConfig.baseUrl}${ApiConfig.addPersonReferenceEndpoint}$employeeId';
+
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $currentToken',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(referenceData),
+      );
+
+      print('📥 Response: ${response.statusCode} — ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return {'success': true, 'data': jsonDecode(response.body)};
+      } else {
+        return {'success': false, 'error': 'Failed: ${response.statusCode}'};
+      }
+    } catch (e) {
+      print('💥 Error: $e');
+      return {'success': false, 'error': 'Error: $e'};
+    }
+  }
+
+  /// PUT  /adminuser/person-reference/update-person-reference/{referenceId}
+  Future<Map<String, dynamic>> updatePersonReference(
+    String token,
+    String referenceId,
+    Map<String, dynamic> referenceData,
+  ) async {
+    print('\n✏️ [UserService] UPDATE Person Reference id: $referenceId');
+
+    final currentToken = TokenManager().token ?? token;
+    final url =
+        '${ApiConfig.baseUrl}${ApiConfig.updatePersonReferenceEndpoint}$referenceId';
+
+    try {
+      final response = await http.put(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $currentToken',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(referenceData),
+      );
+
+      print('📥 Response: ${response.statusCode} — ${response.body}');
+
+      if (response.statusCode == 200) {
+        return {'success': true, 'data': jsonDecode(response.body)};
+      } else {
+        return {'success': false, 'error': 'Failed: ${response.statusCode}'};
+      }
+    } catch (e) {
+      print('💥 Error: $e');
+      return {'success': false, 'error': 'Error: $e'};
+    }
+  }
+
+  /// DELETE  /adminuser/person-reference/delete-person-reference/{referenceId}
+  Future<Map<String, dynamic>> deletePersonReference(
+    String token,
+    String referenceId,
+  ) async {
+    print('\n🗑️ [UserService] DELETE Person Reference id: $referenceId');
+
+    final currentToken = TokenManager().token ?? token;
+    final url =
+        '${ApiConfig.baseUrl}${ApiConfig.deletePersonReferenceEndpoint}$referenceId';
+
+    try {
+      final response = await http.delete(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $currentToken',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      print('📥 Response: ${response.statusCode} — ${response.body}');
+
+      if (response.statusCode == 200) {
+        return {'success': true, 'data': jsonDecode(response.body)};
+      } else {
+        return {'success': false, 'error': 'Failed: ${response.statusCode}'};
+      }
+    } catch (e) {
+      print('💥 Error: $e');
+      return {'success': false, 'error': 'Error: $e'};
+    }
+  }
 
 }

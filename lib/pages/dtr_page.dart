@@ -415,16 +415,11 @@ class _DtrWidgetState extends State<DtrWidget> {
         children: [
           Container(
             margin: const EdgeInsets.all(12),
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-            ),
             child: Column(
               children: [
                 // Header section with filter and refresh buttons
                 Container(
-                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 1),
+                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
                   decoration: const BoxDecoration(
                     color: Color(0xFF2C5F4F),
                     borderRadius: BorderRadius.only(
