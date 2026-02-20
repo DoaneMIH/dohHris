@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_application/pages/dtr_page.dart';
@@ -8,11 +9,13 @@ import 'login_page.dart';
 class UserDetailsPageContent extends StatefulWidget {
   final String token;
   final String baseUrl;
+  final GlobalKey<ScaffoldState>? scaffoldKey;
 
   const UserDetailsPageContent({
     Key? key,
     required this.token,
     required this.baseUrl,
+     this.scaffoldKey,
   }) : super(key: key);
 
   @override
@@ -20,6 +23,14 @@ class UserDetailsPageContent extends StatefulWidget {
 }
 
 class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
+
+final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  /// Called by MainNavigation to open the side drawer from the bottom nav bar.
+  void openDrawer() {
+    _scaffoldKey.currentState?.openDrawer();
+  }
+
   final _userService = UserService();
   Map<String, dynamic>? _userDetails;
   bool _isLoading = true;
@@ -52,21 +63,20 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
   List<Map<String, dynamic>> _workExperienceListData = [];
   List<Map<String, dynamic>> _voluntaryWorkListData = [];
   List<Map<String, dynamic>> _learningDevelopmentListData = [];
-   List<Map<String, dynamic>> _civilServiceEligibilityListData = [];
-   Map<String, dynamic>? _otherInfoRecord;
-
+  List<Map<String, dynamic>> _civilServiceEligibilityListData = [];
+  Map<String, dynamic>? _otherInfoRecord;
 
   // Educational background data
   bool _isEducationalBackgroundExpanded = true;
   List<Map<String, dynamic>> _educationData = [];
   int? _editingEducationIndex;
-Set<int> _collapsedEducationIndexes = <int>{};
+  Set<int> _collapsedEducationIndexes = <int>{};
 
   // Civil service eligibility data
   bool _isCivilServiceExpanded = true;
   List<Map<String, dynamic>> _civilServiceData = [];
   int? _editingCivilServiceIndex;
-  Set<int> _collapsedCivilServiceIndexes = <int>{}; 
+  Set<int> _collapsedCivilServiceIndexes = <int>{};
 
   // Work experience data
   bool _isWorkExperienceExpanded = true;
@@ -78,20 +88,20 @@ Set<int> _collapsedEducationIndexes = <int>{};
   bool _isVoluntaryWorkExpanded = true;
   List<Map<String, dynamic>> _voluntaryWorkData = [];
   int? _editingVoluntaryWorkIndex;
-   Set<int> _collapsedVoluntaryWorkIndexes = <int>{};
+  Set<int> _collapsedVoluntaryWorkIndexes = <int>{};
 
   // Learning and development data
   bool _isLearningDevelopmentExpanded = true;
   List<Map<String, dynamic>> _learningDevelopmentData = [];
   int? _editingLearningDevelopmentIndex;
-    Set<int> _collapsedLearningDevIndexes = <int>{};
+  Set<int> _collapsedLearningDevIndexes = <int>{};
 
   bool _isOtherInformationExpanded = true;
   List<Map<String, dynamic>> _specialSkillsData = [];
   int? _editingSpecialSkillIndex;
 
   // References — fetched from API (single record: personRef)
-  Map<String, dynamic>? _personRefRecord;   // raw API record with 'id'
+  Map<String, dynamic>? _personRefRecord; // raw API record with 'id'
   bool _isFetchingPersonRef = false;
   bool _isEditingPersonRef = false;
   Map<String, dynamic> _personRefData = {};
@@ -102,9 +112,8 @@ Set<int> _collapsedEducationIndexes = <int>{};
   List<Map<String, dynamic>> _membershipData = [];
   int? _editingMembershipIndex;
 
-bool _isFetchingOtherInfo = false;
-  bool _isEditingOtherInfo = false; 
-
+  bool _isFetchingOtherInfo = false;
+  bool _isEditingOtherInfo = false;
 
   // Selected menu state
   String _selectedMenu = 'Personal Information';
@@ -450,10 +459,10 @@ bool _isFetchingOtherInfo = false;
       };
     }).toList();
 
-  _collapsedEducationIndexes = List<int>.generate(
-  _educationData.length, 
-  (index) => index
-).toSet();
+    _collapsedEducationIndexes = List<int>.generate(
+      _educationData.length,
+      (index) => index,
+    ).toSet();
     print('📚 Parsed ${_educationData.length} education records');
   }
 
@@ -1173,714 +1182,132 @@ bool _isFetchingOtherInfo = false;
 
   //FETCH WORK EXPERIENCE DATA
   Future<void> _fetchWorkExperienceData() async {
-  print('\n💼 [UserDetailsPage] FETCHING WORK EXPERIENCE DATA');
-  
-  final employeeId = _userDetails?['employee']?['id'];
-  if (employeeId == null) {
-    print('❌ No employee ID, skipping work experience fetch');
-    return;
-  }
+    print('\n💼 [UserDetailsPage] FETCHING WORK EXPERIENCE DATA');
 
-  try {
-    final response = await _userService.getWorkExperienceDetails(
-      widget.token, 
-      employeeId.toString(),
-    );
-    
-    if (response['success']) {
-      final List<dynamic> workList = response['data']['workExperienceList'] ?? [];
-      
-      setState(() {
-        _workExperienceListData = workList.map((item) => Map<String, dynamic>.from(item)).toList();
-        _parseWorkExperienceData();
-      });
-      
-      print('✅ Loaded ${_workExperienceListData.length} work experience records');
-    }
-  } catch (e) {
-    print('💥 Exception: $e');
-  }
-}
-
-void _parseWorkExperienceData() {
-  _workExperienceData = _workExperienceListData.map((work) {
-    // ⭐ FIX: Convert boolean to "Yes"/"No" for display
-    String getGovernmentServiceDisplay(dynamic value) {
-      if (value == null) return 'No';
-      if (value is bool) return value ? 'Yes' : 'No';
-      final strValue = value.toString().toUpperCase();
-      if (strValue == 'TRUE' || strValue == 'YES' || strValue == '1') return 'Yes';
-      return 'No';
-    }
-
-    return {
-      'id': work['id'],
-      'dateFrom': work['dateFrom'] ?? '',
-      'dateTo': work['dateTo'] ?? '',
-      'position': work['position'] ?? '',
-      'company': work['company'] ?? '',
-      'appointmentStatus': work['appointmentStatus'] ?? '',
-      'govtService': getGovernmentServiceDisplay(work['govtService']),
-    };
-  }).toList();
-   _collapsedWorkExperienceIndexes  = List<int>.generate(
-  _workExperienceData.length, 
-  (index) => index
-).toSet();
-  print('💼 Parsed ${_workExperienceData.length} work experience records');
-}
-
-//ADD WORK EXPERIENCE SAVE AND DELETE FUNCTIONS HERE
-Future<void> _saveWorkExperience(int index) async {
-  final work = _workExperienceData[index];
-  
-  // Validate position title
-  if (work['position']?.toString().trim().isEmpty ?? true) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Please enter position title before saving'),
-        backgroundColor: Colors.orange,
-      ),
-    );
-    return;
-  }
-
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (context) => const Center(child: CircularProgressIndicator()),
-  );
-
-  try {
     final employeeId = _userDetails?['employee']?['id'];
-    if (employeeId == null) throw Exception('Employee ID not found');
-
-    bool isGovernmentService = false;
-    final govServiceValue = work['govtService']?.toString().toUpperCase();
-    if (govServiceValue == 'YES' || govServiceValue == 'TRUE' || govServiceValue == '1') {
-      isGovernmentService = true;
+    if (employeeId == null) {
+      print('❌ No employee ID, skipping work experience fetch');
+      return;
     }
 
-    final workData = {
-      'dateFrom': work['dateFrom'] ?? '',
-      'dateTo': work['dateTo'] ?? '',
-      'position': work['position'] ?? '',
-      'company': work['company'] ?? '',
-      'appointmentStatus': work['appointmentStatus'] ?? '',
-      'govtService': isGovernmentService,
-    };
+    try {
+      final response = await _userService.getWorkExperienceDetails(
+        widget.token,
+        employeeId.toString(),
+      );
 
-    final response = work.containsKey('id') && work['id'] != null
-        ? await _userService.updateWorkExperience(widget.token, work['id'].toString(), workData)
-        : await _userService.addWorkExperience(widget.token, employeeId.toString(), workData);
+      if (response['success']) {
+        final List<dynamic> workList =
+            response['data']['workExperienceList'] ?? [];
 
-    if (mounted) Navigator.pop(context);
+        setState(() {
+          _workExperienceListData = workList
+              .map((item) => Map<String, dynamic>.from(item))
+              .toList();
+          _parseWorkExperienceData();
+        });
 
-    if (response['success']) {
-      await _fetchWorkExperienceData();
-      if (mounted) {
-        setState(() => _editingWorkExperienceIndex = null);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Work experience saved successfully'), backgroundColor: Colors.green),
+        print(
+          '✅ Loaded ${_workExperienceListData.length} work experience records',
         );
       }
-    } else {
-      throw Exception(response['error']);
-    }
-  } catch (e) {
-    if (mounted) {
-      Navigator.of(context, rootNavigator: true).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to save: $e'), backgroundColor: Colors.red),
-      );
+    } catch (e) {
+      print('💥 Exception: $e');
     }
   }
-}
 
+  void _parseWorkExperienceData() {
+    _workExperienceData = _workExperienceListData.map((work) {
+      // ⭐ FIX: Convert boolean to "Yes"/"No" for display
+      String getGovernmentServiceDisplay(dynamic value) {
+        if (value == null) return 'No';
+        if (value is bool) return value ? 'Yes' : 'No';
+        final strValue = value.toString().toUpperCase();
+        if (strValue == 'TRUE' || strValue == 'YES' || strValue == '1')
+          return 'Yes';
+        return 'No';
+      }
 
-Future<void> _deleteWorkExperience(int index) async {
-  final confirmed = await showDialog<bool>(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: const Text('Delete Work Experience'),
-      content: const Text('Are you sure you want to delete this work experience record?'),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-        TextButton(
-          onPressed: () => Navigator.pop(context, true),
-          style: TextButton.styleFrom(foregroundColor: Colors.red),
-          child: const Text('Delete'),
-        ),
-      ],
-    ),
-  );
+      return {
+        'id': work['id'],
+        'dateFrom': work['dateFrom'] ?? '',
+        'dateTo': work['dateTo'] ?? '',
+        'position': work['position'] ?? '',
+        'company': work['company'] ?? '',
+        'appointmentStatus': work['appointmentStatus'] ?? '',
+        'govtService': getGovernmentServiceDisplay(work['govtService']),
+      };
+    }).toList();
+    _collapsedWorkExperienceIndexes = List<int>.generate(
+      _workExperienceData.length,
+      (index) => index,
+    ).toSet();
+    print('💼 Parsed ${_workExperienceData.length} work experience records');
+  }
 
-  if (confirmed != true) return;
-
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (context) => const Center(child: CircularProgressIndicator()),
-  );
-
-  try {
+  //ADD WORK EXPERIENCE SAVE AND DELETE FUNCTIONS HERE
+  Future<void> _saveWorkExperience(int index) async {
     final work = _workExperienceData[index];
-    
-    if (work.containsKey('id') && work['id'] != null) {
-      final response = await _userService.deleteWorkExperience(widget.token, work['id'].toString());
+
+    // Validate position title
+    if (work['position']?.toString().trim().isEmpty ?? true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter position title before saving'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final employeeId = _userDetails?['employee']?['id'];
+      if (employeeId == null) throw Exception('Employee ID not found');
+
+      bool isGovernmentService = false;
+      final govServiceValue = work['govtService']?.toString().toUpperCase();
+      if (govServiceValue == 'YES' ||
+          govServiceValue == 'TRUE' ||
+          govServiceValue == '1') {
+        isGovernmentService = true;
+      }
+
+      final workData = {
+        'dateFrom': work['dateFrom'] ?? '',
+        'dateTo': work['dateTo'] ?? '',
+        'position': work['position'] ?? '',
+        'company': work['company'] ?? '',
+        'appointmentStatus': work['appointmentStatus'] ?? '',
+        'govtService': isGovernmentService,
+      };
+
+      final response = work.containsKey('id') && work['id'] != null
+          ? await _userService.updateWorkExperience(
+              widget.token,
+              work['id'].toString(),
+              workData,
+            )
+          : await _userService.addWorkExperience(
+              widget.token,
+              employeeId.toString(),
+              workData,
+            );
+
       if (mounted) Navigator.pop(context);
-      
+
       if (response['success']) {
         await _fetchWorkExperienceData();
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Work experience deleted'), backgroundColor: Colors.green),
-          );
-        }
-      } else {
-        throw Exception(response['error']);
-      }
-    } else {
-      if (mounted) Navigator.pop(context);
-      setState(() {
-        _workExperienceData.removeAt(index);
-        if (_editingWorkExperienceIndex == index) _editingWorkExperienceIndex = null;
-      });
-    }
-  } catch (e) {
-    if (mounted) {
-      Navigator.of(context, rootNavigator: true).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to delete: $e'), backgroundColor: Colors.red),
-      );
-    }
-  }
-}
-
-
-Future<void> _fetchVoluntaryWorkData() async {
-  print('\n🤝 [UserDetailsPage] FETCHING VOLUNTARY WORK DATA');
-  
-  final employeeId = _userDetails?['employee']?['id'];
-  if (employeeId == null) {
-    print('❌ No employee ID, skipping voluntary work fetch');
-    return;
-  }
-
-  try {
-    final response = await _userService.getVoluntaryWorkDetails(
-      widget.token, 
-      employeeId.toString(),
-    );
-    
-    if (response['success']) {
-      final List<dynamic> voluntaryList = response['data']['voluntaryWorkList'] ?? [];
-      
-      setState(() {
-        _voluntaryWorkListData = voluntaryList.map((item) => Map<String, dynamic>.from(item)).toList();
-        _parseVoluntaryWorkData();
-      });
-      
-      print('✅ Loaded ${_voluntaryWorkListData.length} voluntary work records');
-    }
-  } catch (e) {
-    print('💥 Exception: $e');
-  }
-}
-
-void _parseVoluntaryWorkData() {
-  _voluntaryWorkData = _voluntaryWorkListData.map((voluntary) {
-    return {
-      'id': voluntary['id'],
-      'organization': voluntary['organization'] ?? '',
-      'dateFrom': voluntary['dateFrom'] ?? '',
-      'dateTo': voluntary['dateTo'] ?? '',
-      'hours': voluntary['hours']?.toString() ?? '',
-      'work': voluntary['work'] ?? '',
-    };
-  }).toList();
-  _collapsedVoluntaryWorkIndexes = List<int>.generate(
-  _voluntaryWorkData.length, 
-  (index) => index
-).toSet();
-  print('🤝 Parsed ${_voluntaryWorkData.length} voluntary work records');
-}
-
-
-Future<void> _saveVoluntaryWork(int index) async {
-  final voluntary = _voluntaryWorkData[index];
-  
-  // Validate organization
-  if (voluntary['organization']?.toString().trim().isEmpty ?? true) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Please enter organization name before saving'),
-        backgroundColor: Colors.orange,
-      ),
-    );
-    return;
-  }
-
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (context) => const Center(child: CircularProgressIndicator()),
-  );
-
-  try {
-    final employeeId = _userDetails?['employee']?['id'];
-    if (employeeId == null) throw Exception('Employee ID not found');
-
-    final voluntaryData = {
-      'organization': voluntary['organization'] ?? '',
-      'dateFrom': voluntary['dateFrom'] ?? '',
-      'dateTo': voluntary['dateTo'] ?? '',
-      'hours': voluntary['hours'] ?? '',
-      'work': voluntary['work'] ?? '',
-    };
-
-    final response = voluntary.containsKey('id') && voluntary['id'] != null
-        ? await _userService.updateVoluntaryWork(widget.token, voluntary['id'].toString(), voluntaryData)
-        : await _userService.addVoluntaryWork(widget.token, employeeId.toString(), voluntaryData);
-
-    if (mounted) Navigator.pop(context);
-
-    if (response['success']) {
-      await _fetchVoluntaryWorkData();
-      if (mounted) {
-        setState(() => _editingVoluntaryWorkIndex = null);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Voluntary work saved successfully'), backgroundColor: Colors.green),
-        );
-      }
-    } else {
-      throw Exception(response['error']);
-    }
-  } catch (e) {
-    if (mounted) {
-      Navigator.of(context, rootNavigator: true).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to save: $e'), backgroundColor: Colors.red),
-      );
-    }
-  }
-}
-
-
-Future<void> _deleteVoluntaryWork(int index) async {
-  final confirmed = await showDialog<bool>(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: const Text('Delete Voluntary Work'),
-      content: const Text('Are you sure you want to delete this voluntary work record?'),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-        TextButton(
-          onPressed: () => Navigator.pop(context, true),
-          style: TextButton.styleFrom(foregroundColor: Colors.red),
-          child: const Text('Delete'),
-        ),
-      ],
-    ),
-  );
-
-  if (confirmed != true) return;
-
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (context) => const Center(child: CircularProgressIndicator()),
-  );
-
-  try {
-    final voluntary = _voluntaryWorkData[index];
-    
-    if (voluntary.containsKey('id') && voluntary['id'] != null) {
-      final response = await _userService.deleteVoluntaryWork(widget.token, voluntary['id'].toString());
-      if (mounted) Navigator.pop(context);
-      
-      if (response['success']) {
-        await _fetchVoluntaryWorkData();
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Voluntary work deleted'), backgroundColor: Colors.green),
-          );
-        }
-      } else {
-        throw Exception(response['error']);
-      }
-    } else {
-      if (mounted) Navigator.pop(context);
-      setState(() {
-        _voluntaryWorkData.removeAt(index);
-        if (_editingVoluntaryWorkIndex == index) _editingVoluntaryWorkIndex = null;
-      });
-    }
-  } catch (e) {
-    if (mounted) {
-      Navigator.of(context, rootNavigator: true).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to delete: $e'), backgroundColor: Colors.red),
-      );
-    }
-  }
-}
-
-//LEARNING AND DEVELOPMENT FUNCTIONS
-Future<void> _fetchLearningDevelopmentData() async {
-  print('\n📚 [UserDetailsPage] FETCHING LEARNING AND DEVELOPMENT DATA');
-
-  final employeeId = _userDetails?['employee']?['id'];
-  if (employeeId == null) {
-    print('❌ No employee ID, skipping learning and development fetch');
-    return;
-  }
-
-  try {
-    final response = await _userService.getLearningDevelopmentDetails(
-      widget.token,
-      employeeId.toString(),
-    );
-
-    if (response['success']) {
-      final List<dynamic> learningList = response['data']['learnDevList'] ?? [];
-
-      setState(() {
-        _learningDevelopmentListData = learningList.map((item) => Map<String, dynamic>.from(item)).toList();
-        _parseLearningDevelopmentData();
-      });
-
-      print('✅ Loaded ${_learningDevelopmentListData.length} learning and development records');
-    }
-  } catch (e) {
-    print('💥 Exception: $e');
-  }
-}
-
-void _parseLearningDevelopmentData() {
-  _learningDevelopmentData = _learningDevelopmentListData.map((learning) {
-    return {
-      'id':            learning['id'],
-      'title':         learning['title'] ?? '',
-      'attendedFrom':      learning['attendedFrom'] ?? '',
-      'attendedTo':        learning['attendedTo'] ?? '',
-      'hours': learning['hours']?.toString() ?? '',    // API: hours
-      'ldType':      learning['ldType'] ?? '',                 // API: type  (DB: ld_type)
-      'conductedBy':   learning['conductedBy'] ?? '',
-      'certificate_url': learning['certificate_url'] ?? '',      // ⭐ Added
-    };
-  }).toList();
-
-   _collapsedLearningDevIndexes = List<int>.generate(
-  _learningDevelopmentData.length, 
-  (index) => index
-).toSet();
-  print('📚 Parsed ${_learningDevelopmentData.length} learning and development records');
-}
-
-Future<void> _saveLearningDevelopment(int index) async {
-  final learning = _learningDevelopmentData[index];
-
-  if (learning['title']?.toString().trim().isEmpty ?? true) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Please enter the title before saving'),
-        backgroundColor: Colors.orange,
-      ),
-    );
-    return;
-  }
-
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (context) => const Center(child: CircularProgressIndicator()),
-  );
-
-  try {
-    final employeeId = _userDetails?['employee']?['id'];
-    if (employeeId == null) throw Exception('Employee ID not found');
-
-    // ⭐ Map widget field names → API field names expected by the backend
-    final learningData = {
-      'title':           learning['title'] ?? '',
-      'attendedFrom':        learning['attendedFrom'] ?? '',
-      'attendedTo':          learning['attendedTo'] ?? '',
-      'hours':           learning['hours'] ?? '',  
-      'ldType':         learning['ldType'] ?? '',         
-      'conductedBy':     learning['conductedBy'] ?? '',
-      'certificate_url': learning['certificate_url'] ?? '',  
-    };
-
-    final response = learning.containsKey('id') && learning['id'] != null
-        ? await _userService.updateLearningDevelopment(
-            widget.token,
-            learning['id'].toString(),
-            learningData,
-          )
-        : await _userService.addLearningDevelopment(
-            widget.token,
-            employeeId.toString(),
-            learningData,
-          );
-
-    if (mounted) Navigator.pop(context);
-
-    if (response['success']) {
-      await _fetchLearningDevelopmentData();
-      if (mounted) {
-        setState(() => _editingLearningDevelopmentIndex = null);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Learning and development record saved successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } else {
-      throw Exception(response['error']);
-    }
-  } catch (e) {
-    if (mounted) {
-      Navigator.of(context, rootNavigator: true).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to save: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-}
-
-Future<void> _deleteLearningDevelopment(int index) async {
-  final confirmed = await showDialog<bool>(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: const Text('Delete Learning and Development Record'),
-      content: const Text('Are you sure you want to delete this learning and development record?'),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-        TextButton(
-          onPressed: () => Navigator.pop(context, true),
-          style: TextButton.styleFrom(foregroundColor: Colors.red),
-          child: const Text('Delete'),
-        ),
-      ],
-    ),
-  );
-  if (confirmed != true) return;
-
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (context) => const Center(child: CircularProgressIndicator()),
-  );
-
-  try {
-    final learning = _learningDevelopmentData[index];
-
-    if (learning.containsKey('id') && learning['id'] != null) {
-      final response = await _userService.deleteLearningDevelopment(widget.token, learning['id'].toString());
-      if (mounted) Navigator.pop(context);
-
-      if (response['success']) {
-        await _fetchLearningDevelopmentData();
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Learning and development record deleted'), backgroundColor: Colors.green),
-          );
-        }
-      } else {
-        throw Exception(response['error']);
-      }
-    } else {
-      if (mounted) Navigator.pop(context);
-      setState(() {
-        _learningDevelopmentData.removeAt(index);
-        if (_editingLearningDevelopmentIndex == index) _editingLearningDevelopmentIndex = null;
-      });
-    }
-  } catch (e) {
-    if (mounted) {
-      Navigator.of(context, rootNavigator: true).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to delete: $e'), backgroundColor: Colors.red),
-      );
-    }
-  }
-}
-
-Future<void> _fetchCivilServiceEligibilityData() async {
-  print('\n📜 [UserDetailsPage] FETCHING CIVIL SERVICE ELIGIBILITY');
-
-  final employeeId = _userDetails?['employee']?['id'];
-  if (employeeId == null) {
-    print('❌ No employee ID, skipping civil service eligibility fetch');
-    return;
-  }
-
-  try {
-    final response = await _userService.getCivilServiceEligibilityDetails(
-      widget.token,
-      employeeId.toString(),
-    );
-
-    if (response['success']) {
-      final List<dynamic> eligibilityList = response['data']['eligibilityList'] ?? [];
-
-      setState(() {
-        _civilServiceEligibilityListData = eligibilityList
-            .map((item) => Map<String, dynamic>.from(item))
-            .toList();
-        _parseCivilServiceEligibilityData();
-      });
-
-      print('✅ Loaded ${_civilServiceEligibilityListData.length} civil service eligibility records');
-    }
-  } catch (e) {
-    print('💥 Exception: $e');
-  }
-}
-
-void _parseCivilServiceEligibilityData() {
-  _civilServiceData = _civilServiceEligibilityListData.map((eligibility) {
-    return {
-      'id': eligibility['id'],
-      'serviceEligibility': eligibility['serviceEligibility'] ?? '',
-      'rating': eligibility['rating'] ?? '',
-      'examPlace': eligibility['examPlace'] ?? '',
-      'examDate': eligibility['examDate'] ?? '',
-      'licenseNo': eligibility['licenseNo'] ?? '',
-      // 'validity': eligibility['validity'] ?? '',
-    };
-  }).toList();
- _collapsedCivilServiceIndexes = List<int>.generate(
-  _civilServiceData.length, 
-  (index) => index
-).toSet();
-  print('📜 Parsed ${_civilServiceData.length} civil service eligibility records');
-}
-
-Future<void> _saveCivilServiceEligibility(int index) async {
-  final eligibility = _civilServiceData[index];
-
-  if (eligibility['serviceEligibility']?.toString().trim().isEmpty ?? true) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Please enter the career service before saving'),
-        backgroundColor: Colors.orange,
-      ),
-    );
-    return;
-  }
-
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (context) => const Center(child: CircularProgressIndicator()),
-  );
-
-  try {
-    final employeeId = _userDetails?['employee']?['id'];
-    if (employeeId == null) throw Exception('Employee ID not found');
-
-    // ⭐ Map widget field names → API field names
-    final eligibilityData = {
-      'serviceEligibility': eligibility['serviceEligibility'] ?? '',
-      'rating': eligibility['rating'] ?? '',
-      'examPlace': eligibility['examPlace'] ?? '',
-      'examDate': eligibility['examDate'] ?? '',
-      'licenseNo': eligibility['licenseNo'] ?? '',
-      // 'validity': eligibility['validity'] ?? '',
-    };
-
-    final response = eligibility.containsKey('id') && eligibility['id'] != null
-        ? await _userService.updateCivilServiceEligibility(
-            widget.token,
-            eligibility['id'].toString(),
-            eligibilityData,
-          )
-        : await _userService.addCivilServiceEligibility(
-            widget.token,
-            employeeId.toString(),
-            eligibilityData,
-          );
-
-    if (mounted) Navigator.pop(context);
-
-    if (response['success']) {
-      await _fetchCivilServiceEligibilityData();
-      if (mounted) {
-        setState(() => _editingCivilServiceIndex = null);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Civil service eligibility saved successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } else {
-      throw Exception(response['error']);
-    }
-  } catch (e) {
-    if (mounted) {
-      Navigator.of(context, rootNavigator: true).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to save: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-}
-
-Future<void> _deleteCivilServiceEligibility(int index) async {
-  final confirmed = await showDialog<bool>(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: const Text('Delete Civil Service Eligibility'),
-      content: const Text('Are you sure you want to delete this civil service eligibility record?'),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context, false),
-          child: const Text('Cancel'),
-        ),
-        TextButton(
-          onPressed: () => Navigator.pop(context, true),
-          style: TextButton.styleFrom(foregroundColor: Colors.red),
-          child: const Text('Delete'),
-        ),
-      ],
-    ),
-  );
-
-  if (confirmed != true) return;
-
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (context) => const Center(child: CircularProgressIndicator()),
-  );
-
-  try {
-    final eligibility = _civilServiceData[index];
-
-    if (eligibility.containsKey('id') && eligibility['id'] != null) {
-      final response = await _userService.deleteCivilServiceEligibility(
-        widget.token,
-        eligibility['id'].toString(),
-      );
-
-      if (mounted) Navigator.pop(context);
-
-      if (response['success']) {
-        await _fetchCivilServiceEligibilityData();
-        if (mounted) {
+          setState(() => _editingWorkExperienceIndex = null);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Civil service eligibility deleted'),
+              content: Text('Work experience saved successfully'),
               backgroundColor: Colors.green,
             ),
           );
@@ -1888,31 +1315,710 @@ Future<void> _deleteCivilServiceEligibility(int index) async {
       } else {
         throw Exception(response['error']);
       }
-    } else {
-      if (mounted) Navigator.pop(context);
-      setState(() {
-        _civilServiceData.removeAt(index);
-        if (_editingCivilServiceIndex == index) {
-          _editingCivilServiceIndex = null;
-        }
-      });
-    }
-  } catch (e) {
-    if (mounted) {
-      Navigator.of(context, rootNavigator: true).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to delete: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
-}
 
+  Future<void> _deleteWorkExperience(int index) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Work Experience'),
+        content: const Text(
+          'Are you sure you want to delete this work experience record?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
 
-//OTHER INFORMATION
-Future<void> _fetchOtherInfoData() async {
+    if (confirmed != true) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final work = _workExperienceData[index];
+
+      if (work.containsKey('id') && work['id'] != null) {
+        final response = await _userService.deleteWorkExperience(
+          widget.token,
+          work['id'].toString(),
+        );
+        if (mounted) Navigator.pop(context);
+
+        if (response['success']) {
+          await _fetchWorkExperienceData();
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Work experience deleted'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+        } else {
+          throw Exception(response['error']);
+        }
+      } else {
+        if (mounted) Navigator.pop(context);
+        setState(() {
+          _workExperienceData.removeAt(index);
+          if (_editingWorkExperienceIndex == index)
+            _editingWorkExperienceIndex = null;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to delete: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _fetchVoluntaryWorkData() async {
+    print('\n🤝 [UserDetailsPage] FETCHING VOLUNTARY WORK DATA');
+
+    final employeeId = _userDetails?['employee']?['id'];
+    if (employeeId == null) {
+      print('❌ No employee ID, skipping voluntary work fetch');
+      return;
+    }
+
+    try {
+      final response = await _userService.getVoluntaryWorkDetails(
+        widget.token,
+        employeeId.toString(),
+      );
+
+      if (response['success']) {
+        final List<dynamic> voluntaryList =
+            response['data']['voluntaryWorkList'] ?? [];
+
+        setState(() {
+          _voluntaryWorkListData = voluntaryList
+              .map((item) => Map<String, dynamic>.from(item))
+              .toList();
+          _parseVoluntaryWorkData();
+        });
+
+        print(
+          '✅ Loaded ${_voluntaryWorkListData.length} voluntary work records',
+        );
+      }
+    } catch (e) {
+      print('💥 Exception: $e');
+    }
+  }
+
+  void _parseVoluntaryWorkData() {
+    _voluntaryWorkData = _voluntaryWorkListData.map((voluntary) {
+      return {
+        'id': voluntary['id'],
+        'organization': voluntary['organization'] ?? '',
+        'dateFrom': voluntary['dateFrom'] ?? '',
+        'dateTo': voluntary['dateTo'] ?? '',
+        'hours': voluntary['hours']?.toString() ?? '',
+        'work': voluntary['work'] ?? '',
+      };
+    }).toList();
+    _collapsedVoluntaryWorkIndexes = List<int>.generate(
+      _voluntaryWorkData.length,
+      (index) => index,
+    ).toSet();
+    print('🤝 Parsed ${_voluntaryWorkData.length} voluntary work records');
+  }
+
+  Future<void> _saveVoluntaryWork(int index) async {
+    final voluntary = _voluntaryWorkData[index];
+
+    // Validate organization
+    if (voluntary['organization']?.toString().trim().isEmpty ?? true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter organization name before saving'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final employeeId = _userDetails?['employee']?['id'];
+      if (employeeId == null) throw Exception('Employee ID not found');
+
+      final voluntaryData = {
+        'organization': voluntary['organization'] ?? '',
+        'dateFrom': voluntary['dateFrom'] ?? '',
+        'dateTo': voluntary['dateTo'] ?? '',
+        'hours': voluntary['hours'] ?? '',
+        'work': voluntary['work'] ?? '',
+      };
+
+      final response = voluntary.containsKey('id') && voluntary['id'] != null
+          ? await _userService.updateVoluntaryWork(
+              widget.token,
+              voluntary['id'].toString(),
+              voluntaryData,
+            )
+          : await _userService.addVoluntaryWork(
+              widget.token,
+              employeeId.toString(),
+              voluntaryData,
+            );
+
+      if (mounted) Navigator.pop(context);
+
+      if (response['success']) {
+        await _fetchVoluntaryWorkData();
+        if (mounted) {
+          setState(() => _editingVoluntaryWorkIndex = null);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Voluntary work saved successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } else {
+        throw Exception(response['error']);
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteVoluntaryWork(int index) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Voluntary Work'),
+        content: const Text(
+          'Are you sure you want to delete this voluntary work record?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final voluntary = _voluntaryWorkData[index];
+
+      if (voluntary.containsKey('id') && voluntary['id'] != null) {
+        final response = await _userService.deleteVoluntaryWork(
+          widget.token,
+          voluntary['id'].toString(),
+        );
+        if (mounted) Navigator.pop(context);
+
+        if (response['success']) {
+          await _fetchVoluntaryWorkData();
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Voluntary work deleted'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+        } else {
+          throw Exception(response['error']);
+        }
+      } else {
+        if (mounted) Navigator.pop(context);
+        setState(() {
+          _voluntaryWorkData.removeAt(index);
+          if (_editingVoluntaryWorkIndex == index)
+            _editingVoluntaryWorkIndex = null;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to delete: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  //LEARNING AND DEVELOPMENT FUNCTIONS
+  Future<void> _fetchLearningDevelopmentData() async {
+    print('\n📚 [UserDetailsPage] FETCHING LEARNING AND DEVELOPMENT DATA');
+
+    final employeeId = _userDetails?['employee']?['id'];
+    if (employeeId == null) {
+      print('❌ No employee ID, skipping learning and development fetch');
+      return;
+    }
+
+    try {
+      final response = await _userService.getLearningDevelopmentDetails(
+        widget.token,
+        employeeId.toString(),
+      );
+
+      if (response['success']) {
+        final List<dynamic> learningList =
+            response['data']['learnDevList'] ?? [];
+
+        setState(() {
+          _learningDevelopmentListData = learningList
+              .map((item) => Map<String, dynamic>.from(item))
+              .toList();
+          _parseLearningDevelopmentData();
+        });
+
+        print(
+          '✅ Loaded ${_learningDevelopmentListData.length} learning and development records',
+        );
+      }
+    } catch (e) {
+      print('💥 Exception: $e');
+    }
+  }
+
+  void _parseLearningDevelopmentData() {
+    _learningDevelopmentData = _learningDevelopmentListData.map((learning) {
+      return {
+        'id': learning['id'],
+        'title': learning['title'] ?? '',
+        'attendedFrom': learning['attendedFrom'] ?? '',
+        'attendedTo': learning['attendedTo'] ?? '',
+        'hours': learning['hours']?.toString() ?? '', // API: hours
+        'ldType': learning['ldType'] ?? '', // API: type  (DB: ld_type)
+        'conductedBy': learning['conductedBy'] ?? '',
+        'certificate_url': learning['certificate_url'] ?? '', // ⭐ Added
+      };
+    }).toList();
+
+    _collapsedLearningDevIndexes = List<int>.generate(
+      _learningDevelopmentData.length,
+      (index) => index,
+    ).toSet();
+    print(
+      '📚 Parsed ${_learningDevelopmentData.length} learning and development records',
+    );
+  }
+
+  Future<void> _saveLearningDevelopment(int index) async {
+    final learning = _learningDevelopmentData[index];
+
+    if (learning['title']?.toString().trim().isEmpty ?? true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter the title before saving'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final employeeId = _userDetails?['employee']?['id'];
+      if (employeeId == null) throw Exception('Employee ID not found');
+
+      // ⭐ Map widget field names → API field names expected by the backend
+      final learningData = {
+        'title': learning['title'] ?? '',
+        'attendedFrom': learning['attendedFrom'] ?? '',
+        'attendedTo': learning['attendedTo'] ?? '',
+        'hours': learning['hours'] ?? '',
+        'ldType': learning['ldType'] ?? '',
+        'conductedBy': learning['conductedBy'] ?? '',
+        'certificate_url': learning['certificate_url'] ?? '',
+      };
+
+      final response = learning.containsKey('id') && learning['id'] != null
+          ? await _userService.updateLearningDevelopment(
+              widget.token,
+              learning['id'].toString(),
+              learningData,
+            )
+          : await _userService.addLearningDevelopment(
+              widget.token,
+              employeeId.toString(),
+              learningData,
+            );
+
+      if (mounted) Navigator.pop(context);
+
+      if (response['success']) {
+        await _fetchLearningDevelopmentData();
+        if (mounted) {
+          setState(() => _editingLearningDevelopmentIndex = null);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Learning and development record saved successfully',
+              ),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } else {
+        throw Exception(response['error']);
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteLearningDevelopment(int index) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Learning and Development Record'),
+        content: const Text(
+          'Are you sure you want to delete this learning and development record?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final learning = _learningDevelopmentData[index];
+
+      if (learning.containsKey('id') && learning['id'] != null) {
+        final response = await _userService.deleteLearningDevelopment(
+          widget.token,
+          learning['id'].toString(),
+        );
+        if (mounted) Navigator.pop(context);
+
+        if (response['success']) {
+          await _fetchLearningDevelopmentData();
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Learning and development record deleted'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+        } else {
+          throw Exception(response['error']);
+        }
+      } else {
+        if (mounted) Navigator.pop(context);
+        setState(() {
+          _learningDevelopmentData.removeAt(index);
+          if (_editingLearningDevelopmentIndex == index)
+            _editingLearningDevelopmentIndex = null;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to delete: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _fetchCivilServiceEligibilityData() async {
+    print('\n📜 [UserDetailsPage] FETCHING CIVIL SERVICE ELIGIBILITY');
+
+    final employeeId = _userDetails?['employee']?['id'];
+    if (employeeId == null) {
+      print('❌ No employee ID, skipping civil service eligibility fetch');
+      return;
+    }
+
+    try {
+      final response = await _userService.getCivilServiceEligibilityDetails(
+        widget.token,
+        employeeId.toString(),
+      );
+
+      if (response['success']) {
+        final List<dynamic> eligibilityList =
+            response['data']['eligibilityList'] ?? [];
+
+        setState(() {
+          _civilServiceEligibilityListData = eligibilityList
+              .map((item) => Map<String, dynamic>.from(item))
+              .toList();
+          _parseCivilServiceEligibilityData();
+        });
+
+        print(
+          '✅ Loaded ${_civilServiceEligibilityListData.length} civil service eligibility records',
+        );
+      }
+    } catch (e) {
+      print('💥 Exception: $e');
+    }
+  }
+
+  void _parseCivilServiceEligibilityData() {
+    _civilServiceData = _civilServiceEligibilityListData.map((eligibility) {
+      return {
+        'id': eligibility['id'],
+        'serviceEligibility': eligibility['serviceEligibility'] ?? '',
+        'rating': eligibility['rating'] ?? '',
+        'examPlace': eligibility['examPlace'] ?? '',
+        'examDate': eligibility['examDate'] ?? '',
+        'licenseNo': eligibility['licenseNo'] ?? '',
+        // 'validity': eligibility['validity'] ?? '',
+      };
+    }).toList();
+    _collapsedCivilServiceIndexes = List<int>.generate(
+      _civilServiceData.length,
+      (index) => index,
+    ).toSet();
+    print(
+      '📜 Parsed ${_civilServiceData.length} civil service eligibility records',
+    );
+  }
+
+  Future<void> _saveCivilServiceEligibility(int index) async {
+    final eligibility = _civilServiceData[index];
+
+    if (eligibility['serviceEligibility']?.toString().trim().isEmpty ?? true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter the career service before saving'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final employeeId = _userDetails?['employee']?['id'];
+      if (employeeId == null) throw Exception('Employee ID not found');
+
+      // ⭐ Map widget field names → API field names
+      final eligibilityData = {
+        'serviceEligibility': eligibility['serviceEligibility'] ?? '',
+        'rating': eligibility['rating'] ?? '',
+        'examPlace': eligibility['examPlace'] ?? '',
+        'examDate': eligibility['examDate'] ?? '',
+        'licenseNo': eligibility['licenseNo'] ?? '',
+        // 'validity': eligibility['validity'] ?? '',
+      };
+
+      final response =
+          eligibility.containsKey('id') && eligibility['id'] != null
+          ? await _userService.updateCivilServiceEligibility(
+              widget.token,
+              eligibility['id'].toString(),
+              eligibilityData,
+            )
+          : await _userService.addCivilServiceEligibility(
+              widget.token,
+              employeeId.toString(),
+              eligibilityData,
+            );
+
+      if (mounted) Navigator.pop(context);
+
+      if (response['success']) {
+        await _fetchCivilServiceEligibilityData();
+        if (mounted) {
+          setState(() => _editingCivilServiceIndex = null);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Civil service eligibility saved successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } else {
+        throw Exception(response['error']);
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteCivilServiceEligibility(int index) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Civil Service Eligibility'),
+        content: const Text(
+          'Are you sure you want to delete this civil service eligibility record?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final eligibility = _civilServiceData[index];
+
+      if (eligibility.containsKey('id') && eligibility['id'] != null) {
+        final response = await _userService.deleteCivilServiceEligibility(
+          widget.token,
+          eligibility['id'].toString(),
+        );
+
+        if (mounted) Navigator.pop(context);
+
+        if (response['success']) {
+          await _fetchCivilServiceEligibilityData();
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Civil service eligibility deleted'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+        } else {
+          throw Exception(response['error']);
+        }
+      } else {
+        if (mounted) Navigator.pop(context);
+        setState(() {
+          _civilServiceData.removeAt(index);
+          if (_editingCivilServiceIndex == index) {
+            _editingCivilServiceIndex = null;
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to delete: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _fetchOtherInfoData() async {
     print('\n📋 [UserDetailsPage] FETCHING OTHER INFO');
 
     final employeeId = _userDetails?['employee']?['id'];
@@ -1924,21 +2030,81 @@ Future<void> _fetchOtherInfoData() async {
     setState(() => _isFetchingOtherInfo = true);
 
     try {
-      final response = await _userService.getOtherInfo(
+      final response = await _userService.getAllOtherInfo(
         widget.token,
         employeeId.toString(),
       );
 
       if (response['success']) {
-        final raw = response['data']['otherInfo'];   // single object from API
+        final List<dynamic> rawList = response['data']['otherInfoList'] ?? [];
+
         setState(() {
-          _otherInfoRecord = raw != null
-              ? Map<String, dynamic>.from(raw)
+          // Flatten all entries into the three lists
+          _specialSkillsData = [];
+          _nonAcademicDistinctionsData = [];
+          _membershipData = [];
+
+          for (final item in rawList) {
+            final record = Map<String, dynamic>.from(item);
+
+            // Skills
+            final skillsRaw = record['skills']?.toString() ?? '';
+            if (skillsRaw.isNotEmpty) {
+              _specialSkillsData.addAll(
+                skillsRaw
+                    .split(',')
+                    .map((s) => s.trim())
+                    .where((s) => s.isNotEmpty)
+                    .map(
+                      (s) => {'skill': s, '_recordId': record['id'].toString()},
+                    ),
+              );
+            }
+
+            // Recognition
+            final recognitionRaw = record['recognition']?.toString() ?? '';
+            if (recognitionRaw.isNotEmpty) {
+              _nonAcademicDistinctionsData.addAll(
+                recognitionRaw
+                    .split(',')
+                    .map((s) => s.trim())
+                    .where((s) => s.isNotEmpty)
+                    .map(
+                      (s) => {
+                        'distinction': s,
+                        '_recordId': record['id'].toString(),
+                      },
+                    ),
+              );
+            }
+
+            // Membership
+            final membershipRaw = record['membership']?.toString() ?? '';
+            if (membershipRaw.isNotEmpty) {
+              _membershipData.addAll(
+                membershipRaw
+                    .split(',')
+                    .map((s) => s.trim())
+                    .where((s) => s.isNotEmpty)
+                    .map(
+                      (s) => {
+                        'organization': s,
+                        '_recordId': record['id'].toString(),
+                      },
+                    ),
+              );
+            }
+          }
+
+          // Keep the first record for save/update reference
+          _otherInfoRecord = rawList.isNotEmpty
+              ? Map<String, dynamic>.from(rawList.first)
               : null;
-          _parseOtherInfoData();
+
           _isFetchingOtherInfo = false;
         });
-        print('✅ Other info loaded: $_otherInfoRecord');
+
+        print('✅ Other info loaded: ${rawList.length} records');
       } else {
         print('⚠️ Other info fetch failed: ${response['error']}');
         setState(() => _isFetchingOtherInfo = false);
@@ -1949,8 +2115,7 @@ Future<void> _fetchOtherInfoData() async {
     }
   }
 
-
-void _parseOtherInfoData() {
+  void _parseOtherInfoData() {
     if (_otherInfoRecord == null) {
       _specialSkillsData = [];
       _nonAcademicDistinctionsData = [];
@@ -1984,85 +2149,122 @@ void _parseOtherInfoData() {
         .where((s) => s.isNotEmpty)
         .map((s) => {'organization': s})
         .toList();
-
   }
 
-Future<void> _saveOtherInfo() async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
-    );
+  Future<void> _saveOtherInfo() async {
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => const Center(child: CircularProgressIndicator()),
+  );
 
-    try {
-      final employeeId = _userDetails?['employee']?['id'];
-      if (employeeId == null) throw Exception('Employee ID not found');
+  try {
+    final employeeId = _userDetails?['employee']?['id'];
+    if (employeeId == null) throw Exception('Employee ID not found');
 
-      // Re-join list items back to comma-separated strings
-      final skills = _specialSkillsData
-          .map((e) => e['skill']?.toString().trim() ?? '')
-          .where((s) => s.isNotEmpty)
-          .join(', ');
+    // ── 1. Handle EXISTING records: group by _recordId and update only changed fields ──
+    final Map<String, Map<String, List<String>>> grouped = {};
 
-      final recognition = _nonAcademicDistinctionsData
-          .map((e) => e['distinction']?.toString().trim() ?? '')
-          .where((s) => s.isNotEmpty)
-          .join(', ');
+    void addToGroup(String recordId, String field, String value) {
+      grouped.putIfAbsent(recordId, () => {});
+      grouped[recordId]!.putIfAbsent(field, () => []);
+      grouped[recordId]![field]!.add(value);
+    }
 
-      final membership = _membershipData
-          .map((e) => e['organization']?.toString().trim() ?? '')
-          .where((s) => s.isNotEmpty)
-          .join(', ');
+    for (final e in _specialSkillsData) {
+      final v = e['skill']?.toString().trim() ?? '';
+      final id = e['_recordId']?.toString();
+      if (v.isNotEmpty && id != null) addToGroup(id, 'skills', v);
+    }
+    for (final e in _nonAcademicDistinctionsData) {
+      final v = e['distinction']?.toString().trim() ?? '';
+      final id = e['_recordId']?.toString();
+      if (v.isNotEmpty && id != null) addToGroup(id, 'recognition', v);
+    }
+    for (final e in _membershipData) {
+      final v = e['organization']?.toString().trim() ?? '';
+      final id = e['_recordId']?.toString();
+      if (v.isNotEmpty && id != null) addToGroup(id, 'membership', v);
+    }
 
+    for (final entry in grouped.entries) {
+      final fields = entry.value;
       final payload = {
-        'skills': skills,
-        'recognition': recognition,
-        'membership': membership,
+        if (fields.containsKey('skills'))
+          'skills': fields['skills']!.join(', '),
+        if (fields.containsKey('recognition'))
+          'recognition': fields['recognition']!.join(', '),
+        if (fields.containsKey('membership'))
+          'membership': fields['membership']!.join(', '),
       };
+      await _userService.updateOtherInfo(
+        widget.token,
+        entry.key,
+        payload,
+      );
+    }
 
-      final bool isUpdate =
-          _otherInfoRecord != null && _otherInfoRecord!['id'] != null;
-
-      final response = isUpdate
-          ? await _userService.updateOtherInfo(
-              widget.token,
-              _otherInfoRecord!['id'].toString(),
-              payload,
-            )
-          : await _userService.addOtherInfo(
-              widget.token,
-              employeeId.toString(),
-              payload,
-            );
-
-      if (mounted) Navigator.pop(context);
-
-      if (response['success']) {
-        await _fetchOtherInfoData();
-        if (mounted) {
-          setState(() => _isEditingOtherInfo = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Other information saved successfully'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-      } else {
-        throw Exception(response['error']);
-      }
-    } catch (e) {
-      if (mounted) {
-        Navigator.of(context, rootNavigator: true).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to save: $e'),
-            backgroundColor: Colors.red,
-          ),
+    // ── 2. Handle NEW items: each one gets its own addOtherInfo call ──
+    // New skills — each becomes its own record
+    for (final e in _specialSkillsData) {
+      final v = e['skill']?.toString().trim() ?? '';
+      if (v.isNotEmpty && e['_recordId'] == null) {
+        await _userService.addOtherInfo(
+          widget.token,
+          employeeId.toString(),
+          {'skills': v, 'recognition': '', 'membership': ''},
         );
       }
     }
+
+    // New recognitions — each becomes its own record
+    for (final e in _nonAcademicDistinctionsData) {
+      final v = e['distinction']?.toString().trim() ?? '';
+      if (v.isNotEmpty && e['_recordId'] == null) {
+        await _userService.addOtherInfo(
+          widget.token,
+          employeeId.toString(),
+          {'skills': '', 'recognition': v, 'membership': ''},
+        );
+      }
+    }
+
+    // New memberships — each becomes its own record
+    for (final e in _membershipData) {
+      final v = e['organization']?.toString().trim() ?? '';
+      if (v.isNotEmpty && e['_recordId'] == null) {
+        await _userService.addOtherInfo(
+          widget.token,
+          employeeId.toString(),
+          {'skills': '', 'recognition': '', 'membership': v},
+        );
+      }
+    }
+
+    if (mounted) Navigator.pop(context);
+    await _fetchOtherInfoData();
+    if (mounted) {
+      setState(() => _isEditingOtherInfo = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Other information saved successfully'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
+  } catch (e) {
+    if (mounted) {
+      Navigator.of(context, rootNavigator: true).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to save: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
+}
+
 
   Future<void> _fetchPersonReferenceData() async {
     print('\n👥 [UserDetailsPage] FETCHING PERSON REFERENCE');
@@ -2082,18 +2284,18 @@ Future<void> _saveOtherInfo() async {
       );
 
       if (response['success']) {
-  final data = response['data'];
-  // API may return single object or a list — handle both
-  dynamic raw = data['personRef'] ?? data['personRefList'];
-  if (raw is List && raw.isNotEmpty) raw = raw.first;
-  setState(() {
-    _personRefRecord = (raw != null && raw is Map)
-        ? Map<String, dynamic>.from(raw)
-        : null;
-    _parsePersonRefData();
-    _isFetchingPersonRef = false;
-  });
-  print('✅ Person reference loaded: $_personRefRecord');
+        final data = response['data'];
+        // API may return single object or a list — handle both
+        dynamic raw = data['personRef'] ?? data['personRefList'];
+        if (raw is List && raw.isNotEmpty) raw = raw.first;
+        setState(() {
+          _personRefRecord = (raw != null && raw is Map)
+              ? Map<String, dynamic>.from(raw)
+              : null;
+          _parsePersonRefData();
+          _isFetchingPersonRef = false;
+        });
+        print('✅ Person reference loaded: $_personRefRecord');
       } else {
         print('⚠️ Person reference fetch failed: ${response['error']}');
         setState(() => _isFetchingPersonRef = false);
@@ -2104,7 +2306,7 @@ Future<void> _saveOtherInfo() async {
     }
   }
 
-void _parsePersonRefData() {
+  void _parsePersonRefData() {
     if (_personRefRecord == null) {
       _personRefData = {};
       return;
@@ -2119,7 +2321,7 @@ void _parsePersonRefData() {
     print('👥 Parsed person reference data: $_personRefData');
   }
 
- Future<void> _savePersonReference() async {
+  Future<void> _savePersonReference() async {
     if ((_personRefData['refName'] ?? '').toString().trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -2141,8 +2343,8 @@ void _parsePersonRefData() {
       if (employeeId == null) throw Exception('Employee ID not found');
 
       final payload = {
-        'refName':      _personRefData['refName']?.toString().trim()      ?? '',
-        'refAddress':   _personRefData['refAddress']?.toString().trim()   ?? '',
+        'refName': _personRefData['refName']?.toString().trim() ?? '',
+        'refAddress': _personRefData['refAddress']?.toString().trim() ?? '',
         'refTelephone': _personRefData['refTelephone']?.toString().trim() ?? '',
       };
 
@@ -2190,15 +2392,17 @@ void _parsePersonRefData() {
     }
   }
 
- Future<void> _deletePersonReference() async {
-    if (!_personRefData.containsKey('id') || _personRefData['id'] == null) return;
+  Future<void> _deletePersonReference() async {
+    if (!_personRefData.containsKey('id') || _personRefData['id'] == null)
+      return;
 
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Reference'),
         content: const Text(
-            'Are you sure you want to delete this reference record?'),
+          'Are you sure you want to delete this reference record?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -2258,7 +2462,6 @@ void _parsePersonRefData() {
     }
   }
 
-
   void _logout() {
     print('🚪 [UserDetailsPage] Logout button pressed');
     print('🔄 [UserDetailsPage] Navigating back to LoginPage...');
@@ -2269,15 +2472,21 @@ void _parsePersonRefData() {
     );
   }
 
-  @override
+   @override
   Widget build(BuildContext context) {
+    // Use the externally-provided key so MainNavigation can open the drawer,
+    // otherwise fall back to the internal key.
+    final scaffoldKey = widget.scaffoldKey ?? _scaffoldKey;
     return Container(
       decoration: const BoxDecoration(color: Colors.white),
       child: Scaffold(
+        key: scaffoldKey,
         resizeToAvoidBottomInset: false,
         backgroundColor: Colors.transparent,
         appBar: AppBar(
           iconTheme: const IconThemeData(color: Colors.white),
+          // Drawer is opened via the bottom nav Menu icon — hide the AppBar hamburger.
+          automaticallyImplyLeading: false,
           title: Row(
             children: [
               SizedBox(width: 10),
@@ -2330,7 +2539,7 @@ void _parsePersonRefData() {
               ),
             ],
           ),
-          automaticallyImplyLeading: true,
+          
           backgroundColor: const Color(0xFF00674F),
           actions: [
             Padding(
@@ -2343,31 +2552,59 @@ void _parsePersonRefData() {
             ),
           ],
         ),
-        drawer: Drawer(
+        endDrawer: Drawer(
           width: 300,
           backgroundColor: Colors.white,
           child: ListView(
             padding: EdgeInsets.zero,
             children: [
-              SizedBox(
-                height: 80,
-                child: DrawerHeader(
-                  margin: EdgeInsets.zero,
-                  decoration: const BoxDecoration(color: Color(0xFF00674F)),
-                  child: const Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Menu',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+              // SizedBox(
+              //   height: 80,
+              //   child: DrawerHeader(
+              //     margin: EdgeInsets.zero,
+              //     decoration: const BoxDecoration(color: Color(0xFF00674F)),
+              //     child: const Align(
+              //       alignment: Alignment.centerLeft,
+              //       child: Text(
+              //         'Menu',
+              //         style: TextStyle(
+              //           color: Colors.white,
+              //           fontSize: 24,
+              //           fontWeight: FontWeight.bold,
+              //         ),
+              //       ),
+              //     ),
+              //   ),
+              // ),
+              // Information Section with Dropdown
+              ExpansionTile(
+                leading: const Icon(
+                  Icons.room_service,
+                  color: Color(0xFF00674F),
+                ),
+                title: const Text(
+                  'Services',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF00674F),
                   ),
                 ),
+                iconColor: const Color.fromARGB(255, 0, 0, 0),
+                collapsedIconColor: const Color.fromARGB(255, 0, 0, 0),
+                initiallyExpanded: _isServicesExpanded,
+                onExpansionChanged: (expanded) {
+                  setState(() {
+                    _isServicesExpanded = expanded;
+                  });
+                },
+                children: [
+                  _buildDrawerItem(
+                    'Daily Time Record',
+                    Icons.access_time,
+                    _selectedMenu == 'Daily Time Record',
+                  ),
+                ],
               ),
-              // Information Section with Dropdown
               ExpansionTile(
                 leading: const Icon(
                   Icons.info_outline,
@@ -2437,34 +2674,34 @@ void _parsePersonRefData() {
                 ],
               ),
               // Services Section with Dropdown
-              ExpansionTile(
-                leading: const Icon(
-                  Icons.room_service,
-                  color: Color(0xFF00674F),
-                ),
-                title: const Text(
-                  'Services',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF00674F),
-                  ),
-                ),
-                iconColor: const Color.fromARGB(255, 0, 0, 0),
-                collapsedIconColor: const Color.fromARGB(255, 0, 0, 0),
-                initiallyExpanded: _isServicesExpanded,
-                onExpansionChanged: (expanded) {
-                  setState(() {
-                    _isServicesExpanded = expanded;
-                  });
-                },
-                children: [
-                  _buildDrawerItem(
-                    'Daily Time Record',
-                    Icons.access_time,
-                    _selectedMenu == 'Daily Time Record',
-                  ),
-                ],
-              ),
+              // ExpansionTile(
+              //   leading: const Icon(
+              //     Icons.room_service,
+              //     color: Color(0xFF00674F),
+              //   ),
+              //   title: const Text(
+              //     'Services',
+              //     style: TextStyle(
+              //       fontWeight: FontWeight.bold,
+              //       color: Color(0xFF00674F),
+              //     ),
+              //   ),
+              //   iconColor: const Color.fromARGB(255, 0, 0, 0),
+              //   collapsedIconColor: const Color.fromARGB(255, 0, 0, 0),
+              //   initiallyExpanded: _isServicesExpanded,
+              //   onExpansionChanged: (expanded) {
+              //     setState(() {
+              //       _isServicesExpanded = expanded;
+              //     });
+              //   },
+              //   children: [
+              //     _buildDrawerItem(
+              //       'Daily Time Record',
+              //       Icons.access_time,
+              //       _selectedMenu == 'Daily Time Record',
+              //     ),
+              //   ],
+              // ),
             ],
           ),
         ),
@@ -2516,23 +2753,29 @@ void _parsePersonRefData() {
   // FIXED PROFILE HEADER - Always visible at the top
   Widget _buildProfileHeader() {
     return Container(
-      height: 290,
+      height: 295,
       padding: const EdgeInsets.all(16.0),
 
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          AuthenticatedProfilePhoto(
-            photoUrl: _userDetails?['employee']?['photoUrl'],
-            // photoUrl: _userDetails?['photoUrl'],  // Remove ['employee']
-            baseUrl: widget.baseUrl,
-            userName: (_userDetails?['name'] ?? 'User').toString(),
-            radius: 70,
-            token: widget.token,
-            employeeId: _userDetails?['employee']?['id']
-                ?.toString(), // Add employeeId
-            onPhotoUpdated:
-                _fetchUserDetails, // Refresh user details after photo update
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.grey.shade300, width: 2),
+            ),
+            child: AuthenticatedProfilePhoto(
+              photoUrl: _userDetails?['employee']?['photoUrl'],
+              // photoUrl: _userDetails?['photoUrl'],  // Remove ['employee']
+              baseUrl: widget.baseUrl,
+              userName: (_userDetails?['name'] ?? 'User').toString(),
+              radius: 70,
+              token: widget.token,
+              employeeId: _userDetails?['employee']?['id']
+                  ?.toString(), // Add employeeId
+              onPhotoUpdated:
+                  _fetchUserDetails, // Refresh user details after photo update
+            ),
           ),
           const SizedBox(width: 25, height: 10),
           // Name and Details
@@ -2626,405 +2869,423 @@ void _parsePersonRefData() {
     }
   }
 
-  Widget _buildPersonalInformationCard() {
-    return Container(
-      padding: EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Container(
-            margin: const EdgeInsets.all(1),
-            child: Column(
-              children: [
-                // Header Section
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF2C5F4F),
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(8),
-                      topRight: Radius.circular(8),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'PERSONAL INFORMATION',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.5,
-                        ),
+   Widget _buildPersonalInformationCard() {
+    return Column(
+      children: [
+        Column(
+          children: [
+            Container(
+              margin: EdgeInsets.zero,
+              child: Column(
+                children: [
+                  // Header Section
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    width: double.infinity,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF2C5F4F),
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(8),
+                        topRight: Radius.circular(8),
                       ),
-                      Row(
-                        children: [
-                          IconButton(
-                            icon: Icon(
-                              _isEditingPersonalInfo ? Icons.check : Icons.edit,
-                              size: 15,
-                              color: Colors.white,
-                            ),
-                            onPressed: () async {
-                              if (_isEditingPersonalInfo) {
-                                // Save changes (this will automatically exit edit mode)
-                                await _savePersonalInformation();
-                              } else {
-                                if (_userDetails?['employee'] != null) {
-                                  final employee = _userDetails!['employee'];
-
-                                  _personalInfoData = {
-                                    // Name fields
-                                    'lastName': employee['lastName'] ?? '',
-                                    'firstName': employee['firstName'] ?? '',
-                                    'middleName': employee['middleName'] ?? '',
-                                    'suffix': employee['suffix'] ?? '',
-                                    'photoUrl': employee['photoUrl'] ?? '',
-
-                                    // Personal info
-                                    'sex': employee['sex'] ?? '',
-                                    'civilStatus':
-                                        employee['civilStatus'] ?? '',
-                                    'citizenship':
-                                        employee['citizenship'] ?? '',
-                                    'birthdate': employee['birthdate'] ?? '',
-                                    'birthplace': employee['birthplace'] ?? '',
-                                    'employeeId': employee['employeeId'] ?? '',
-
-                                    // Physical attributes
-                                    'height': employee['height'] ?? 0,
-                                    'weight': employee['weight'] ?? 0,
-                                    'bloodType': employee['bloodType'] ?? '',
-
-                                    // Address fields (permanent)
-                                    'houseNo': employee['houseNo'] ?? '',
-                                    'street': employee['street'] ?? '',
-                                    'village': employee['village'] ?? '',
-                                    'barangay': employee['barangay'] ?? '',
-                                    'municipality':
-                                        employee['municipality'] ?? '',
-                                    'province': employee['province'] ?? '',
-                                    'zipCode': employee['zipCode'] ?? '',
-
-                                    // Address fields (residential)
-                                    'resHouseNo': employee['resHouseNo'] ?? '',
-                                    'resStreet': employee['resStreet'] ?? '',
-                                    'resVillage': employee['resVillage'] ?? '',
-                                    'resBarangay':
-                                        employee['resBarangay'] ?? '',
-                                    'resMunicipality':
-                                        employee['resMunicipality'] ?? '',
-                                    'resProvince':
-                                        employee['resProvince'] ?? '',
-                                    'resZipCode': employee['resZipCode'] ?? '',
-
-                                    // Contact info
-                                    'telephoneNo':
-                                        employee['telephoneNo'] ?? '',
-                                    'mobileNo': employee['mobileNo'] ?? '',
-                                    'email': employee['email'] ?? '',
-
-                                    // Government IDs (only if you want them editable in personal info)
-                                    'tin': employee['tin'] ?? '',
-                                    'phic': employee['phic'] ?? '',
-                                    'sss': employee['sss'] ?? '',
-                                    'pagibig': employee['pagibig'] ?? '',
-                                    'gsis': employee['gsis'] ?? '',
-                                    'umid': employee['umid'] ?? '',
-                                    'philsys': employee['philsys'] ?? '',
-
-                                    'employmentStatus':
-                                        employee['employmentStatus'] ?? 'true',
-                                  };
-
-                                  // Note: employmentStatus and photo fields are intentionally NOT included
-
-                                  print(
-                                    '✅ [UserDetailsPage] Personal info initialized with ${_personalInfoData.length} editable fields',
-                                  );
-                                }
-                                setState(() {
-                                  _isEditingPersonalInfo = true;
-                                });
-                              }
-                            },
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                // Content Section
-                Container(
-                  margin: const EdgeInsets.only(bottom: 14),
-                  padding: const EdgeInsets.all(10),
-                  width: double.infinity,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 5,
-                      vertical: 15,
                     ),
-
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _isEditingPersonalInfo
-                            ? _buildDateFieldInline(
-                                'Date of Birth (YYYY-MM-DD)',
-                                _personalInfoData['birthdate'],
-                                (value) => setState(
-                                  () => _personalInfoData['birthdate'] = value,
-                                ),
-                              )
-                            : _buildInfoFieldInline(
-                                'Date of Birth',
-                                _userDetails?['employee']?['birthdate'],
-                              ),
-                        const SizedBox(height: 20),
-                        _isEditingPersonalInfo
-                            ? _buildEditableFieldInline(
-                                'Place of Birth',
-                                _personalInfoData['birthplace'],
-                                (value) => setState(
-                                  () => _personalInfoData['birthplace'] = value,
-                                ),
-                              )
-                            : _buildInfoFieldInline(
-                                'Place of Birth',
-                                _userDetails?['employee']?['birthplace'],
-                              ),
-                        const SizedBox(height: 20),
-                        _isEditingPersonalInfo
-                            ? _buildEditableFieldInline(
-                                'Civil Status',
-                                _personalInfoData['civilStatus'],
-                                (value) => setState(
-                                  () =>
-                                      _personalInfoData['civilStatus'] = value,
-                                ),
-                              )
-                            : _buildInfoFieldInline(
-                                'Civil Status',
-                                _userDetails?['employee']?['civilStatus'],
-                              ),
-                        const SizedBox(height: 20),
-                        _isEditingPersonalInfo
-                            ? _buildEditableFieldInline(
-                                'Citizenship',
-                                _personalInfoData['citizenship'],
-                                (value) => setState(
-                                  () =>
-                                      _personalInfoData['citizenship'] = value,
-                                ),
-                              )
-                            : _buildInfoFieldInline(
-                                'Citizenship',
-                                _userDetails?['employee']?['citizenship'],
-                              ),
-                        const SizedBox(height: 20),
-                        _isEditingPersonalInfo
-                            ? _buildEditableFieldInline(
-                                'Sex at Birth',
-                                _personalInfoData['sex'],
-                                (value) => setState(
-                                  () => _personalInfoData['sex'] = value,
-                                ),
-                              )
-                            : _buildInfoFieldInline(
-                                'Sex at Birth',
-                                _userDetails?['employee']?['sex'],
-                              ),
-                        const SizedBox(height: 20),
-                        _isEditingPersonalInfo
-                            ? _buildEditableFieldInline(
-                                'Blood Type',
-                                _personalInfoData['bloodType'],
-                                (value) => setState(
-                                  () => _personalInfoData['bloodType'] = value,
-                                ),
-                              )
-                            : _buildInfoFieldInline(
-                                'Blood Type',
-                                _userDetails?['employee']?['bloodType'],
-                              ),
-                        const SizedBox(height: 20),
-                        _isEditingPersonalInfo
-                            ? _buildEditableFieldInline(
-                                'Height (cm)',
-                                _personalInfoData['height']?.toString() ?? '',
-                                (value) => setState(
-                                  () => _personalInfoData['height'] =
-                                      int.tryParse(value) ?? 0,
-                                ),
-                              )
-                            : _buildInfoFieldInline(
-                                'Height (cm)',
-                                _userDetails?['employee']?['height'],
-                              ),
-                        const SizedBox(height: 20),
-                        _isEditingPersonalInfo
-                            ? _buildEditableFieldInline(
-                                'Weight (kg)',
-                                _personalInfoData['weight']?.toString() ?? '',
-                                (value) => setState(
-                                  () => _personalInfoData['weight'] =
-                                      int.tryParse(value) ?? 0,
-                                ),
-                              )
-                            : _buildInfoFieldInline(
-                                'Weight (kg)',
-                                _userDetails?['employee']?['weight'],
-                              ),
-                        const SizedBox(height: 20),
-                        _isEditingPersonalInfo
-                            ? Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Residential Address',
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      color: Colors.grey,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  _buildEditableFieldInline(
-                                    'Barangay',
-                                    _personalInfoData['barangay'],
-                                    (value) => setState(
-                                      () =>
-                                          _personalInfoData['barangay'] = value,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  _buildEditableFieldInline(
-                                    'Municipality',
-                                    _personalInfoData['municipality'],
-                                    (value) => setState(
-                                      () => _personalInfoData['municipality'] =
-                                          value,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  _buildEditableFieldInline(
-                                    'Province',
-                                    _personalInfoData['province'],
-                                    (value) => setState(
-                                      () =>
-                                          _personalInfoData['province'] = value,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  _buildEditableFieldInline(
-                                    'Zip Code',
-                                    _personalInfoData['zipCode'],
-                                    (value) => setState(
-                                      () =>
-                                          _personalInfoData['zipCode'] = value,
-                                    ),
-                                  ),
-                                ],
-                              )
-                            : _buildInfoFieldInline(
-                                'Residential Address',
-                                "${_userDetails?['employee']?['barangay'] ?? ''}, "
-                                    "${_userDetails?['employee']?['municipality'] ?? ''}, "
-                                    "${_userDetails?['employee']?['province'] ?? ''}, "
-                                    "${_userDetails?['employee']?['zipCode'] ?? ''}",
-                              ),
-                        const SizedBox(height: 20),
-                        _buildInfoFieldInline(
-                          'Permanent Address',
-                          "${_userDetails?['employee']?['barangay'] ?? ''}, "
-                              "${_userDetails?['employee']?['municipality'] ?? ''}, "
-                              "${_userDetails?['employee']?['province'] ?? ''}, "
-                              "${_userDetails?['employee']?['zipCode'] ?? ''}",
+                        const Text(
+                          'PERSONAL INFORMATION',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
                         ),
-                        const SizedBox(height: 20),
-                        _isEditingPersonalInfo
-                            ? _buildPhoneFieldInline(
-                                'Telephone No.',
-                                _personalInfoData['telephoneNo'],
-                                (value) => setState(
-                                  () =>
-                                      _personalInfoData['telephoneNo'] = value,
-                                ),
-                              )
-                            : _buildInfoFieldInline(
-                                'Telephone No.',
-                                _userDetails?['employee']?['telephoneNo'],
+                        Row(
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                _isEditingPersonalInfo ? Icons.check : Icons.edit,
+                                size: 15,
+                                color: Colors.white,
                               ),
-                        const SizedBox(height: 20),
-                        _isEditingPersonalInfo
-                            ? _buildPhoneFieldInline(
-                                'Mobile No.',
-                                _personalInfoData['mobileNo'],
-                                (value) => setState(
-                                  () => _personalInfoData['mobileNo'] = value,
-                                ),
-                              )
-                            : _buildInfoFieldInline(
-                                'Mobile No.',
-                                _userDetails?['employee']?['mobileNo'],
-                              ),
-                        const SizedBox(height: 20),
-                        _buildInfoFieldInline(
-                          'Email Address',
-                          _userDetails?['email'],
-                        ),
-                        const SizedBox(height: 20),
-                        _buildInfoFieldInline(
-                          'Agency Employee No.',
-                          _userDetails?['employee']?['employeeId'],
-                        ),
-                        const SizedBox(height: 20),
-                        _buildInfoFieldInline(
-                          'UMID ID No.',
-                          _userDetails?['employee']?['umid'],
-                        ),
-                        const SizedBox(height: 20),
-                        _buildInfoFieldInline(
-                          'Pag-ibig No.',
-                          _userDetails?['employee']?['pagibig'],
-                        ),
-                        const SizedBox(height: 20),
-                        _buildInfoFieldInline(
-                          'PhilHealth No.',
-                          _userDetails?['employee']?['phic'],
-                        ),
-                        const SizedBox(height: 20),
-                        _buildInfoFieldInline(
-                          'PhilSys No. (PSN)',
-                          _userDetails?['employee']?['philsys'],
-                        ),
-                        const SizedBox(height: 20),
-                        _buildInfoFieldInline(
-                          'TIN No.',
-                          _userDetails?['employee']?['tin'],
+                              onPressed: () async {
+                                if (_isEditingPersonalInfo) {
+                                  // Save changes (this will automatically exit edit mode)
+                                  await _savePersonalInformation();
+                                } else {
+                                  if (_userDetails?['employee'] != null) {
+                                    final employee = _userDetails!['employee'];
+        
+                                    _personalInfoData = {
+                                      // Name fields
+                                      'lastName': employee['lastName'] ?? '',
+                                      'firstName': employee['firstName'] ?? '',
+                                      'middleName': employee['middleName'] ?? '',
+                                      'suffix': employee['suffix'] ?? '',
+                                      'photoUrl': employee['photoUrl'] ?? '',
+        
+                                      // Personal info
+                                      'sex': employee['sex'] ?? '',
+                                      'civilStatus':
+                                          employee['civilStatus'] ?? '',
+                                      'citizenship':
+                                          employee['citizenship'] ?? '',
+                                      'birthdate': employee['birthdate'] ?? '',
+                                      'birthplace': employee['birthplace'] ?? '',
+                                      'employeeId': employee['employeeId'] ?? '',
+        
+                                      // Physical attributes
+                                      'height': employee['height'] ?? 0,
+                                      'weight': employee['weight'] ?? 0,
+                                      'bloodType': employee['bloodType'] ?? '',
+        
+                                      // Address fields (permanent)
+                                      'houseNo': employee['houseNo'] ?? '',
+                                      'street': employee['street'] ?? '',
+                                      'village': employee['village'] ?? '',
+                                      'barangay': employee['barangay'] ?? '',
+                                      'municipality':
+                                          employee['municipality'] ?? '',
+                                      'province': employee['province'] ?? '',
+                                      'zipCode': employee['zipCode'] ?? '',
+        
+                                      // Address fields (residential)
+                                      'resHouseNo': employee['resHouseNo'] ?? '',
+                                      'resStreet': employee['resStreet'] ?? '',
+                                      'resVillage': employee['resVillage'] ?? '',
+                                      'resBarangay':
+                                          employee['resBarangay'] ?? '',
+                                      'resMunicipality':
+                                          employee['resMunicipality'] ?? '',
+                                      'resProvince':
+                                          employee['resProvince'] ?? '',
+                                      'resZipCode': employee['resZipCode'] ?? '',
+        
+                                      // Contact info
+                                      'telephoneNo':
+                                          employee['telephoneNo'] ?? '',
+                                      'mobileNo': employee['mobileNo'] ?? '',
+                                      'email': employee['email'] ?? '',
+        
+                                      // Government IDs (only if you want them editable in personal info)
+                                      'tin': employee['tin'] ?? '',
+                                      'phic': employee['phic'] ?? '',
+                                      'sss': employee['sss'] ?? '',
+                                      'pagibig': employee['pagibig'] ?? '',
+                                      'gsis': employee['gsis'] ?? '',
+                                      'umid': employee['umid'] ?? '',
+                                      'philsys': employee['philsys'] ?? '',
+        
+                                      'employmentStatus':
+                                          employee['employmentStatus'] ?? 'true',
+                                    };
+        
+                                    // Note: employmentStatus and photo fields are intentionally NOT included
+        
+                                    print(
+                                      '✅ [UserDetailsPage] Personal info initialized with ${_personalInfoData.length} editable fields',
+                                    );
+                                  }
+                                  setState(() {
+                                    _isEditingPersonalInfo = true;
+                                  });
+                                }
+                              },
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ),
-                ),
-              ],
+                  // Content Section
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    width: double.infinity,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 15,
+                      ),
+        
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _isEditingPersonalInfo
+                              ? _buildDateFieldInline(
+                                  'Date of Birth (YYYY-MM-DD)',
+                                  _personalInfoData['birthdate'],
+                                  (value) => setState(
+                                    () => _personalInfoData['birthdate'] = value,
+                                  ),
+                                )
+                              : _buildInfoFieldInline(
+                                  'Date of Birth',
+                                  _userDetails?['employee']?['birthdate'],
+                                ),
+                          const SizedBox(height: 20),
+                          _isEditingPersonalInfo
+                              ? _buildEditableFieldInline(
+                                  'Place of Birth',
+                                  _personalInfoData['birthplace'],
+                                  (value) => setState(
+                                    () => _personalInfoData['birthplace'] = value,
+                                  ),
+                                )
+                              : _buildInfoFieldInline(
+                                  'Place of Birth',
+                                  _userDetails?['employee']?['birthplace'],
+                                ),
+                          const SizedBox(height: 20),
+                          _isEditingPersonalInfo
+                              ? _buildEditableFieldInline(
+                                  'Civil Status',
+                                  _personalInfoData['civilStatus'],
+                                  (value) => setState(
+                                    () =>
+                                        _personalInfoData['civilStatus'] = value,
+                                  ),
+                                )
+                              : _buildInfoFieldInline(
+                                  'Civil Status',
+                                  _userDetails?['employee']?['civilStatus'],
+                                ),
+                          const SizedBox(height: 20),
+                          _isEditingPersonalInfo
+                              ? _buildEditableFieldInline(
+                                  'Citizenship',
+                                  _personalInfoData['citizenship'],
+                                  (value) => setState(
+                                    () =>
+                                        _personalInfoData['citizenship'] = value,
+                                  ),
+                                )
+                              : _buildInfoFieldInline(
+                                  'Citizenship',
+                                  _userDetails?['employee']?['citizenship'],
+                                ),
+                          const SizedBox(height: 20),
+                          _isEditingPersonalInfo
+                              ? _buildEditableFieldInline(
+                                  'Sex at Birth',
+                                  _personalInfoData['sex'],
+                                  (value) => setState(
+                                    () => _personalInfoData['sex'] = value,
+                                  ),
+                                )
+                              : _buildInfoFieldInline(
+                                  'Sex at Birth',
+                                  _userDetails?['employee']?['sex'],
+                                ),
+                          const SizedBox(height: 20),
+                          _isEditingPersonalInfo
+                              ? _buildEditableFieldInline(
+                                  'Blood Type',
+                                  _personalInfoData['bloodType'],
+                                  (value) => setState(
+                                    () => _personalInfoData['bloodType'] = value,
+                                  ),
+                                )
+                              : _buildInfoFieldInline(
+                                  'Blood Type',
+                                  _userDetails?['employee']?['bloodType'],
+                                ),
+                          const SizedBox(height: 20),
+                          _isEditingPersonalInfo
+                              ? _buildEditableFieldInline(
+                                  'Height (cm)',
+                                  _personalInfoData['height']?.toString() ?? '',
+                                  (value) => setState(
+                                    () => _personalInfoData['height'] =
+                                        int.tryParse(value) ?? 0,
+                                  ),
+                                )
+                              : _buildInfoFieldInline(
+                                  'Height (cm)',
+                                  _userDetails?['employee']?['height'],
+                                ),
+                          const SizedBox(height: 20),
+                          _isEditingPersonalInfo
+                              ? _buildEditableFieldInline(
+                                  'Weight (kg)',
+                                  _personalInfoData['weight']?.toString() ?? '',
+                                  (value) => setState(
+                                    () => _personalInfoData['weight'] =
+                                        int.tryParse(value) ?? 0,
+                                  ),
+                                )
+                              : _buildInfoFieldInline(
+                                  'Weight (kg)',
+                                  _userDetails?['employee']?['weight'],
+                                ),
+                          const SizedBox(height: 20),
+                          _isEditingPersonalInfo
+                              ? Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Residential Address',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        color: Colors.grey,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    _buildEditableFieldInline(
+                                      'Barangay',
+                                      _personalInfoData['barangay'],
+                                      (value) => setState(
+                                        () =>
+                                            _personalInfoData['barangay'] = value,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    _buildEditableFieldInline(
+                                      'Municipality',
+                                      _personalInfoData['municipality'],
+                                      (value) => setState(
+                                        () => _personalInfoData['municipality'] =
+                                            value,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    _buildEditableFieldInline(
+                                      'Province',
+                                      _personalInfoData['province'],
+                                      (value) => setState(
+                                        () =>
+                                            _personalInfoData['province'] = value,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    _buildEditableFieldInline(
+                                      'Zip Code',
+                                      _personalInfoData['zipCode'],
+                                      (value) => setState(
+                                        () =>
+                                            _personalInfoData['zipCode'] = value,
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : _buildInfoFieldInline(
+                                  'Residential Address',
+                                  "${_userDetails?['employee']?['barangay'] ?? ''}, "
+                                      "${_userDetails?['employee']?['municipality'] ?? ''}, "
+                                      "${_userDetails?['employee']?['province'] ?? ''}, "
+                                      "${_userDetails?['employee']?['zipCode'] ?? ''}",
+                                ),
+                          const SizedBox(height: 20),
+                          _buildInfoFieldInline(
+                            'Permanent Address',
+                            "${_userDetails?['employee']?['barangay'] ?? ''}, "
+                                "${_userDetails?['employee']?['municipality'] ?? ''}, "
+                                "${_userDetails?['employee']?['province'] ?? ''}, "
+                                "${_userDetails?['employee']?['zipCode'] ?? ''}",
+                          ),
+                          const SizedBox(height: 20),
+                          _isEditingPersonalInfo
+                              ? _buildPhoneFieldInline(
+                                  'Telephone No.',
+                                  _personalInfoData['telephoneNo'],
+                                  (value) => setState(
+                                    () =>
+                                        _personalInfoData['telephoneNo'] = value,
+                                  ),
+                                )
+                              : _buildInfoFieldInline(
+                                  'Telephone No.',
+                                  _userDetails?['employee']?['telephoneNo'],
+                                ),
+                          const SizedBox(height: 20),
+                          _isEditingPersonalInfo
+                              ? _buildPhoneFieldInline(
+                                  'Mobile No.',
+                                  _personalInfoData['mobileNo'],
+                                  (value) => setState(
+                                    () => _personalInfoData['mobileNo'] = value,
+                                  ),
+                                )
+                              : _buildInfoFieldInline(
+                                  'Mobile No.',
+                                  _userDetails?['employee']?['mobileNo'],
+                                ),
+                          const SizedBox(height: 20),
+                          _buildInfoFieldInline(
+                            'Email Address',
+                            _userDetails?['email'],
+                          ),
+                          const SizedBox(height: 20),
+                          _buildInfoFieldInline(
+                            'Agency Employee No.',
+                            _userDetails?['employee']?['employeeId'],
+                          ),
+                          const SizedBox(height: 20),
+                          _buildInfoFieldInline(
+                            'UMID ID No.',
+                            _userDetails?['employee']?['umid'],
+                          ),
+                          const SizedBox(height: 20),
+                          _buildInfoFieldInline(
+                            'Pag-ibig No.',
+                            _userDetails?['employee']?['pagibig'],
+                          ),
+                          const SizedBox(height: 20),
+                          _buildInfoFieldInline(
+                            'PhilHealth No.',
+                            _userDetails?['employee']?['phic'],
+                          ),
+                          const SizedBox(height: 20),
+                          _buildInfoFieldInline(
+                            'PhilSys No. (PSN)',
+                            _userDetails?['employee']?['philsys'],
+                          ),
+                          const SizedBox(height: 20),
+                          _buildInfoFieldInline(
+                            'TIN No.',
+                            _userDetails?['employee']?['tin'],
+                          ),
+                          if (_isEditingPersonalInfo) ...[
+                          
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _isEditingPersonalInfo = false;
+                                  });
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: Color(0xFF00674F),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Text(
+                                    'Cancel',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -3033,20 +3294,8 @@ void _parsePersonRefData() {
     if (!_isFetchingFamily && _familyData.isEmpty && _familyError == null) {
       _fetchFamilyDetails();
     }
-
     return Container(
-      padding: EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+      padding: EdgeInsets.zero,
       child: Column(
         children: [
           InkWell(
@@ -3185,39 +3434,90 @@ void _parsePersonRefData() {
               )
             // Show Edit + Delete buttons only when spouse exists (or currently adding)
             else if (hasSpouse || _isEditingSpouse)
-              Row(
-                children: [
-                  IconButton(
-                    icon: Icon(
-                      _isEditingSpouse ? Icons.check : Icons.edit,
-                      size: 20,
-                      color: const Color(0xFF2C5F4F),
-                    ),
-                    onPressed: () {
-                      if (_isEditingSpouse) {
-                        _saveSpouse();
-                      } else {
-                        setState(() => _isEditingSpouse = true);
-                      }
-                    },
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                  if (hasSpouse) ...[
-                    const SizedBox(width: 8),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.delete,
-                        size: 20,
-                        color: Colors.red,
-                      ),
-                      onPressed: () => _deleteSpouse(),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                    ),
-                  ],
-                ],
-              ),
+            
+              // Row(
+              //   children: [
+              //     IconButton(
+              //       icon: Icon(
+              //         _isEditingSpouse ? Icons.check : Icons.edit,
+              //         size: 20,
+              //         color: Colors.black,
+              //       ),
+              //       onPressed: () {
+              //         if (_isEditingSpouse) {
+              //           _saveSpouse();
+              //         } else {
+              //           setState(() => _isEditingSpouse = true);
+              //         }
+              //       },
+              //       padding: EdgeInsets.zero,
+              //       constraints: const BoxConstraints(),
+              //     ),
+              //     if (hasSpouse) ...[
+              //       const SizedBox(width: 8),
+              //       IconButton(
+              //         icon: const Icon(
+              //           Icons.delete,
+              //           size: 20,
+              //           color: Colors.black,
+              //         ),
+              //         onPressed: () => _deleteSpouse(),
+              //         padding: EdgeInsets.zero,
+              //         constraints: const BoxConstraints(),
+              //       ),
+              //     ],
+              //   ],
+              // ),
+              PopupMenuButton<String>(
+  icon: const Icon(Icons.more_horiz, size: 20, color: Colors.black),
+  padding: EdgeInsets.zero,
+  onSelected: (value) {
+    if (value == 'edit') {
+      if (_isEditingSpouse) {
+        _saveSpouse();
+      } else {
+        setState(() => _isEditingSpouse = true);
+      }
+    } else if (value == 'delete') {
+      _deleteSpouse();
+    } else if (value == 'cancel') {
+      setState(() => _isEditingSpouse = false);
+    }
+  },
+  itemBuilder: (context) => [
+    PopupMenuItem(
+      value: 'edit',
+      child: Row(
+        children: [
+          Icon(_isEditingSpouse ? Icons.check : Icons.edit, size: 20),
+          const SizedBox(width: 8),
+          Text(_isEditingSpouse ? 'Save' : 'Edit'),
+        ],
+      ),
+    ),
+    if (hasSpouse)
+      const PopupMenuItem(
+        value: 'delete',
+        child: Row(
+          children: [
+            Icon(Icons.delete, size: 20),
+            SizedBox(width: 8),
+            Text('Delete'),
+          ],
+        ),
+      ),
+    const PopupMenuItem(
+      value: 'cancel',
+      child: Row(
+        children: [
+          Icon(Icons.cancel, size: 20),
+          SizedBox(width: 8),
+          Text('Cancel'),
+        ],
+      ),
+    ),
+  ],
+),
           ],
         ),
 
@@ -3352,7 +3652,207 @@ void _parsePersonRefData() {
   }
 
   // Children Section
- Widget _buildChildrenSection() {
+//   Widget _buildChildrenSection() {
+//     return Column(
+//       crossAxisAlignment: CrossAxisAlignment.start,
+//       children: [
+//         Row(
+//           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//           children: [
+//             const Text(
+//               'CHILDREN',
+//               style: TextStyle(
+//                 fontSize: 15,
+//                 fontWeight: FontWeight.w700,
+//                 color: Colors.black,
+//               ),
+//             ),
+//           ],
+//         ),
+
+//         ..._childrenData.asMap().entries.map((entry) {
+//           int index = entry.key;
+//           Map<String, dynamic> child = entry.value;
+//           bool isEditing = _editingChildIndex == index;
+
+//           return Container(
+            
+//             padding: const EdgeInsets.all(5),
+//             decoration: BoxDecoration(color: Colors.white),
+//             child: Column(
+//               children: [
+//                 Row(
+//                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//                   children: [
+//                     Expanded(
+//                       child: Text(
+//                         'Child ${index + 1}',
+//                         style: TextStyle(
+//                           fontSize: 11,
+//                           fontWeight: FontWeight.bold,
+//                           color: Colors.grey[700],
+//                         ),
+//                       ),
+//                     ),
+//                     // Row(
+//                     //   children: [
+//                     //     IconButton(
+//                     //       icon: Icon(
+//                     //         isEditing ? Icons.check : Icons.edit,
+//                     //         size: 18,
+//                     //         color: Colors.black,
+//                     //       ),
+//                     //       onPressed: () {
+//                     //         if (isEditing) {
+//                     //           _saveChild(index);
+//                     //         } else {
+//                     //           setState(() => _editingChildIndex = index);
+//                     //         }
+//                     //       },
+//                     //       padding: EdgeInsets.zero,
+//                     //       constraints: const BoxConstraints(),
+//                     //     ),
+
+//                     //     IconButton(
+//                     //       icon: const Icon(
+//                     //         Icons.delete,
+//                     //         size: 18,
+//                     //         color: Colors.black,
+//                     //       ),
+//                     //       onPressed: () => _deleteChild(index),
+//                     //       padding: EdgeInsets.zero,
+//                     //       constraints: const BoxConstraints(),
+//                     //     ),
+//                     //   ],
+//                     // ),
+
+//                     PopupMenuButton<String>(
+//   icon: const Icon(Icons.more_horiz, size: 20, color: Colors.black),
+//   padding: EdgeInsets.zero,
+//   onSelected: (value) {
+//     if (value == 'edit') {
+//       if (isEditing) {
+//         _saveChild(index);
+//       } else {
+//         setState(() => _editingChildIndex = index);
+//       }
+//     } else if (value == 'delete') {
+//       _deleteChild(index);
+//     } else if (value == 'cancel') {
+//       setState(() => _editingChildIndex = -1);
+//     }
+//   },
+//   itemBuilder: (context) => [
+//     PopupMenuItem(
+//       value: 'edit',
+//       child: Row(
+//         children: [
+//           Icon(isEditing ? Icons.check : Icons.edit, size: 18),
+//           const SizedBox(width: 8),
+//           Text(isEditing ? 'Save' : 'Edit'),
+//         ],
+//       ),
+//     ),
+//     const PopupMenuItem(
+//       value: 'delete',
+//       child: Row(
+//         children: [
+//           Icon(Icons.delete, size: 18),
+//           SizedBox(width: 8),
+//           Text('Delete'),
+//         ],
+//       ),
+//     ),
+//     const PopupMenuItem(
+//       value: 'cancel',
+//       child: Row(
+//         children: [
+//           Icon(Icons.cancel, size: 18),
+//           SizedBox(width: 8),
+//           Text('Cancel'),
+//         ],
+//       ),
+//     ),
+//   ],
+// ),
+//                   ],
+//                 ),
+
+//                 Container(
+//                   // spacing around each child box
+//                   margin: const EdgeInsets.symmetric(
+//                     horizontal: 2,
+//                     vertical: 6,
+//                   ),
+//                   // inner spacing of the white box
+//                   padding: const EdgeInsets.symmetric(horizontal: 10),
+//                   width: double.infinity,
+//                   decoration: BoxDecoration(
+//                     color: Colors.white,
+//                     borderRadius: BorderRadius.circular(6),
+//                   ),
+//                   child: Column(
+//                     crossAxisAlignment: CrossAxisAlignment.start,
+//                     children: [
+//                       isEditing
+//                           ? _buildEditableFieldInline(
+//                               'Name of Children',
+//                               child['name'],
+//                               (value) {
+//                                 _childrenData[index]['name'] = value;
+//                               },
+//                             )
+//                           : _buildInfoFieldInline(
+//                               'Name of Children',
+//                               child['name'],
+//                             ),
+//                       const SizedBox(height: 8),
+//                       isEditing
+//                           ? _buildDateFieldInline(
+//                               'Birthday (YYYY-MM-DD)',
+//                               child['birthday'],
+//                               (value) {
+//                                 _childrenData[index]['birthday'] = value;
+//                               },
+//                             )
+//                           : _buildInfoFieldInline(
+//                               'Birthday (YYYY-MM-DD)',
+//                               child['birthday'],
+//                             ),
+//                     ],
+//                   ),
+//                 ),
+//               ],
+//             ),
+//           );
+//         }).toList(),
+//         if (_editingChildIndex == null)
+//           Align(
+//             alignment: Alignment.centerRight,
+//             child: IconButton(
+//               icon: const Icon(
+//                 Icons.add_circle,
+//                 size: 25,
+//                 color: Color(0xFF2C5F4F),
+//               ),
+//               onPressed: () {
+//                 setState(() {
+//                   _childrenData.add({'name': '', 'birthday': ''});
+//                   _editingChildIndex = _childrenData.length - 1;
+//                 });
+//               },
+//               tooltip: 'Add Child',
+//               padding: EdgeInsets.zero,
+//               constraints: const BoxConstraints(),
+//             ),
+//           ),
+       
+//       ],
+//     );
+//   }
+
+
+Widget _buildChildrenSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -3367,6 +3867,32 @@ void _parsePersonRefData() {
                 color: Colors.black,
               ),
             ),
+            // Single 3-dot menu at the top level for adding
+            if (_editingChildIndex == null)
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_horiz, size: 20, color: Colors.black),
+                padding: EdgeInsets.zero,
+                onSelected: (value) {
+                  if (value == 'add') {
+                    setState(() {
+                      _childrenData.add({'name': '', 'birthday': ''});
+                      _editingChildIndex = _childrenData.length - 1;
+                    });
+                  }
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: 'add',
+                    child: Row(
+                      children: [
+                        Icon(Icons.add_circle, size: 18, color: Color(0xFF2C5F4F)),
+                        SizedBox(width: 8),
+                        Text('Add Child'),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
           ],
         ),
 
@@ -3376,9 +3902,8 @@ void _parsePersonRefData() {
           bool isEditing = _editingChildIndex == index;
 
           return Container(
-            margin: const EdgeInsets.only(bottom: 5),
             padding: const EdgeInsets.all(5),
-            decoration: BoxDecoration(color: Colors.white),
+            decoration: const BoxDecoration(color: Colors.white),
             child: Column(
               children: [
                 Row(
@@ -3394,34 +3919,52 @@ void _parsePersonRefData() {
                         ),
                       ),
                     ),
-                    Row(
-                      children: [
-                        IconButton(
-                          icon: Icon(
-                            isEditing ? Icons.check : Icons.edit,
-                            size: 18,
-                            color: Color(0xFF2C5F4F),
+                    PopupMenuButton<String>(
+                      icon: const Icon(Icons.more_horiz, size: 20, color: Colors.black),
+                      padding: EdgeInsets.zero,
+                      onSelected: (value) {
+                        if (value == 'edit') {
+                          if (isEditing) {
+                            _saveChild(index);
+                          } else {
+                            setState(() => _editingChildIndex = index);
+                          }
+                        } else if (value == 'delete') {
+                          _deleteChild(index);
+                        } else if (value == 'cancel') {
+                          setState(() => _editingChildIndex = null);
+                        }
+                      },
+                      itemBuilder: (context) => [
+                        PopupMenuItem(
+                          value: 'edit',
+                          child: Row(
+                            children: [
+                              Icon(isEditing ? Icons.check : Icons.edit, size: 18),
+                              const SizedBox(width: 8),
+                              Text(isEditing ? 'Save' : 'Edit'),
+                            ],
                           ),
-                          onPressed: () {
-                            if (isEditing) {
-                              _saveChild(index);
-                            } else {
-                              setState(() => _editingChildIndex = index);
-                            }
-                          },
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
                         ),
-
-                        IconButton(
-                          icon: const Icon(
-                            Icons.delete,
-                            size: 18,
-                            color: Colors.red,
+                        const PopupMenuItem(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              Icon(Icons.delete, size: 18),
+                              SizedBox(width: 8),
+                              Text('Delete'),
+                            ],
                           ),
-                          onPressed: () => _deleteChild(index),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
+                        ),
+                        const PopupMenuItem(
+                          value: 'cancel',
+                          child: Row(
+                            children: [
+                              Icon(Icons.cancel, size: 18),
+                              SizedBox(width: 8),
+                              Text('Cancel'),
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -3429,12 +3972,10 @@ void _parsePersonRefData() {
                 ),
 
                 Container(
-                  // spacing around each child box
                   margin: const EdgeInsets.symmetric(
                     horizontal: 2,
                     vertical: 6,
                   ),
-                  // inner spacing of the white box
                   padding: const EdgeInsets.symmetric(horizontal: 10),
                   width: double.infinity,
                   decoration: BoxDecoration(
@@ -3476,42 +4017,171 @@ void _parsePersonRefData() {
             ),
           );
         }).toList(),
-         if (_editingChildIndex == null)
-            Align(
-              alignment: Alignment.centerRight,
-              child: IconButton(
-                icon: const Icon(
-                  Icons.add_circle,
-                  size: 25,
-                  color: Color(0xFF2C5F4F),
-                ),
-                onPressed: () {
-                  setState(() {
-                    _childrenData.add({'name': '', 'birthday': ''});
-                    _editingChildIndex = _childrenData.length - 1;
-                  });
-                },
-                tooltip: 'Add Child',
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
-            ),
-            const SizedBox(height: 20),
       ],
-      
     );
   }
+
   // Father Section
+  // Widget _buildFatherSection() {
+  //   // A father record exists only when the parsed data contains an 'id' from the API
+  //   final bool hasFather =
+  //       _fatherData.containsKey('id') && _fatherData['id'] != null;
+
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+        
+
+  //       Row(
+  //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //         children: [
+  //           const Text(
+  //             'FATHER',
+  //             style: TextStyle(
+  //               fontSize: 15,
+  //               fontWeight: FontWeight.w700,
+  //               color: Colors.black,
+  //             ),
+  //           ),
+  //           // Show Add button only when there is no father record yet
+  //           if (!hasFather && !_isEditingFather)
+  //             TextButton.icon(
+  //               onPressed: () {
+  //                 setState(() {
+  //                   _fatherData = {
+  //                     'firstName': '',
+  //                     'middleName': '',
+  //                     'lastName': '',
+  //                     'nameExtension': '',
+  //                   };
+  //                   _isEditingFather = true;
+  //                 });
+  //               },
+  //               icon: const Icon(
+  //                 Icons.add_circle,
+  //                 size: 20,
+  //                 color: Color(0xFF2C5F4F),
+  //               ),
+  //               label: const Text(
+  //                 'Add',
+  //                 style: TextStyle(
+  //                   color: Color(0xFF2C5F4F),
+  //                   fontWeight: FontWeight.w600,
+  //                 ),
+  //               ),
+  //               style: TextButton.styleFrom(
+  //                 padding: const EdgeInsets.symmetric(horizontal: 4),
+  //               ),
+  //             )
+  //           // Show Edit button when father record exists or currently adding
+  //           else if (hasFather || _isEditingFather)
+  //             IconButton(
+  //               icon: Icon(
+  //                 _isEditingFather ? Icons.check : Icons.edit,
+  //                 size: 20,
+  //                 color: Colors.black,
+  //               ),
+  //               onPressed: () {
+  //                 if (_isEditingFather) {
+  //                   _saveFather();
+  //                 } else {
+  //                   setState(() => _isEditingFather = true);
+  //                 }
+  //               },
+  //               padding: EdgeInsets.zero,
+  //               constraints: const BoxConstraints(),
+  //             ),
+  //         ],
+  //       ),
+
+  //       // If no father and not editing, show a subtle empty-state hint
+  //       if (!hasFather && !_isEditingFather)
+  //         Padding(
+  //           padding: const EdgeInsets.symmetric(vertical: 8.0),
+  //           child: Text(
+  //             'No father information added yet.',
+  //             style: TextStyle(
+  //               fontSize: 13,
+  //               color: Colors.grey[500],
+  //               fontStyle: FontStyle.italic,
+  //             ),
+  //           ),
+  //         ),
+
+  //       // Show fields only when father record exists or when adding/editing
+  //       if (hasFather || _isEditingFather)
+  //         Container(
+  //           margin: const EdgeInsets.only(bottom: 12),
+  //           padding: const EdgeInsets.all(12),
+  //           width: double.infinity,
+  //           child: Column(
+  //             crossAxisAlignment: CrossAxisAlignment.start,
+  //             children: [
+  //               Column(
+  //                 children: [
+  //                   if (_isEditingFather) ...[
+  //                     _buildEditableFieldInline(
+  //                       'First Name',
+  //                       _fatherData['firstName'],
+  //                       (value) {
+  //                         _fatherData['firstName'] = value;
+  //                       },
+  //                     ),
+  //                     const SizedBox(height: 12),
+  //                     _buildEditableFieldInline(
+  //                       'Middle Name',
+  //                       _fatherData['middleName'],
+  //                       (value) {
+  //                         _fatherData['middleName'] = value;
+  //                       },
+  //                     ),
+  //                     const SizedBox(height: 12),
+  //                     _buildEditableFieldInline(
+  //                       'Last Name',
+  //                       _fatherData['lastName'],
+  //                       (value) {
+  //                         _fatherData['lastName'] = value;
+  //                       },
+  //                     ),
+  //                     const SizedBox(height: 12),
+  //                     _buildEditableFieldInline(
+  //                       'Name Extension',
+  //                       _fatherData['nameExtension'],
+  //                       (value) {
+  //                         _fatherData['nameExtension'] = value;
+  //                       },
+  //                     ),
+  //                   ] else
+  //                     _buildInfoFieldInline(
+  //                       'Name',
+  //                       [
+  //                             _fatherData['firstName'],
+  //                             _fatherData['middleName'],
+  //                             _fatherData['lastName'],
+  //                             _fatherData['nameExtension'],
+  //                           ]
+  //                           .where(
+  //                             (v) =>
+  //                                 v != null && v.toString().trim().isNotEmpty,
+  //                           )
+  //                           .join(' '),
+  //                     ),
+  //                 ],
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //     ],
+  //   );
+  // }
+
   Widget _buildFatherSection() {
-    // A father record exists only when the parsed data contains an 'id' from the API
     final bool hasFather =
         _fatherData.containsKey('id') && _fatherData['id'] != null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 20),
-
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -3553,28 +4223,49 @@ void _parsePersonRefData() {
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                 ),
               )
-            // Show Edit button when father record exists or currently adding
+            // Show 3-dot menu when father record exists or currently editing
             else if (hasFather || _isEditingFather)
-              IconButton(
-                icon: Icon(
-                  _isEditingFather ? Icons.check : Icons.edit,
-                  size: 20,
-                  color: const Color(0xFF2C5F4F),
-                ),
-                onPressed: () {
-                  if (_isEditingFather) {
-                    _saveFather();
-                  } else {
-                    setState(() => _isEditingFather = true);
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_horiz, size: 20, color: Colors.black),
+                padding: EdgeInsets.zero,
+                onSelected: (value) {
+                  if (value == 'edit') {
+                    if (_isEditingFather) {
+                      _saveFather();
+                    } else {
+                      setState(() => _isEditingFather = true);
+                    }
+                  }  else if (value == 'cancel') {
+                    setState(() => _isEditingFather = false);
                   }
                 },
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: 'edit',
+                    child: Row(
+                      children: [
+                        Icon(_isEditingFather ? Icons.check : Icons.edit, size: 18),
+                        const SizedBox(width: 8),
+                        Text(_isEditingFather ? 'Save' : 'Edit'),
+                      ],
+                    ),
+                  ),
+                  
+                  const PopupMenuItem(
+                    value: 'cancel',
+                    child: Row(
+                      children: [
+                        Icon(Icons.cancel, size: 18),
+                        SizedBox(width: 8),
+                        Text('Cancel'),
+                      ],
+                    ),
+                  ),
+                ],
               ),
           ],
         ),
 
-        // If no father and not editing, show a subtle empty-state hint
         if (!hasFather && !_isEditingFather)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -3588,7 +4279,6 @@ void _parsePersonRefData() {
             ),
           ),
 
-        // Show fields only when father record exists or when adding/editing
         if (hasFather || _isEditingFather)
           Container(
             margin: const EdgeInsets.only(bottom: 12),
@@ -3646,8 +4336,6 @@ void _parsePersonRefData() {
                             )
                             .join(' '),
                       ),
-
-                    const SizedBox(height: 10),
                   ],
                 ),
               ],
@@ -3709,21 +4397,59 @@ void _parsePersonRefData() {
               )
             // Show Edit button when mother record exists or currently adding
             else if (hasMother || _isEditingMother)
-              IconButton(
-                icon: Icon(
-                  _isEditingMother ? Icons.check : Icons.edit,
-                  size: 20,
-                  color: const Color(0xFF2C5F4F),
-                ),
-                onPressed: () {
-                  if (_isEditingMother) {
-                    _saveMother();
-                  } else {
-                    setState(() => _isEditingMother = true);
+              // IconButton(
+              //   icon: Icon(
+              //     _isEditingMother ? Icons.check : Icons.edit,
+              //     size: 20,
+              //     color: Colors.black,
+              //   ),
+              //   onPressed: () {
+              //     if (_isEditingMother) {
+              //       _saveMother();
+              //     } else {
+              //       setState(() => _isEditingMother = true);
+              //     }
+              //   },
+              //   padding: EdgeInsets.zero,
+              //   constraints: const BoxConstraints(),
+              // ),
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_horiz, size: 20, color: Colors.black),
+                padding: EdgeInsets.zero,
+                onSelected: (value) {
+                  if (value == 'edit') {
+                    if (_isEditingMother) {
+                      _saveMother();
+                    } else {
+                      setState(() => _isEditingMother = true);
+                    }
+                  }  else if (value == 'cancel') {
+                    setState(() => _isEditingMother = false);
                   }
                 },
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: 'edit',
+                    child: Row(
+                      children: [
+                        Icon(_isEditingMother ? Icons.check : Icons.edit, size: 18),
+                        const SizedBox(width: 8),
+                        Text(_isEditingMother ? 'Save' : 'Edit'),
+                      ],
+                    ),
+                  ),
+                  
+                  const PopupMenuItem(
+                    value: 'cancel',
+                    child: Row(
+                      children: [
+                        Icon(Icons.cancel, size: 18),
+                        SizedBox(width: 8),
+                        Text('Cancel'),
+                      ],
+                    ),
+                  ),
+                ],
               ),
           ],
         ),
@@ -3791,7 +4517,9 @@ void _parsePersonRefData() {
                           _motherData['lastName'],
                           _motherData['nameExtension'],
                         ]
-                        .where((v) => v != null && v.toString().trim().isNotEmpty)
+                        .where(
+                          (v) => v != null && v.toString().trim().isNotEmpty,
+                        )
                         .join(' '),
                   ),
                 const SizedBox(height: 12),
@@ -3804,20 +4532,7 @@ void _parsePersonRefData() {
 
   Widget _buildEducationalBackgroundCard() {
     return Container(
-      padding: EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey[200]!),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 12,
-            offset: Offset(0, 1),
-          ),
-        ],
-      ),
+      padding: EdgeInsets.zero,
       child: Column(
         children: [
           // Header
@@ -3850,13 +4565,8 @@ void _parsePersonRefData() {
           // Content
           if (_isEducationalBackgroundExpanded)
             Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(5),
+              padding: const EdgeInsets.all(7.0),
               width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-              ),
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 child: Column(
@@ -3865,7 +4575,7 @@ void _parsePersonRefData() {
                       ? [
                           Center(
                             child: Padding(
-                              padding: const EdgeInsets.all(20.0),
+                              padding: const EdgeInsets.all(7.0),
                               child: Text(
                                 'No education records found.\nClick + to add education.',
                                 textAlign: TextAlign.center,
@@ -3885,9 +4595,8 @@ void _parsePersonRefData() {
                             bool isCollapsed = _collapsedEducationIndexes.contains(index);
 
                             return Container(
-                              margin: const EdgeInsets.only(bottom: 16),
+                              // margin: const EdgeInsets.only(bottom: 20),
                               padding: const EdgeInsets.all(12),
-
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(8),
@@ -3895,277 +4604,207 @@ void _parsePersonRefData() {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // Header row with level and buttons
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      // Level dropdown or text
-                                      Expanded(
-                                        child: isEditing
-                                            ? DropdownButtonFormField<String>(
-                                                value: education['level'],
-                                                decoration: InputDecoration(
-                                                  labelText: 'Education Level',
-                                                  labelStyle: TextStyle(
-                                                    fontSize: 12,
-                                                  ),
-                                                  contentPadding:
-                                                      EdgeInsets.symmetric(
-                                                        horizontal: 8,
-                                                        vertical: 4,
-                                                      ),
-                                                  border: OutlineInputBorder(),
-                                                ),
-                                                items:
-                                                    [
-                                                      'ELEMENTARY',
-                                                      'SECONDARY',
-                                                      'VOCATIONAL/TRADE COURSE',
-                                                      'COLLEGE',
-                                                      'GRADUATE STUDIES',
-                                                    ].map((level) {
-                                                      return DropdownMenuItem(
-                                                        value: level,
-                                                        child: Text(
-                                                          level,
-                                                          style: TextStyle(
-                                                            fontSize: 12,
-                                                          ),
-                                                        ),
-                                                      );
-                                                    }).toList(),
-                                                onChanged: (value) {
-                                                  setState(() {
-                                                    _educationData[index]['level'] =
-                                                        value!;
-                                                  });
-                                                },
-                                              )
-                                            : Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    education['level'] ?? 'N/A',
-                                                    style: TextStyle(
-                                                      fontSize: 15,
-                                                      color: Colors.black,
-                                                      fontWeight: FontWeight.bold,
+                                  // Clickable title row — toggles collapse/expand
+                                  GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        if (isCollapsed) {
+                                          _collapsedEducationIndexes.remove(index);
+                                        } else {
+                                          _collapsedEducationIndexes.add(index);
+                                        }
+                                      });
+                                    },
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Expanded(
+                                          child: isEditing
+                                              ? DropdownButtonFormField<String>(
+                                                  value: education['level'],
+                                                  decoration: InputDecoration(
+                                                    labelText: 'Education Level',
+                                                    labelStyle: TextStyle(fontSize: 12),
+                                                    contentPadding: EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 4,
                                                     ),
+                                                    border: OutlineInputBorder(),
                                                   ),
-                                                  if (isCollapsed)
+                                                  items: [
+                                                    'ELEMENTARY',
+                                                    'SECONDARY',
+                                                    'VOCATIONAL/TRADE COURSE',
+                                                    'COLLEGE',
+                                                    'GRADUATE STUDIES',
+                                                  ].map((level) {
+                                                    return DropdownMenuItem(
+                                                      value: level,
+                                                      child: Text(level, style: TextStyle(fontSize: 12)),
+                                                    );
+                                                  }).toList(),
+                                                  onChanged: (value) {
+                                                    setState(() {
+                                                      _educationData[index]['level'] = value!;
+                                                    });
+                                                  },
+                                                )
+                                              : Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
                                                     Text(
-                                                      education['schoolName'] ?? 'N/A',
+                                                      education['level'] ?? 'N/A',
                                                       style: TextStyle(
-                                                        fontSize: 12,
-                                                        color: Colors.grey[600],
+                                                        fontSize: 15,
+                                                        color: Colors.black,
+                                                        fontWeight: FontWeight.bold,
                                                       ),
                                                     ),
-                                                ],
-                                              ),
-                                      ),
-                                      // Action buttons
-                                      Row(
-                                        children: [
-                                          // Collapse/Expand button
-                                          IconButton(
-                                            icon: Icon(
-                                              isCollapsed
-                                                  ? Icons.expand_more
-                                                  : Icons.expand_less,
-                                              size: 20,
-                                              color: Color(0xFF2C5F4F),
-                                            ),
-                                            onPressed: () {
-                                              setState(() {
-                                                if (isCollapsed) {
-                                                  _collapsedEducationIndexes.remove(index);
-                                                } else {
-                                                  _collapsedEducationIndexes.add(index);
-                                                }
-                                              });
-                                            },
-                                            padding: EdgeInsets.zero,
-                                            constraints: const BoxConstraints(),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          // Edit button
-                                          IconButton(
-                                            icon: Icon(
-                                              isEditing
-                                                  ? Icons.check
-                                                  : Icons.edit,
-                                              size: 20,
-                                              color: Color(0xFF2C5F4F),
-                                            ),
-                                            onPressed: () {
-                                              if (isEditing) {
-                                                _saveEducation(index);
-                                              } else {
-                                                setState(() {
-                                                  _editingEducationIndex =
-                                                      index;
-                                                  // Auto-expand when editing
-                                                  _collapsedEducationIndexes.remove(index);
-                                                });
-                                              }
-                                            },
-                                            padding: EdgeInsets.zero,
-                                            constraints: const BoxConstraints(),
-                                          ),
-                                          const SizedBox(width: 2),
-                                          // Delete button
-                                          IconButton(
-                                            icon: const Icon(
-                                              Icons.delete,
-                                              size: 20,
-                                              color: Colors.red,
-                                            ),
-                                            onPressed: () =>
-                                                _deleteEducation(index),
-                                            padding: EdgeInsets.zero,
-                                            constraints: const BoxConstraints(),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
+                                                    if (isCollapsed)
+                                                      Text(
+                                                        education['schoolName'] ?? 'N/A',
+                                                        style: TextStyle(
+                                                          fontSize: 11,
+                                                          color: Colors.grey[600],
+                                                        ),
+                                                      ),
+                                                  ],
+                                                ),
+                                        ),
+                                        // Only show expand/collapse arrow icon
+                                        Icon(
+                                          isCollapsed ? Icons.expand_more : Icons.expand_less,
+                                          size: 20,
+                                          color: Color.fromARGB(255, 0, 0, 0),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                  // Collapsible content
+
+                                  // Collapsible content + edit/delete at bottom
                                   if (!isCollapsed) ...[
                                     const SizedBox(height: 12),
                                     Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12.0,
-                                      ),
+                                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
                                       child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           // School Name
                                           isEditing
                                               ? _buildEditableFieldInline(
                                                   'School Name',
                                                   education['schoolName'],
-                                                  (value) {
-                                                    _educationData[index]['schoolName'] =
-                                                        value;
-                                                  },
+                                                  (value) { _educationData[index]['schoolName'] = value; },
                                                 )
-                                              : _buildInfoFieldInline(
-                                                  'School Name',
-                                                  education['schoolName'],
-                                                ),
+                                              : _buildInfoFieldInline('School Name', education['schoolName']),
                                           const SizedBox(height: 12),
 
                                           // Degree/Course
                                           isEditing
-                                            ? _buildEditableFieldInline(
-                                                'Degree/Course',
-                                                education['degreeCourse'],
-                                                (value) {
-                                                  _educationData[index]['degreeCourse'] =
-                                                      value;
-                                                },
-                                              )
-                                            : _buildInfoFieldInline(
-                                                'Degree/Course',
-                                                education['degreeCourse'],
+                                              ? _buildEditableFieldInline(
+                                                  'Degree/Course',
+                                                  education['degreeCourse'],
+                                                  (value) { _educationData[index]['degreeCourse'] = value; },
+                                                )
+                                              : _buildInfoFieldInline('Degree/Course', education['degreeCourse']),
+                                          const SizedBox(height: 12),
+
+                                          // Period Attended - From/To
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: isEditing
+                                                    ? _buildDateFieldInline(
+                                                        'From',
+                                                        education['attendedFrom'],
+                                                        (value) { _educationData[index]['attendedFrom'] = value; },
+                                                      )
+                                                    : _buildInfoFieldInline('From', education['attendedFrom']),
                                               ),
-                                        const SizedBox(height: 12),
-
-                                        // Period Attended - From/To in a row
-                                        Row(
-                                          children: [
-                                            Expanded(
-                                              child: isEditing
-                                                  ? _buildDateFieldInline(
-                                                      'From',
-                                                      education['attendedFrom'],
-                                                      (value) {
-                                                        _educationData[index]['attendedFrom'] =
-                                                            value;
-                                                      },
-                                                    )
-                                                  : _buildInfoFieldInline(
-                                                      'From',
-                                                      education['attendedFrom'],
-                                                    ),
-                                            ),
-                                            const SizedBox(width: 12),
-                                            Expanded(
-                                              child: isEditing
-                                                  ? _buildDateFieldInline(
-                                                      'To',
-                                                      education['attendedTo'],
-                                                      (value) {
-                                                        _educationData[index]['attendedTo'] =
-                                                            value;
-                                                      },
-                                                    )
-                                                  : _buildInfoFieldInline(
-                                                      'To',
-                                                      education['attendedTo'],
-                                                    ),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 12),
-
-                                        // Highest Level/Year & Year Graduated in a row
-                                        Row(
-                                          children: [
-                                            Expanded(
-                                              child: isEditing
-                                                  ? _buildEditableFieldInline(
-                                                      'Highest Level/Units',
-                                                      education['highestLevel'],
-                                                      (value) {
-                                                        _educationData[index]['highestLevel'] =
-                                                            value;
-                                                      },
-                                                    )
-                                                  : _buildInfoFieldInline(
-                                                      'Highest Level/Units',
-                                                      education['highestLevel'],
-                                                    ),
-                                            ),
-                                            const SizedBox(width: 12),
-                                            Expanded(
-                                              child: isEditing
-                                                  ? _buildEditableFieldInline(
-                                                      'Year Graduated',
-                                                      education['yearGraduated'],
-                                                      (value) {
-                                                        _educationData[index]['yearGraduated'] =
-                                                            value;
-                                                      },
-                                                    )
-                                                  : _buildInfoFieldInline(
-                                                      'Year Graduated',
-                                                      education['yearGraduated'],
-                                                    ),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 12),
-
-                                        // Academic Honors
-                                        isEditing
-                                            ? _buildEditableFieldInline(
-                                                'Academic Honors',
-                                                education['academicHonors'],
-                                                (value) {
-                                                  _educationData[index]['academicHonors'] =
-                                                      value;
-                                                },
-                                              )
-                                            : _buildInfoFieldInline(
-                                                'Academic Honors',
-                                                education['academicHonors'],
+                                              const SizedBox(width: 12),
+                                              Expanded(
+                                                child: isEditing
+                                                    ? _buildDateFieldInline(
+                                                        'To',
+                                                        education['attendedTo'],
+                                                        (value) { _educationData[index]['attendedTo'] = value; },
+                                                      )
+                                                    : _buildInfoFieldInline('To', education['attendedTo']),
                                               ),
-                                      ],
+                                            ],
+                                          ),
+                                          const SizedBox(height: 12),
+
+                                          // Highest Level/Units & Year Graduated
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: isEditing
+                                                    ? _buildEditableFieldInline(
+                                                        'Highest Level/Units',
+                                                        education['highestLevel'],
+                                                        (value) { _educationData[index]['highestLevel'] = value; },
+                                                      )
+                                                    : _buildInfoFieldInline('Highest Level/Units', education['highestLevel']),
+                                              ),
+                                              const SizedBox(width: 12),
+                                              Expanded(
+                                                child: isEditing
+                                                    ? _buildEditableFieldInline(
+                                                        'Year Graduated',
+                                                        education['yearGraduated'],
+                                                        (value) { _educationData[index]['yearGraduated'] = value; },
+                                                      )
+                                                    : _buildInfoFieldInline('Year Graduated', education['yearGraduated']),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 12),
+
+                                          // Academic Honors
+                                          isEditing
+                                              ? _buildEditableFieldInline(
+                                                  'Academic Honors',
+                                                  education['academicHonors'],
+                                                  (value) { _educationData[index]['academicHonors'] = value; },
+                                                )
+                                              : _buildInfoFieldInline('Academic Honors', education['academicHonors']),
+
+
+                                          // Edit and Delete buttons — bottom right after details
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.end,
+                                            children: [
+                                              GestureDetector(
+                                                onTap: () {
+                                                  if (isEditing) {
+                                                    _saveEducation(index);
+                                                  } else {
+                                                    setState(() {
+                                                      _editingEducationIndex = index;
+                                                    });
+                                                  }
+                                                },
+                                                child: Icon(
+                                                  isEditing ? Icons.check : Icons.edit,
+                                                  size: 20,
+                                                  color: Color.fromARGB(255, 0, 0, 0),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 12),
+                                              GestureDetector(
+                                                onTap: () => _deleteEducation(index),
+                                                child: const Icon(
+                                                  Icons.delete,
+                                                  size: 20,
+                                                  color: Color.fromARGB(255, 0, 0, 0),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                  ),
                                   ], // End of collapsible content
                                 ],
                               ),
@@ -4211,22 +4850,10 @@ void _parsePersonRefData() {
     );
   }
 
-
-// Civil Service Eligibility Section
-  Widget _buildCivilServiceCard() {
+  // Civil Service Eligibility Section
+   Widget _buildCivilServiceCard() {
     return Container(
-      padding: EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+      padding: EdgeInsets.zero,
       child: Column(
         children: [
           // Header with expand/collapse button
@@ -4258,304 +4885,200 @@ void _parsePersonRefData() {
           ),
           // Content
           if (_isCivilServiceExpanded)
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Eligibility Records',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF2C5F4F),
-                        ),
-                      ),
-                  
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  ..._civilServiceData.asMap().entries.map((entry) {
-                    int index = entry.key;
-                    Map<String, dynamic> service = entry.value;
-                    bool isEditing = _editingCivilServiceIndex == index;
-                    bool isCollapsed = _collapsedCivilServiceIndexes.contains(index);
-
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      
-                      child: Column(
-                        
-                        children: [
-                           Container(
-                           padding: const EdgeInsets.only(left:150),
-                             child: Row(
-                                  children: [
-                                      // Collapse/Expand button
-                                            IconButton(
-                                              icon: Icon(
-                                                isCollapsed
-                                                    ? Icons.expand_more
-                                                    : Icons.expand_less,
-                                                size: 20,
-                                                color: Color(0xFF2C5F4F),
-                                              ),
-                                              onPressed: () {
-                                                setState(() {
-                                                  if (isCollapsed) {
-                                                    _collapsedCivilServiceIndexes.remove(index);
-                                                  } else {
-                                                    _collapsedCivilServiceIndexes.add(index);
-                                                  }
-                                                });
-                                              },
-                                              padding: EdgeInsets.zero,
-                                              constraints: const BoxConstraints(),
-                                            ),
-                                            const SizedBox(width: 8),
-                                    IconButton(
-                                      icon: Icon(
-                                        isEditing ? Icons.check : Icons.edit,
-                                        size: 20,
-                                        color: Color(0xFF2C5F4F),
-                                      ),
-                                       onPressed: () {
-                                                if (isEditing) {
-                                                  _saveCivilServiceEligibility(index);
-                                                } else {
-                                                  setState(() {
-                                                    _editingCivilServiceIndex =
-                                                        index;
-                                                    // Auto-expand when editing
-                                                    _collapsedEducationIndexes.remove(index);
-                                                  });
-                                                }
-                                              },
-                             
-                             
-                                      padding: EdgeInsets.zero,
-                                      constraints: const BoxConstraints(),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    IconButton(
-                                      icon: const Icon(
-                                        Icons.delete,
-                                        size: 20,
-                                        color: Colors.red,
-                                      ),
-                                     onPressed: () => _deleteCivilServiceEligibility(index),
-                                      padding: EdgeInsets.zero,
-                                      constraints: const BoxConstraints(),
-                                    ),
-                                  ],
-                                ),
-                           ),
-                          // Header row with eligibility type and buttons
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              
-                              // Eligibility type dropdown or text
-                              Expanded(
-                                child: isEditing
-                                    ? DropdownButtonFormField<String>(
-                                        value: service['serviceEligibility'],
-                                        decoration: InputDecoration(
-                                          labelText: 'Eligibility Type',
-                                          labelStyle: TextStyle(
-                                            fontSize: 8,
-                                          ),
-                                          contentPadding: EdgeInsets.symmetric(
-                                            horizontal: 10,
-                                            vertical: 8,
-                                          ),
-                                          border: OutlineInputBorder(),
-                                        ),
-                                        items: [
-                                          {'value': 'CSE', 'label': 'Career Service Eligibility'},
-                                          {'value': 'RA1080', 'label': 'RA 1080 (Board/Bar) Under Special Laws'},
-                                          {'value': 'CES', 'label': 'Career Executive Service'},
-                                          {'value': 'CSEE', 'label': 'Career Service Executive Examination'},
-                                          {'value': 'BE', 'label': 'Barangay Eligibility'},
-                                          {'value': 'DL', 'label': 'Driver\'s License'},
-                                          {'value': 'OTHERS', 'label': 'Others'},
-                                        ].map((item) {
-                                          return DropdownMenuItem(
-                                            value: item['value'],
-                                            child: Text(
-                                              item['label']!,
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                              ),
-                                            ),
-                                          );
-                                        }).toList(),
-                                        onChanged: (value) {
-                                          setState(() {
-                                            _civilServiceData[index]['serviceEligibility'] = value!;
-                                          });
-                                        },
-                                      )
-                                    : Text(
-                                        // Display the label based on the value
-                                        service['serviceEligibility'] == 'CSE' ? 'Career Service Eligibility'
-                                        : service['serviceEligibility'] == 'RA1080' ? 'RA 1080 (Board/Bar) Under Special Laws'
-                                        : service['serviceEligibility'] == 'CES' ? 'Career Executive Service'
-                                        : service['serviceEligibility'] == 'CSEE' ? 'Career Service Executive Examination'
-                                        : service['serviceEligibility'] == 'BE' ? 'Barangay Eligibility'
-                                        : service['serviceEligibility'] == 'DL' ? 'Driver\'s License'
-                                        : service['serviceEligibility'] == 'OTHERS' ? 'Others'
-                                        : service['serviceEligibility'] ?? 'N/A',
-                                        style: TextStyle(
-                                          fontSize: 15,
-                                          color: Colors.black,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      
-                              ),
-                              // Edit and Delete buttons
-                              // Row(
-                              //   children: [
-                              //       // Collapse/Expand button
-                              //             IconButton(
-                              //               icon: Icon(
-                              //                 isCollapsed
-                              //                     ? Icons.expand_more
-                              //                     : Icons.expand_less,
-                              //                 size: 20,
-                              //                 color: Color(0xFF2C5F4F),
-                              //               ),
-                              //               onPressed: () {
-                              //                 setState(() {
-                              //                   if (isCollapsed) {
-                              //                     _collapsedCivilServiceIndexes.remove(index);
-                              //                   } else {
-                              //                     _collapsedCivilServiceIndexes.add(index);
-                              //                   }
-                              //                 });
-                              //               },
-                              //               padding: EdgeInsets.zero,
-                              //               constraints: const BoxConstraints(),
-                              //             ),
-                              //             const SizedBox(width: 8),
-                              //     IconButton(
-                              //       icon: Icon(
-                              //         isEditing ? Icons.check : Icons.edit,
-                              //         size: 20,
-                              //         color: Color(0xFF2C5F4F),
-                              //       ),
-                              //        onPressed: () {
-                              //                 if (isEditing) {
-                              //                   _saveCivilServiceEligibility(index);
-                              //                 } else {
-                              //                   setState(() {
-                              //                     _editingCivilServiceIndex =
-                              //                         index;
-                              //                     // Auto-expand when editing
-                              //                     _collapsedEducationIndexes.remove(index);
-                              //                   });
-                              //                 }
-                              //               },
-
-
-                              //       padding: EdgeInsets.zero,
-                              //       constraints: const BoxConstraints(),
-                              //     ),
-                              //     const SizedBox(width: 8),
-                              //     IconButton(
-                              //       icon: const Icon(
-                              //         Icons.delete,
-                              //         size: 20,
-                              //         color: Colors.red,
-                              //       ),
-                              //      onPressed: () => _deleteCivilServiceEligibility(index),
-                              //       padding: EdgeInsets.zero,
-                              //       constraints: const BoxConstraints(),
-                              //     ),
-                              //   ],
-                              // ),
-                            ],
-                          ),const SizedBox(height: 12),
-                          if (!isCollapsed) ...[
-                          
-                          Container(
-                            width: double.infinity,
+            Container(
+              padding: const EdgeInsets.all(7.0),
+              width: double.infinity,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: _civilServiceData.isEmpty
+                      ? [
+                          Center(
                             child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // Rating
-                                  isEditing
-                                    ? _buildEditableFieldInline(
-                                        'Rating',
-                                        service['rating'],
-                                        (value) {
-                                          service['rating'] = value;
-                                        },
-                                      )
-                                    : _buildInfoFieldInline(
-                                        'Rating',
-                                        service['rating'],
-                                      ),
-                                const SizedBox(height: 20),
-                                // Date of Exam
-                                isEditing
-                                    ? _buildDateFieldInline(
-                                        'Date of Exam',
-                                        service['examDate'],
-                                        (value) {
-                                          service['examDate'] = value;
-                                        },
-                                      )
-                                    : _buildInfoFieldInline(
-                                        'Date of Exam',
-                                        service['examDate'],
-                                      ),
-                                const SizedBox(height: 20),
-                                // Place of Exam
-                                isEditing
-                                    ? _buildEditableFieldInline(
-                                        'Place of Exam',
-                                        service['examPlace'],
-                                        (value) {
-                                          service['examPlace'] = value;
-                                        },
-                                      )
-                                    : _buildInfoFieldInline(
-                                        'Place of Exam',
-                                        service['examPlace'],
-                                      ),
-                                const SizedBox(height: 20),
-                                // License Number
-                                isEditing
-                                    ? _buildEditableFieldInline(
-                                        'License Number',
-                                        service['licenseNo'],
-                                        (value) {
-                                          service['licenseNo'] = value;
-                                        },
-                                      )
-                                    : _buildInfoFieldInline(
-                                        'License Number',
-                                        service['licenseNo'],
-                                      ),
-                                  const SizedBox(height: 20),
-                                ],
+                              padding: const EdgeInsets.all(20.0),
+                              child: Text(
+                                'No civil service records found.\nClick + to add.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 14,
+                                ),
                               ),
                             ),
                           ),
+                        ]
+                      : [
+                          ..._civilServiceData.asMap().entries.map((entry) {
+                            int index = entry.key;
+                            Map<String, dynamic> service = entry.value;
+                            bool isEditing = _editingCivilServiceIndex == index;
+                            bool isCollapsed = _collapsedCivilServiceIndexes.contains(index);
+
+                            // Helper to get display label from value
+                            String eligibilityLabel(String? val) {
+                              const map = {
+                                'CSE': 'Career Service Eligibility',
+                                'RA1080': 'RA 1080 (Board/Bar) Under Special Laws',
+                                'CES': 'Career Executive Service',
+                                'CSEE': 'Career Service Executive Examination',
+                                'BE': 'Barangay Eligibility',
+                                'DL': 'Driver\'s License',
+                                'OTHERS': 'Others',
+                              };
+                              return map[val] ?? val ?? 'N/A';
+                            }
+
+                            return Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Clickable title row — toggles collapse/expand
+                                  GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        if (isCollapsed) {
+                                          _collapsedCivilServiceIndexes.remove(index);
+                                        } else {
+                                          _collapsedCivilServiceIndexes.add(index);
+                                        }
+                                      });
+                                    },
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Expanded(
+                                          child: isEditing
+                                              ? DropdownButtonFormField<String>(
+                                                  value: service['serviceEligibility'],
+                                                  isExpanded: true,
+                                                  decoration: InputDecoration(
+                                                    labelText: 'Eligibility Type',
+                                                    labelStyle: TextStyle(fontSize: 12),
+                                                    contentPadding: EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 4,
+                                                    ),
+                                                    border: OutlineInputBorder(),
+                                                  ),
+                                                  items: [
+                                                    {'value': 'CSE', 'label': 'Career Service Eligibility'},
+                                                    {'value': 'RA1080', 'label': 'RA 1080 (Board/Bar) Under Special Laws'},
+                                                    {'value': 'CES', 'label': 'Career Executive Service'},
+                                                    {'value': 'CSEE', 'label': 'Career Service Executive Examination'},
+                                                    {'value': 'BE', 'label': 'Barangay Eligibility'},
+                                                    {'value': 'DL', 'label': 'Driver\'s License'},
+                                                    {'value': 'OTHERS', 'label': 'Others'},
+                                                  ].map((item) {
+                                                    return DropdownMenuItem(
+                                                      value: item['value'],
+                                                      child: Text(item['label']!, style: TextStyle(fontSize: 12)),
+                                                    );
+                                                  }).toList(),
+                                                  onChanged: (value) {
+                                                    setState(() {
+                                                      _civilServiceData[index]['serviceEligibility'] = value!;
+                                                    });
+                                                  },
+                                                )
+                                              : Text(
+                                                  eligibilityLabel(service['serviceEligibility']),
+                                                  style: TextStyle(
+                                                    fontSize: 15,
+                                                    color: Colors.black,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                        ),
+                                        // Only expand/collapse arrow
+                                        Icon(
+                                          isCollapsed ? Icons.expand_more : Icons.expand_less,
+                                          size: 20,
+                                          color: Colors.black,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+
+                                  // Collapsible content + edit/delete at bottom
+                                  if (!isCollapsed) ...[
+                                    const SizedBox(height: 12),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          // Rating
+                                          isEditing
+                                              ? _buildEditableFieldInline('Rating', service['rating'], (value) { service['rating'] = value; })
+                                              : _buildInfoFieldInline('Rating', service['rating']),
+                                          const SizedBox(height: 10),
+
+                                          // Date of Exam
+                                          isEditing
+                                              ? _buildDateFieldInline('Date of Exam', service['examDate'], (value) { service['examDate'] = value; })
+                                              : _buildInfoFieldInline('Date of Exam', service['examDate']),
+                                          const SizedBox(height: 10),
+
+                                          // Place of Exam
+                                          isEditing
+                                              ? _buildEditableFieldInline('Place of Exam', service['examPlace'], (value) { service['examPlace'] = value; })
+                                              : _buildInfoFieldInline('Place of Exam', service['examPlace']),
+                                          const SizedBox(height: 10),
+
+                                          // License Number
+                                          isEditing
+                                              ? _buildEditableFieldInline('License Number', service['licenseNo'], (value) { service['licenseNo'] = value; })
+                                              : _buildInfoFieldInline('License Number', service['licenseNo']),
+
+                                       
+
+                                          // Edit and Delete buttons — bottom right after details
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.end,
+                                            children: [
+                                              GestureDetector(
+                                                onTap: () {
+                                                  if (isEditing) {
+                                                    _saveCivilServiceEligibility(index);
+                                                  } else {
+                                                    setState(() {
+                                                      _editingCivilServiceIndex = index;
+                                                    });
+                                                  }
+                                                },
+                                                child: Icon(
+                                                  isEditing ? Icons.check : Icons.edit,
+                                                  size: 20,
+                                                  color: Colors.black,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 12),
+                                              GestureDetector(
+                                                onTap: () => _deleteCivilServiceEligibility(index),
+                                                child: const Icon(
+                                                  Icons.delete,
+                                                  size: 20,
+                                                  color: Colors.black,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ], // End collapsible content
+                                ],
+                              ),
+                            );
+                          }).toList(),
                         ],
-                        ],
-                      ),
-                    
-                    );
-                
-                  }),
-                ],
+                ),
               ),
             ),
             // Add Button
@@ -4593,21 +5116,9 @@ void _parsePersonRefData() {
     );
   }
 
-
 Widget _buildWorkExperienceCard() {
   return Container(
-    padding: EdgeInsets.all(10),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(10),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.1),
-          blurRadius: 8,
-          offset: const Offset(0, 2),
-        ),
-      ],
-    ),
+    padding: EdgeInsets.zero,
     child: Column(
       children: [
         // Header
@@ -4639,265 +5150,213 @@ Widget _buildWorkExperienceCard() {
         ),
         // Content
         if (_isWorkExperienceExpanded)
-          Padding(
-            padding: const EdgeInsets.all(7.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Empty state or work experience list
-                if (_workExperienceData.isEmpty)
-                  Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20.0),
-                      child: Text(
-                        'No work experience records found.\nClick + to add work experience.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                  )
-                else
-                  ..._workExperienceData.asMap().entries.map((entry) {
-                    int index = entry.key;
-                    Map<String, dynamic> work = entry.value;
-                    bool isEditing = _editingWorkExperienceIndex == index;
-                    bool isCollapsed = _collapsedWorkExperienceIndexes.contains(index);
-
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 16),
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Header row with position title and buttons
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              // Position Title (header)
-                              Expanded(
-                                child: isEditing
-                                    ? _buildEditableFieldInline(
-                                        'Position Title',
-                                        work['position'],
-                                        (value) {
-                                          _workExperienceData[index]['position'] = value;
-                                        },
-                                      )
-                                    : Text(
-                                        work['position'] ?? 'N/A',
-                                        style: TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.bold,
-                                          color: Color.fromARGB(255, 0, 0, 0),
-                                        ),
-                                      ),
+          Container(
+          
+            padding: const EdgeInsets.all(5),
+            width: double.infinity,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: _workExperienceData.isEmpty
+                    ? [
+                        Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(20.0),
+                            child: Text(
+                              'No work experience records found.\nClick + to add work experience.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 14,
                               ),
-                              // Edit and Delete buttons
-                              Row(
-                                children: [
-                                   IconButton(
-                                            icon: Icon(
-                                              isCollapsed
-                                                  ? Icons.expand_more
-                                                  : Icons.expand_less,
-                                              size: 20,
-                                              color: Color(0xFF2C5F4F),
-                                            ),
-                                            onPressed: () {
-                                              setState(() {
-                                                if (isCollapsed) {
-                                                  _collapsedWorkExperienceIndexes .remove(index);
-                                                } else {
-                                                  _collapsedWorkExperienceIndexes .add(index);
-                                                }
-                                              });
-                                            },
-                                            padding: EdgeInsets.zero,
-                                            constraints: const BoxConstraints(),
-                                          ),
-                                          const SizedBox(width: 8),
-                                  IconButton(
-                                    icon: Icon(
-                                      isEditing ? Icons.check : Icons.edit,
-                                      size: 18,
-                                      color: const Color(0xFF2C5F4F),
-                                    ),
-                                    onPressed: () {
-                                      if (isEditing) {
-                                        _saveWorkExperience(index);
-                                      } else {
-                                        setState(() {
-                                          _editingWorkExperienceIndex = index;
-
-                                            _collapsedWorkExperienceIndexes.remove(index);
-                                        });
-                                      }
-                                    },
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  IconButton(
-                                    icon: const Icon(
-                                      Icons.delete,
-                                      size: 18,
-                                      color: Colors.red,
-                                    ),
-                                    onPressed: () => _deleteWorkExperience(index),
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-
-                          // Date From and Date To in a row
-                           if (!isCollapsed) ...[
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                                      horizontal: 12.0,
-                                    ),
-                            child: Row(
-                              crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  child: isEditing
-                                      ? _buildDateFieldInline(
-                                          'From',
-                                          work['dateFrom'],
-                                          (value) {
-                                            _workExperienceData[index]['dateFrom'] = value;
-                                          },
-                                        )
-                                      : _buildInfoFieldInline(
-                                          'From',
-                                          work['dateFrom'],
-                                        ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: isEditing
-                                      ? _buildDateFieldInline(
-                                          'To',
-                                          work['dateTo'],
-                                          (value) {
-                                            _workExperienceData[index]['dateTo'] = value;
-                                          },
-                                        )
-                                      : _buildInfoFieldInline(
-                                          'To',
-                                          work['dateTo'],
-                                        ),
-                                ),
-                              ],
                             ),
                           ),
-                          const SizedBox(height: 12),
+                        ),
+                      ]
+                    : [
+                        ..._workExperienceData.asMap().entries.map((entry) {
+                          int index = entry.key;
+                          Map<String, dynamic> work = entry.value;
+                          bool isEditing = _editingWorkExperienceIndex == index;
+                          bool isCollapsed = _collapsedWorkExperienceIndexes.contains(index);
 
-                          // Department / Agency / Office / Company
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                      horizontal: 12.0,
-                                    ),
-                            child: isEditing
-                                ? _buildEditableFieldInline(
-                                    'Department / Agency / Office / Company',
-                                    work['company'],
-                                    (value) {
-                                      _workExperienceData[index]['company'] = value;
-                                    },
-                                  )
-                                : _buildInfoFieldInline(
-                                    'Department / Agency / Office / Company',
-                                    work['company'],
-                                  ),
-                          ),
-                          const SizedBox(height: 12),
-
-                          // Monthly Salary and Salary Grade in a row
-                        
-
-                          // Status of Appointment
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                      horizontal: 12.0,
-                                    ),
-                            child: isEditing
-                                ? _buildEditableFieldInline(
-                                    'Status of Appointment',
-                                    work['appointmentStatus'],
-                                    (value) {
-                                      _workExperienceData[index]['appointmentStatus'] = value;
-                                    },
-                                  )
-                                : _buildInfoFieldInline(
-                                    'Status of Appointment',
-                                    work['appointmentStatus'],
-                                  ),
-                          ),
-                          const SizedBox(height: 12),
-
-                          // Government Service (Yes/No dropdown when editing)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                      horizontal: 12.0,
-                                    ),
-                            child: isEditing
-                                ? Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 16),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Clickable title row — toggles collapse/expand
+                                GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      if (isCollapsed) {
+                                        _collapsedWorkExperienceIndexes.remove(index);
+                                      } else {
+                                        _collapsedWorkExperienceIndexes.add(index);
+                                      }
+                                    });
+                                  },
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text(
-                                        'Government Service',
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          color: Colors.grey[600],
-                                          fontWeight: FontWeight.w500,
-                                        ),
+                                      Expanded(
+                                        child: isEditing
+                                            ? _buildEditableFieldInline(
+                                                'Position Title',
+                                                work['position'],
+                                                (value) {
+                                                  _workExperienceData[index]['position'] = value;
+                                                },
+                                              )
+                                            : Text(
+                                                work['position'] ?? 'N/A',
+                                                style: TextStyle(
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.black,
+                                                ),
+                                              ),
                                       ),
-                                      const SizedBox(height: 4),
-                                      DropdownButtonFormField<String>(
-                                        value: work['govtService']?.toString().toUpperCase() == 'TRUE' ||
-                                                work['govtService']?.toString().toUpperCase() == 'YES'
-                                            ? 'Yes'
-                                            : work['govtService']?.toString().toUpperCase() == 'FALSE' ||
-                                                    work['govtService']?.toString().toUpperCase() == 'NO'
-                                                ? 'No'
-                                                : null,
-                                        decoration: InputDecoration(
-                                          contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                          border: UnderlineInputBorder(),
-                                        ),
-                                        items: ['Yes', 'No'].map((value) {
-                                          return DropdownMenuItem(
-                                            value: value,
-                                            child: Text(value, style: TextStyle(fontSize: 13)),
-                                          );
-                                        }).toList(),
-                                        onChanged: (value) {
-                                          setState(() {
-                                            _workExperienceData[index]['govtService'] = value;
-                                          });
-                                        },
+                                      // Only expand/collapse arrow
+                                      Icon(
+                                        isCollapsed ? Icons.expand_more : Icons.expand_less,
+                                        size: 20,
+                                        color: Color(0xFF2C5F4F),
                                       ),
                                     ],
-                                  )
-                                : _buildInfoFieldInline(
-                                    'Government Service',
-                                    work['govtService'],
                                   ),
-                          ),
-                        ],
-                        ],
-                      ),
-                    );
-                  }).toList(),
-              ],
+                                ),
+
+                                // Collapsible content + edit/delete at bottom
+                                if (!isCollapsed) ...[
+                                  const SizedBox(height: 12),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        // Date From and Date To
+                                        Row(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Expanded(
+                                              child: isEditing
+                                                  ? _buildDateFieldInline('From', work['dateFrom'], (value) { _workExperienceData[index]['dateFrom'] = value; })
+                                                  : _buildInfoFieldInline('From', work['dateFrom']),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: isEditing
+                                                  ? _buildDateFieldInline('To', work['dateTo'], (value) { _workExperienceData[index]['dateTo'] = value; })
+                                                  : _buildInfoFieldInline('To', work['dateTo']),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 12),
+
+                                        // Department / Agency / Office / Company
+                                        isEditing
+                                            ? _buildEditableFieldInline('Department / Agency / Office / Company', work['company'], (value) { _workExperienceData[index]['company'] = value; })
+                                            : _buildInfoFieldInline('Department / Agency / Office / Company', work['company']),
+                                        const SizedBox(height: 12),
+
+                                        // Status of Appointment
+                                        isEditing
+                                            ? _buildEditableFieldInline('Status of Appointment', work['appointmentStatus'], (value) { _workExperienceData[index]['appointmentStatus'] = value; })
+                                            : _buildInfoFieldInline('Status of Appointment', work['appointmentStatus']),
+                                        const SizedBox(height: 12),
+
+                                        // Government Service
+                                        isEditing
+                                            ? Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    'Government Service',
+                                                    style: TextStyle(
+                                                      fontSize: 10,
+                                                      color: Colors.grey[600],
+                                                      fontWeight: FontWeight.w500,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 4),
+                                                  DropdownButtonFormField<String>(
+                                                    value: work['govtService']?.toString().toUpperCase() == 'TRUE' ||
+                                                            work['govtService']?.toString().toUpperCase() == 'YES'
+                                                        ? 'Yes'
+                                                        : work['govtService']?.toString().toUpperCase() == 'FALSE' ||
+                                                                work['govtService']?.toString().toUpperCase() == 'NO'
+                                                            ? 'No'
+                                                            : null,
+                                                    decoration: InputDecoration(
+                                                      contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                      border: UnderlineInputBorder(),
+                                                    ),
+                                                    items: ['Yes', 'No'].map((value) {
+                                                      return DropdownMenuItem(
+                                                        value: value,
+                                                        child: Text(value, style: TextStyle(fontSize: 13)),
+                                                      );
+                                                    }).toList(),
+                                                    onChanged: (value) {
+                                                      setState(() {
+                                                        _workExperienceData[index]['govtService'] = value;
+                                                      });
+                                                    },
+                                                  ),
+                                                ],
+                                              )
+                                            : _buildInfoFieldInline('Government Service', work['govtService']),
+
+                                        const SizedBox(height: 16),
+
+                                        // Edit and Delete buttons — bottom right after details
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.end,
+                                          children: [
+                                            GestureDetector(
+                                              onTap: () {
+                                                if (isEditing) {
+                                                  _saveWorkExperience(index);
+                                                } else {
+                                                  setState(() {
+                                                    _editingWorkExperienceIndex = index;
+                                                  });
+                                                }
+                                              },
+                                              child: Icon(
+                                                isEditing ? Icons.check : Icons.edit,
+                                                size: 20,
+                                                color: Colors.black,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            GestureDetector(
+                                              onTap: () => _deleteWorkExperience(index),
+                                              child: const Icon(
+                                                Icons.delete,
+                                                size: 20,
+                                                color: Colors.black,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ], // End collapsible content
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ],
+              ),
             ),
           ),
            // Add Button
@@ -4933,21 +5392,11 @@ Widget _buildWorkExperienceCard() {
   );
 }
 
+
   // Voluntary Work Section
   Widget _buildVoluntaryWorkCard() {
   return Container(
-    padding: EdgeInsets.all(10),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(10),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.1),
-          blurRadius: 8,
-          offset: const Offset(0, 2),
-        ),
-      ],
-    ),
+    padding: EdgeInsets.zero,
     child: Column(
       children: [
         // Header
@@ -4981,212 +5430,155 @@ Widget _buildWorkExperienceCard() {
         ),
         // Content
         if (_isVoluntaryWorkExpanded)
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-              
-                // Empty state or voluntary work list
-                  if (_voluntaryWorkData.isEmpty)
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(7.0),
-                        child: Text(
-                          'No voluntary work records found.\nClick + to add voluntary work.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                    )
-                  else
-                    ..._voluntaryWorkData.asMap().entries.map((entry) {
-                      int index = entry.key;
-                      Map<String, dynamic> voluntary = entry.value;
-                      bool isEditing = _editingVoluntaryWorkIndex == index;
-                      bool isCollapsed = _collapsedVoluntaryWorkIndexes.contains(index);
-
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 16),
-                        padding: const EdgeInsets.all(3.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Header row with organization and buttons
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                // Organization Name (header)
-                                Expanded(
-                                child: isEditing
-                                    ? _buildEditableFieldInline(
-                                        'Name of Organization',
-                                        voluntary['organization'],
-                                        (value) {
-                                          _voluntaryWorkData[index]['organization'] = value;
-                                        },
-                                      )
-                                    : Text(
-                                        voluntary['organization'] ?? 'N/A',
-                                        style: TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.bold,
-                                          color: Color.fromARGB(255, 0, 0, 0),
-                                        ),
-                                      ),
-                              ),
-                              // Edit and Delete buttons
-                              Row(
-                                children: [
-                                  IconButton(
-                                            icon: Icon(
-                                              isCollapsed
-                                                  ? Icons.expand_more
-                                                  : Icons.expand_less,
-                                              size: 20,
-                                              color: Color(0xFF2C5F4F),
-                                            ),
-                                            onPressed: () {
-                                              setState(() {
-                                                if (isCollapsed) {
-                                                  _collapsedVoluntaryWorkIndexes.remove(index);
-                                                } else {
-                                                  _collapsedVoluntaryWorkIndexes.add(index);
-                                                }
-                                              });
-                                            },
-                                            padding: EdgeInsets.zero,
-                                            constraints: const BoxConstraints(),
-                                          ),
-                                          const SizedBox(width: 8),
-                                  IconButton(
-                                    icon: Icon(
-                                      isEditing ? Icons.check : Icons.edit,
-                                      size: 18,
-                                      color: const Color(0xFF2C5F4F),
-                                    ),
-                                    onPressed: () {
-                                      if (isEditing) {
-                                        _saveVoluntaryWork(index);
-                                      } else {
-                                        setState(() {
-                                          _editingVoluntaryWorkIndex = index;
-
-                                           _collapsedVoluntaryWorkIndexes.remove(index);
-                                        });
-                                      }
-                                    },
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  IconButton(
-                                    icon: const Icon(
-                                      Icons.delete,
-                                      size: 18,
-                                      color: Colors.red,
-                                    ),
-                                    onPressed: () => _deleteVoluntaryWork(index),
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-
-                          // Date From and Date To in a row
-                           if (!isCollapsed) ...[
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                      horizontal: 12.0,
-                                    ),
-                            child: Row(
-                               crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  child: isEditing
-                                      ? _buildDateFieldInline(
-                                          'From',
-                                          voluntary['dateFrom'],
-                                          (value) {
-                                            _voluntaryWorkData[index]['dateFrom'] = value;
-                                          },
-                                        )
-                                      : _buildInfoFieldInline(
-                                          'Date From',
-                                          voluntary['dateFrom'],
-                                        ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: isEditing
-                                      ? _buildDateFieldInline(
-                                          'To',
-                                          voluntary['dateTo'],
-                                          (value) {
-                                            _voluntaryWorkData[index]['dateTo'] = value;
-                                          },
-                                        )
-                                      : _buildInfoFieldInline(
-                                          'Date To',
-                                          voluntary['dateTo'],
-                                        ),
-                                ),
-                              ],
+          Container(
+            padding: const EdgeInsets.all(5),
+            width: double.infinity,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: _voluntaryWorkData.isEmpty
+                    ? [
+                        Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(20.0),
+                            child: Text(
+                              'No voluntary work records found.\nClick + to add voluntary work.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(color: Colors.grey[600], fontSize: 14),
                             ),
                           ),
-                          const SizedBox(height: 12),
+                        ),
+                      ]
+                    : [
+                        ..._voluntaryWorkData.asMap().entries.map((entry) {
+                          int index = entry.key;
+                          Map<String, dynamic> voluntary = entry.value;
+                          bool isEditing = _editingVoluntaryWorkIndex == index;
+                          bool isCollapsed = _collapsedVoluntaryWorkIndexes.contains(index);
 
-                          // Number of Hours
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                      horizontal: 12.0,
-                                    ),
-                            child: isEditing
-                                ? _buildEditableFieldInline(
-                                    'Number of Hours',
-                                    voluntary['hours'],
-                                    (value) {
-                                      _voluntaryWorkData[index]['hours'] = value;
-                                    },
-                                  )
-                                : _buildInfoFieldInline(
-                                    'Number of Hours',
-                                    voluntary['hours'],
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 16),
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Clickable title row — toggles collapse/expand
+                                GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      if (isCollapsed) {
+                                        _collapsedVoluntaryWorkIndexes.remove(index);
+                                      } else {
+                                        _collapsedVoluntaryWorkIndexes.add(index);
+                                      }
+                                    });
+                                  },
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: isEditing
+                                            ? _buildEditableFieldInline(
+                                                'Name of Organization',
+                                                voluntary['organization'],
+                                                (value) { _voluntaryWorkData[index]['organization'] = value; },
+                                              )
+                                            : Text(
+                                                voluntary['organization'] ?? 'N/A',
+                                                style: TextStyle(
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.black,
+                                                ),
+                                              ),
+                                      ),
+                                      Icon(
+                                        isCollapsed ? Icons.expand_more : Icons.expand_less,
+                                        size: 20,
+                                        color: Color(0xFF2C5F4F),
+                                      ),
+                                    ],
                                   ),
-                          ),
-                          const SizedBox(height: 12),
+                                ),
 
-                          // Position / Nature of Work
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                      horizontal: 12.0,
+                                // Collapsible content + edit/delete at bottom
+                                if (!isCollapsed) ...[
+                                  const SizedBox(height: 12),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        // Date From and Date To
+                                        Row(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Expanded(
+                                              child: isEditing
+                                                  ? _buildDateFieldInline('From', voluntary['dateFrom'], (value) { _voluntaryWorkData[index]['dateFrom'] = value; })
+                                                  : _buildInfoFieldInline('Date From', voluntary['dateFrom']),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: isEditing
+                                                  ? _buildDateFieldInline('To', voluntary['dateTo'], (value) { _voluntaryWorkData[index]['dateTo'] = value; })
+                                                  : _buildInfoFieldInline('Date To', voluntary['dateTo']),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 12),
+
+                                        // Number of Hours
+                                        isEditing
+                                            ? _buildEditableFieldInline('Number of Hours', voluntary['hours'], (value) { _voluntaryWorkData[index]['hours'] = value; })
+                                            : _buildInfoFieldInline('Number of Hours', voluntary['hours']),
+                                        const SizedBox(height: 12),
+
+                                        // Position / Nature of Work
+                                        isEditing
+                                            ? _buildEditableFieldInline('Position / Nature of Work', voluntary['work'], (value) { _voluntaryWorkData[index]['work'] = value; })
+                                            : _buildInfoFieldInline('Position / Nature of Work', voluntary['work']),
+
+                                        const SizedBox(height: 16),
+
+                                        // Edit and Delete — bottom right
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.end,
+                                          children: [
+                                            GestureDetector(
+                                              onTap: () {
+                                                if (isEditing) {
+                                                  _saveVoluntaryWork(index);
+                                                } else {
+                                                  setState(() {
+                                                    _editingVoluntaryWorkIndex = index;
+                                                  });
+                                                }
+                                              },
+                                              child: Icon(
+                                                isEditing ? Icons.check : Icons.edit,
+                                                size: 20,
+                                                color: Colors.black,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            GestureDetector(
+                                              onTap: () => _deleteVoluntaryWork(index),
+                                              child: const Icon(Icons.delete, size: 20, color: Colors.black),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
                                     ),
-                            child: isEditing
-                                ? _buildEditableFieldInline(
-                                    'Position / Nature of Work',
-                                    voluntary['work'],
-                                    (value) {
-                                      _voluntaryWorkData[index]['work'] = value;
-                                    },
-                                  )
-                                : _buildInfoFieldInline(
-                                    'Position / Nature of Work',
-                                    voluntary['work'],
                                   ),
-                          ),
-                        ],
-                          ],
-                      ),
-                    );
-                  }).toList(),
-              ],
+                                ], // End collapsible content
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ],
+              ),
             ),
           ),
           if (_isVoluntaryWorkExpanded)
@@ -5223,26 +5615,11 @@ Widget _buildWorkExperienceCard() {
   // Learning and Development Section
 Widget _buildLearningDevelopmentCard() {
   return Container(
-    padding: const EdgeInsets.all(10),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(10),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.1),
-          blurRadius: 8,
-          offset: const Offset(0, 2),
-        ),
-      ],
-    ),
+    padding: EdgeInsets.zero,
+   
     child: Column(
       children: [
         InkWell(
-          onTap: () {
-            setState(() {
-              _isLearningDevelopmentExpanded = !_isLearningDevelopmentExpanded;
-            });
-          },
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: const BoxDecoration(
@@ -5271,272 +5648,185 @@ Widget _buildLearningDevelopmentCard() {
           ),
         ),
         if (_isLearningDevelopmentExpanded)
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Sub-header with Add button
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Training Programs',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF2C5F4F),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(5),
+            width: double.infinity,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: _learningDevelopmentData.isEmpty
+                    ? [
+                        Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(20.0),
+                            child: Text(
+                              'No training records found.\nClick + to add.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                            ),
+                          ),
+                        ),
+                      ]
+                    : [
+                        ..._learningDevelopmentData.asMap().entries.map((entry) {
+                          final int index = entry.key;
+                          final Map<String, dynamic> training = entry.value;
+                          final bool isEditing = _editingLearningDevelopmentIndex == index;
+                          bool isCollapsed = _collapsedLearningDevIndexes.contains(index);
 
-                // ── Training entries ──
-                ..._learningDevelopmentData.asMap().entries.map((entry) {
-                  final int index = entry.key;
-                  final Map<String, dynamic> training = entry.value;
-                  final bool isEditing =
-                      _editingLearningDevelopmentIndex == index;
-                  bool isCollapsed = _collapsedLearningDevIndexes.contains(index);
-
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // ── Row: title + edit/delete buttons ──
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                             Expanded(
-                                child: isEditing
-                                    ? _buildEditableFieldInline(
-                                        'Training Programs',
-                                        training['title'],
-                                        (value) {
-                                          _learningDevelopmentData[index]['title'] = value;
-                                        },
-                                      )
-                                    : Text(
-                                        training['title'] ?? 'N/A',
-                                        style: TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.bold,
-                                          color: Color.fromARGB(255, 0, 0, 0),
-                                        ),
-                                      ),
-                              ),
-                            // const SizedBox(width: 8),
-                            Row(
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 16),
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                  // Collapse/Expand button
-                                          IconButton(
-                                            icon: Icon(
-                                              isCollapsed
-                                                  ? Icons.expand_more
-                                                  : Icons.expand_less,
-                                              size: 20,
-                                              color: Color(0xFF2C5F4F),
-                                            ),
-                                            onPressed: () {
-                                              setState(() {
-                                                if (isCollapsed) {
-                                                  _collapsedLearningDevIndexes.remove(index);
-                                                } else {
-                                                  _collapsedLearningDevIndexes.add(index);
-                                                }
-                                              });
-                                            },
-                                            padding: EdgeInsets.zero,
-                                            constraints: const BoxConstraints(),
-                                          ),
-                                          const SizedBox(width: 2),
-                                IconButton(
-                                  icon: Icon(
-                                    isEditing ? Icons.check : Icons.edit,
-                                    size: 18,
-                                    color: const Color(0xFF2C5F4F),
-                                  ),
-                                  onPressed: () {
-                                    if (isEditing) {
-                                      _saveLearningDevelopment(index);
-                                    } else {
-                                      setState(() {
-                                        _editingLearningDevelopmentIndex =
-                                            index;
-
+                                // Clickable title row — toggles collapse/expand
+                                GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      if (isCollapsed) {
                                         _collapsedLearningDevIndexes.remove(index);
-                                      });
-                                    }
+                                      } else {
+                                        _collapsedLearningDevIndexes.add(index);
+                                      }
+                                    });
                                   },
-                                  padding: EdgeInsets.zero,
-                                  constraints: const BoxConstraints(),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: isEditing
+                                            ? _buildEditableFieldInline(
+                                                'Training Programs',
+                                                training['title'],
+                                                (value) { _learningDevelopmentData[index]['title'] = value; },
+                                              )
+                                            : Text(
+                                                training['title'] ?? 'N/A',
+                                                style: TextStyle(
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.black,
+                                                ),
+                                              ),
+                                      ),
+                                      Icon(
+                                        isCollapsed ? Icons.expand_more : Icons.expand_less,
+                                        size: 20,
+                                        color: Color(0xFF2C5F4F),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete,
-                                      size: 18, color: Colors.red),
-                                  onPressed: () =>
-                                      _deleteLearningDevelopment(index),
-                                  padding: EdgeInsets.zero,
-                                  constraints: const BoxConstraints(),
-                                ),
+
+                                // Collapsible content + edit/delete at bottom
+                                if (!isCollapsed) ...[
+                                  const SizedBox(height: 12),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        // Date From / Date To
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: isEditing
+                                                  ? _buildDateFieldInline('Date From', training['attendedFrom'], (value) { setState(() { _learningDevelopmentData[index]['attendedFrom'] = value; }); })
+                                                  : _buildInfoFieldInline('Date From', training['attendedFrom']),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: isEditing
+                                                  ? _buildDateFieldInline('Date To', training['attendedTo'], (value) { setState(() { _learningDevelopmentData[index]['attendedTo'] = value; }); })
+                                                  : _buildInfoFieldInline('Date To', training['attendedTo']),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 8),
+
+                                        // Number of Hours / Type of L&D
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: isEditing
+                                                  ? _buildEditableFieldInline('Number of Hours', training['hours'], (value) { setState(() { _learningDevelopmentData[index]['hours'] = value; }); })
+                                                  : _buildInfoFieldInline('Number of Hours', training['hours']),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: isEditing
+                                                  ? _buildEditableFieldInline('Type of L&D', training['ldType'], (value) { setState(() { _learningDevelopmentData[index]['ldType'] = value; }); })
+                                                  : _buildInfoFieldInline('Type of L&D', training['ldType']),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 8),
+
+                                        // Conducted / Sponsored By
+                                        isEditing
+                                            ? _buildEditableFieldInline('Conducted / Sponsored By', training['conductedBy'], (value) { setState(() { _learningDevelopmentData[index]['conductedBy'] = value; }); })
+                                            : _buildInfoFieldInline('Conducted / Sponsored By', training['conductedBy']),
+
+                                        const SizedBox(height: 16),
+
+                                        // Edit and Delete — bottom right
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.end,
+                                          children: [
+                                            GestureDetector(
+                                              onTap: () {
+                                                if (isEditing) {
+                                                  _saveLearningDevelopment(index);
+                                                } else {
+                                                  setState(() {
+                                                    _editingLearningDevelopmentIndex = index;
+                                                  });
+                                                }
+                                              },
+                                              child: Icon(
+                                                isEditing ? Icons.check : Icons.edit,
+                                                size: 20,
+                                                color: Colors.black,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            GestureDetector(
+                                              onTap: () => _deleteLearningDevelopment(index),
+                                              child: const Icon(Icons.delete, size: 20, color: Colors.black),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ], // End collapsible content
                               ],
                             ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 8),
-
-                         if (!isCollapsed) ...[
-                        if (isEditing) ...[
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildDateFieldInline(
-                                  'Date From',
-                                  training['attendedFrom'],
-                                  (value) {
-                                    setState(() {
-                                      _learningDevelopmentData[index]
-                                          ['attendedFrom'] = value;
-                                    });
-                                  },
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: _buildDateFieldInline(
-                                  'Date To',
-                                  training['attendedTo'],
-                                  (value) {
-                                    setState(() {
-                                      _learningDevelopmentData[index]
-                                          ['attendedTo'] = value;
-                                    });
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildEditableFieldInline(
-                                  'Number of Hours',
-                                  training['hours'], // ✅ fixed key
-                                  (value) {
-                                    setState(() {
-                                      _learningDevelopmentData[index]
-                                          ['hours'] = value; // ✅
-                                    });
-                                  },
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: _buildEditableFieldInline(
-                                  'Type of L&D',
-                                  training['ldType'], // ✅ fixed key
-                                  (value) {
-                                    setState(() {
-                                      _learningDevelopmentData[index]
-                                          ['ldType'] = value; // ✅
-                                    });
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          _buildEditableFieldInline(
-                            'Conducted / Sponsored By',
-                            training['conductedBy'], // ✅ now works
-                            (value) {
-                              setState(() {
-                                _learningDevelopmentData[index]
-                                    ['conductedBy'] = value;
-                              });
-                            },
-                          ),
-                        ]
-
-                        // ── View mode ──
-                        else ...[
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildInfoFieldInline(
-                                  'Date From',
-                                  training['attendedFrom'],
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: _buildInfoFieldInline(
-                                  'Date To',
-                                  training['attendedTo'],
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildInfoFieldInline(
-                                  'Number of Hours',
-                                  training['hours'], // ✅ fixed key
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: _buildInfoFieldInline(
-                                  'Type of L&D',
-                                  training['ldType'], // ✅ fixed key
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          _buildInfoFieldInline(
-                            'Conducted / Sponsored By',
-                            training['conductedBy'], // ✅ now works
-                          ),
-                        ],
+                          );
+                        }).toList(),
                       ],
-                      ],
-                    ),
-                  );
-                }).toList(),
-              ],
+              ),
             ),
           ),
-        if (_isVoluntaryWorkExpanded)
+        if (_isLearningDevelopmentExpanded)
             Align(
               alignment: Alignment.centerRight,
               child: IconButton(
-                icon: const Icon(
-                  Icons.add_circle,
-                  size: 28,
-                  color: Color(0xFF2C5F4F),
-                ),
+                icon: const Icon(Icons.add_circle, size: 28, color: Color(0xFF2C5F4F)),
                 onPressed: () {
                   setState(() {
                      _learningDevelopmentData.add({
-                            // No 'id' → treated as new record on save
                             'title': '',
-                            'attendedFrom':'',
-                            'attendedTo':'',
+                            'attendedFrom': '',
+                            'attendedTo': '',
                             'hours': '',
                             'ldType': '',
                             'conductedBy': '',
                             'certificate_url': '',
                           });
-                   _editingLearningDevelopmentIndex =
-                  _learningDevelopmentData.length - 1;
+                   _editingLearningDevelopmentIndex = _learningDevelopmentData.length - 1;
                   });
                 },
                 tooltip: 'Add Training Program',
@@ -5550,62 +5840,695 @@ Widget _buildLearningDevelopmentCard() {
   );
 }
 
-  // Other Information Section
-  Widget _buildOtherInformationCard() {
+
+
+// Widget _buildOtherInformationCard() {
+//     return Container(
+//       padding: const EdgeInsets.all(10),
+//       decoration: BoxDecoration(
+//         color: Colors.white,
+//         borderRadius: BorderRadius.circular(10),
+//         boxShadow: [
+//           BoxShadow(
+//             color: Colors.black.withOpacity(0.1),
+//             blurRadius: 8,
+//             offset: const Offset(0, 2),
+//           ),
+//         ],
+//       ),
+//       child: Column(
+//         children: [
+//           // ── Header ──────────────────────────────────────────────
+//           InkWell(
+//             child: Container(
+//               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+//               decoration: const BoxDecoration(
+//                 color: Color(0xFF2C5F4F),
+//                 borderRadius: BorderRadius.only(
+//                   topLeft: Radius.circular(8),
+//                   topRight: Radius.circular(8),
+//                 ),
+//               ),
+//               child: Row(
+//                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//                 children: [
+//                   const Text(
+//                     'OTHER INFORMATION',
+//                     style: TextStyle(
+//                       color: Colors.white,
+//                       fontSize: 13,
+//                       fontWeight: FontWeight.bold,
+//                       letterSpacing: 0.5,
+//                     ),
+//                   ),
+//                   if (_isFetchingOtherInfo)
+//                     const SizedBox(
+//                       width: 16,
+//                       height: 16,
+//                       child: CircularProgressIndicator(
+//                         strokeWidth: 2,
+//                         valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+//                       ),
+//                     ),
+//                 ],
+//               ),
+//             ),
+//           ),
+
+//           // ── Body ─────────────────────────────────────────────────
+//           if (_isOtherInformationExpanded)
+//             Padding(
+//               padding: const EdgeInsets.all(16.0),
+//               child: Column(
+//                 crossAxisAlignment: CrossAxisAlignment.start,
+//                 children: [
+//                   // ── Global Save / Edit / Cancel row ──────────────
+//                   Row(
+//                     mainAxisAlignment: MainAxisAlignment.end,
+//                     children: [
+//                       if (_isEditingOtherInfo) ...[
+//                         TextButton(
+//                           onPressed: () {
+//                             // Cancel: re-parse from the cached record
+//                             setState(() {
+//                               _parseOtherInfoData();
+//                               _isEditingOtherInfo = false;
+//                               _editingSpecialSkillIndex = null;
+//                               _editingNonAcademicDistinctionIndex = null;
+//                               _editingMembershipIndex = null;
+//                             });
+//                           },
+//                           child: const Text(
+//                             'Cancel',
+//                             style: TextStyle(color: Colors.red),
+//                           ),
+//                         ),
+//                         const SizedBox(width: 8),
+//                         ElevatedButton.icon(
+//                           onPressed: _saveOtherInfo,
+//                           icon: const Icon(Icons.save, size: 16),
+//                           label: const Text('Save'),
+//                           style: ElevatedButton.styleFrom(
+//                             backgroundColor: const Color(0xFF2C5F4F),
+//                             foregroundColor: Colors.white,
+//                             padding: const EdgeInsets.symmetric(
+//                               horizontal: 12,
+//                               vertical: 6,
+//                             ),
+//                             textStyle: const TextStyle(fontSize: 13),
+//                           ),
+//                         ),
+//                       ] else
+//                         IconButton(
+//                           icon: const Icon(
+//                             Icons.edit,
+//                             size: 20,
+//                             color: Color(0xFF2C5F4F),
+//                           ),
+//                           tooltip: 'Edit Other Information',
+//                           onPressed: () =>
+//                               setState(() => _isEditingOtherInfo = true),
+//                           padding: EdgeInsets.zero,
+//                           constraints: const BoxConstraints(),
+//                         ),
+//                     ],
+//                   ),
+//                   const SizedBox(height: 8),
+
+//                   // ── Special Skills and Hobbies ────────────────────
+//                   Row(
+//                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//                     children: [
+//                       const Text(
+//                         'Special Skills and Hobbies',
+//                         style: TextStyle(
+//                           fontSize: 15,
+//                           fontWeight: FontWeight.w700,
+//                           color: Color.fromARGB(255, 97, 97, 97),
+//                         ),
+//                       ),
+//                       if (_isEditingOtherInfo)
+//                         Row(
+//                           children: [
+//                             const SizedBox(width: 8),
+//                             IconButton(
+//                               icon: const Icon(
+//                                 Icons.add,
+//                                 size: 20,
+//                                 color: Color(0xFF2C5F4F),
+//                               ),
+//                               onPressed: _showAddOtherInfoDialog,
+//                               padding: EdgeInsets.zero,
+//                               constraints: const BoxConstraints(),
+//                             ),
+//                           ],
+//                         ),
+//                     ],
+//                   ),
+//                   const SizedBox(height: 5),
+
+//                   if (_specialSkillsData.isEmpty && !_isEditingOtherInfo)
+//                     Padding(
+//                       padding: const EdgeInsets.symmetric(vertical: 4),
+//                       child: Text(
+//                         'No skills added yet.',
+//                         style: TextStyle(
+//                           fontSize: 13,
+//                           color: Colors.grey[500],
+//                           fontStyle: FontStyle.italic,
+//                         ),
+//                       ),
+//                     ),
+
+//                   ..._specialSkillsData.asMap().entries.map((entry) {
+//                     final int index = entry.key;
+//                     final Map<String, dynamic> skill = entry.value;
+//                     final bool isEditing = _editingSpecialSkillIndex == index;
+
+//                     return Container(
+//                       padding: const EdgeInsets.only(left: 10),
+//                       decoration: const BoxDecoration(color: Colors.white),
+//                       child: Row(
+//                         children: [
+//                           Expanded(
+//                             child: isEditing
+//                                 ? _buildEditableFieldInline(
+//                                     '',
+//                                     skill['skill'],
+//                                     (value) =>
+//                                         _specialSkillsData[index]['skill'] =
+//                                             value,
+//                                   )
+//                                 : _buildInfoFieldInline('', skill['skill']),
+//                           ),
+//                           // const SizedBox(width: 8),
+//                           if (_isEditingOtherInfo) ...[
+//                             IconButton(
+//                               icon: Icon(
+//                                 isEditing ? Icons.check : Icons.edit,
+//                                 size: 18,
+//                                 color: const Color(0xFF2C5F4F),
+//                               ),
+//                               onPressed: () => setState(() {
+//                                 _editingSpecialSkillIndex = isEditing
+//                                     ? null
+//                                     : index;
+//                               }),
+//                               padding: EdgeInsets.zero,
+//                               constraints: const BoxConstraints(),
+//                             ),
+//                             IconButton(
+//                               icon: const Icon(
+//                                 Icons.delete,
+//                                 size: 18,
+//                                 color: Colors.red,
+//                               ),
+//                               onPressed: () async {
+//                                 final recordId = skill['_recordId']?.toString();
+//                                 if (recordId == null) {
+//                                   setState(() {
+//                                     _specialSkillsData.removeAt(index);
+//                                     if (_editingSpecialSkillIndex == index) _editingSpecialSkillIndex = null;
+//                                   });
+//                                   return;
+//                                 }
+//                                 final response = await _userService.deleteOtherInfo(widget.token, recordId);
+//                                 if (response['success']) {
+//                                   await _fetchOtherInfoData();
+//                                 } else {
+//                                   if (mounted) {
+//                                     ScaffoldMessenger.of(context).showSnackBar(
+//                                       SnackBar(
+//                                         content: Text('Failed to delete: ${response['error']}'),
+//                                         backgroundColor: Colors.red,
+//                                       ),
+//                                     );
+//                                   }
+//                                 }
+//                               },
+//                               padding: EdgeInsets.zero,
+//                               constraints: const BoxConstraints(),
+//                             ),
+//                           ],
+//                         ],
+//                       ),
+//                     );
+//                   }).toList(),
+
+//                   const SizedBox(height: 30),
+
+//                   // ── Non-Academic Distinctions ─────────────────────
+//                   Row(
+//                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//                     children: [
+//                       const Text(
+//                         'Non-Academic Distinctions /\nRecognition',
+//                         style: TextStyle(
+//                           fontSize: 15,
+//                           fontWeight: FontWeight.w700,
+//                           color: Color.fromARGB(255, 97, 97, 97),
+//                         ),
+//                       ),
+//                       if (_isEditingOtherInfo)
+//                         const Row(
+//                           children: [
+//                             SizedBox(width: 28), // Space for alignment
+//                           ],
+//                         ),
+//                     ],
+//                   ),
+
+//                   if (_nonAcademicDistinctionsData.isEmpty &&
+//                       !_isEditingOtherInfo)
+//                     Padding(
+//                       padding: const EdgeInsets.symmetric(vertical: 4),
+//                       child: Text(
+//                         'No distinctions added yet.',
+//                         style: TextStyle(
+//                           fontSize: 13,
+//                           color: Colors.grey[500],
+//                           fontStyle: FontStyle.italic,
+//                         ),
+//                       ),
+//                     ),
+
+//                   ..._nonAcademicDistinctionsData.asMap().entries.map((entry) {
+//                     final int index = entry.key;
+//                     final Map<String, dynamic> distinction = entry.value;
+//                     final bool isEditing =
+//                         _editingNonAcademicDistinctionIndex == index;
+
+//                     return Container(
+//                       margin: const EdgeInsets.only(bottom: 8),
+//                       padding: const EdgeInsets.only(left: 10),
+//                       decoration: const BoxDecoration(color: Colors.white),
+//                       child: Row(
+//                         children: [
+//                           Expanded(
+//                             child: isEditing
+//                                 ? _buildEditableFieldInline(
+//                                     '',
+//                                     distinction['distinction'],
+//                                     (value) =>
+//                                         _nonAcademicDistinctionsData[index]['distinction'] =
+//                                             value,
+//                                   )
+//                                 : _buildInfoFieldInline(
+//                                     '',
+//                                     distinction['distinction'],
+//                                   ),
+//                           ),
+//                           const SizedBox(width: 8),
+//                           if (_isEditingOtherInfo) ...[
+//                             IconButton(
+//                               icon: Icon(
+//                                 isEditing ? Icons.check : Icons.edit,
+//                                 size: 18,
+//                                 color: const Color(0xFF2C5F4F),
+//                               ),
+//                               onPressed: () => setState(() {
+//                                 _editingNonAcademicDistinctionIndex = isEditing
+//                                     ? null
+//                                     : index;
+//                               }),
+//                               padding: EdgeInsets.zero,
+//                               constraints: const BoxConstraints(),
+//                             ),
+//                             IconButton(
+//                               icon: const Icon(
+//                                 Icons.delete,
+//                                 size: 18,
+//                                 color: Colors.red,
+//                               ),
+//                               onPressed: () async {
+//                                 final recordId = distinction['_recordId']?.toString();
+//                                 if (recordId == null) {
+//                                   setState(() {
+//                                     _nonAcademicDistinctionsData.removeAt(index);
+//                                     if (_editingNonAcademicDistinctionIndex == index) {
+//                                       _editingNonAcademicDistinctionIndex = null;
+//                                     }
+//                                   });
+//                                   return;
+//                                 }
+//                                 final response = await _userService.deleteOtherInfo(widget.token, recordId);
+//                                 if (response['success']) {
+//                                   await _fetchOtherInfoData();
+//                                 } else {
+//                                   if (mounted) {
+//                                     ScaffoldMessenger.of(context).showSnackBar(
+//                                       SnackBar(
+//                                         content: Text('Failed to delete: ${response['error']}'),
+//                                         backgroundColor: Colors.red,
+//                                       ),
+//                                     );
+//                                   }
+//                                 }
+//                               },
+//                               padding: EdgeInsets.zero,
+//                               constraints: const BoxConstraints(),
+//                             ),
+//                           ],
+//                         ],
+//                       ),
+//                     );
+//                   }).toList(),
+
+//                   const SizedBox(height: 30),
+
+//                   // ── Membership in Association / Organization ──────
+//                   Row(
+//                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//                     children: [
+//                       const Text(
+//                         'Membership in Association /\nOrganization',
+//                         style: TextStyle(
+//                           fontSize: 15,
+//                           fontWeight: FontWeight.w700,
+//                           color: Color.fromARGB(255, 97, 97, 97),
+//                         ),
+//                       ),
+//                       if (_isEditingOtherInfo)
+//                         const Row(
+//                           children: [
+                            
+//                             SizedBox(width: 28), // Space for alignment
+//                           ],
+//                         ),
+//                     ],
+//                   ),
+//                   const SizedBox(height: 12),
+
+//                   if (_membershipData.isEmpty && !_isEditingOtherInfo)
+//                     Padding(
+//                       padding: const EdgeInsets.symmetric(vertical: 4),
+//                       child: Text(
+//                         'No memberships added yet.',
+//                         style: TextStyle(
+//                           fontSize: 13,
+//                           color: Colors.grey[500],
+//                           fontStyle: FontStyle.italic,
+//                         ),
+//                       ),
+//                     ),
+
+//                   ..._membershipData.asMap().entries.map((entry) {
+//                     final int index = entry.key;
+//                     final Map<String, dynamic> membership = entry.value;
+//                     final bool isEditing = _editingMembershipIndex == index;
+
+//                     return Container(
+//                       margin: const EdgeInsets.only(bottom: 8),
+//                       padding: const EdgeInsets.only(left: 10),
+//                       decoration: const BoxDecoration(color: Colors.white),
+//                       child: Row(
+//                         children: [
+//                           Expanded(
+//                             child: isEditing
+//                                 ? _buildEditableFieldInline(
+//                                     '',
+//                                     membership['organization'],
+//                                     (value) =>
+//                                         _membershipData[index]['organization'] =
+//                                             value,
+//                                   )
+//                                 : _buildInfoFieldInline(
+//                                     '',
+//                                     membership['organization'],
+//                                   ),
+//                           ),
+//                           const SizedBox(width: 8),
+//                           if (_isEditingOtherInfo) ...[
+//                             IconButton(
+//                               icon: Icon(
+//                                 isEditing ? Icons.check : Icons.edit,
+//                                 size: 18,
+//                                 color: const Color(0xFF2C5F4F),
+//                               ),
+//                               onPressed: () => setState(() {
+//                                 _editingMembershipIndex = isEditing
+//                                     ? null
+//                                     : index;
+//                               }),
+//                               padding: EdgeInsets.zero,
+//                               constraints: const BoxConstraints(),
+//                             ),
+//                             IconButton(
+//                               icon: const Icon(
+//                                 Icons.delete,
+//                                 size: 18,
+//                                 color: Colors.red,
+//                               ),
+//                               onPressed: () async {
+//                                 final recordId = membership['_recordId']?.toString();
+//                                 if (recordId == null) {
+//                                   setState(() {
+//                                     _membershipData.removeAt(index);
+//                                     if (_editingMembershipIndex == index) _editingMembershipIndex = null;
+//                                   });
+//                                   return;
+//                                 }
+//                                 final response = await _userService.deleteOtherInfo(widget.token, recordId);
+//                                 if (response['success']) {
+//                                   await _fetchOtherInfoData();
+//                                 } else {
+//                                   if (mounted) {
+//                                     ScaffoldMessenger.of(context).showSnackBar(
+//                                       SnackBar(
+//                                         content: Text('Failed to delete: ${response['error']}'),
+//                                         backgroundColor: Colors.red,
+//                                       ),
+//                                     );
+//                                   }
+//                                 }
+//                               },
+//                               padding: EdgeInsets.zero,
+//                               constraints: const BoxConstraints(),
+//                             ),
+//                           ],
+//                         ],
+//                       ),
+//                     );
+//                   }).toList(),
+//                 ],
+//               ),
+//             ),
+//         ],
+//       ),
+//     );
+//   }
+
+//   // Add this new method for the dialog
+//   void _showAddOtherInfoDialog() {
+//     final TextEditingController skillController = TextEditingController();
+//     final TextEditingController distinctionController = TextEditingController();
+//     final TextEditingController membershipController = TextEditingController();
+
+//     showDialog(
+//       context: context,
+//       builder: (BuildContext context) {
+//         return StatefulBuilder(
+//           builder: (context, setDialogState) {
+//             // Check which fields have text
+//             bool hasSkillText = skillController.text.isNotEmpty;
+//             bool hasDistinctionText = distinctionController.text.isNotEmpty;
+//             bool hasMembershipText = membershipController.text.isNotEmpty;
+
+//             return AlertDialog(
+//               title: const Text(
+//                 'Add Other Information',
+//                 style: TextStyle(
+//                   fontSize: 16,
+//                   fontWeight: FontWeight.bold,
+//                   color: Color(0xFF2C5F4F),
+//                 ),
+//               ),
+//               content: SingleChildScrollView(
+//                 child: Column(
+//                   mainAxisSize: MainAxisSize.min,
+//                   crossAxisAlignment: CrossAxisAlignment.start,
+//                   children: [
+//                     const Text(
+//                       'Fill in only ONE field below:',
+//                       style: TextStyle(
+//                         fontSize: 12,
+//                         fontStyle: FontStyle.italic,
+//                         color: Colors.grey,
+//                       ),
+//                     ),
+//                     const SizedBox(height: 16),
+                    
+//                     // Special Skills Field
+//                     TextField(
+//                       controller: skillController,
+//                       enabled: !hasDistinctionText && !hasMembershipText,
+//                       decoration: InputDecoration(
+//                         labelText: 'Special Skill/Hobby',
+//                         labelStyle: TextStyle(
+//                           fontSize: 14,
+//                           color: (!hasDistinctionText && !hasMembershipText)
+//                               ? Colors.black
+//                               : Colors.grey,
+//                         ),
+//                         border: const OutlineInputBorder(),
+//                         contentPadding: const EdgeInsets.symmetric(
+//                           horizontal: 12,
+//                           vertical: 10,
+//                         ),
+//                       ),
+//                       onChanged: (value) => setDialogState(() {}),
+//                     ),
+//                     const SizedBox(height: 16),
+                    
+//                     // Non-Academic Distinction Field
+//                     TextField(
+//                       controller: distinctionController,
+//                       enabled: !hasSkillText && !hasMembershipText,
+//                       decoration: InputDecoration(
+//                         labelText: 'Non-Academic Distinction/Recognition',
+//                         labelStyle: TextStyle(
+//                           fontSize: 14,
+//                           color: (!hasSkillText && !hasMembershipText)
+//                               ? Colors.black
+//                               : Colors.grey,
+//                         ),
+//                         border: const OutlineInputBorder(),
+//                         contentPadding: const EdgeInsets.symmetric(
+//                           horizontal: 12,
+//                           vertical: 10,
+//                         ),
+//                       ),
+//                       onChanged: (value) => setDialogState(() {}),
+//                     ),
+//                     const SizedBox(height: 16),
+                    
+//                     // Membership Field
+//                     TextField(
+//                       controller: membershipController,
+//                       enabled: !hasSkillText && !hasDistinctionText,
+//                       decoration: InputDecoration(
+//                         labelText: 'Membership in Association/Organization',
+//                         labelStyle: TextStyle(
+//                           fontSize: 14,
+//                           color: (!hasSkillText && !hasDistinctionText)
+//                               ? Colors.black
+//                               : Colors.grey,
+//                         ),
+//                         border: const OutlineInputBorder(),
+//                         contentPadding: const EdgeInsets.symmetric(
+//                           horizontal: 12,
+//                           vertical: 10,
+//                         ),
+//                       ),
+//                       onChanged: (value) => setDialogState(() {}),
+//                     ),
+//                   ],
+//                 ),
+//               ),
+//               actions: [
+//                 TextButton(
+//                   onPressed: () {
+//                     Navigator.of(context).pop();
+//                   },
+//                   child: const Text(
+//                     'Cancel',
+//                     style: TextStyle(color: Colors.red),
+//                   ),
+//                 ),
+//                 ElevatedButton(
+//                   onPressed: () {
+//                     // Add to the appropriate list based on which field has text
+//                     if (skillController.text.isNotEmpty) {
+//                       setState(() {
+//                         _specialSkillsData.add({'skill': skillController.text});
+//                         _editingSpecialSkillIndex = _specialSkillsData.length - 1;
+//                       });
+//                     } else if (distinctionController.text.isNotEmpty) {
+//                       setState(() {
+//                         _nonAcademicDistinctionsData.add({
+//                           'distinction': distinctionController.text
+//                         });
+//                         _editingNonAcademicDistinctionIndex =
+//                             _nonAcademicDistinctionsData.length - 1;
+//                       });
+//                     } else if (membershipController.text.isNotEmpty) {
+//                       setState(() {
+//                         _membershipData.add({
+//                           'organization': membershipController.text
+//                         });
+//                         _editingMembershipIndex = _membershipData.length - 1;
+//                       });
+//                     }
+//                     Navigator.of(context).pop();
+//                   },
+//                   style: ElevatedButton.styleFrom(
+//                     backgroundColor: const Color(0xFF2C5F4F),
+//                     foregroundColor: Colors.white,
+//                   ),
+//                   child: const Text('Add'),
+//                 ),
+//               ],
+//             );
+//           },
+//         );
+//       },
+//     );
+//   }
+
+Widget _buildOtherInformationCard() {
     return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+      padding: EdgeInsets.zero,
       child: Column(
         children: [
           // ── Header ──────────────────────────────────────────────
-          InkWell(
-            onTap: () {
-              setState(() {
-                _isOtherInformationExpanded = !_isOtherInformationExpanded;
-              });
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: const BoxDecoration(
-                color: Color(0xFF2C5F4F),
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(8),
-                  topRight: Radius.circular(8),
-                ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: const BoxDecoration(
+              color: Color(0xFF2C5F4F),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(8),
+                topRight: Radius.circular(8),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'OTHER INFORMATION',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
-                    ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'OTHER INFORMATION',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
                   ),
-                  if (_isFetchingOtherInfo)
-                    const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+                Row(
+                  children: [
+                    if (_isFetchingOtherInfo)
+                      const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
                       ),
-                    ),
-                ],
-              ),
+                    if (!_isFetchingOtherInfo) ...[
+                      IconButton(
+                        icon: const Icon(
+                          Icons.add_circle,
+                          size: 22,
+                          color: Colors.white,
+                        ),
+                        tooltip: 'Add',
+                        onPressed: _showAddOtherInfoDialog,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
             ),
           ),
 
@@ -5616,106 +6539,27 @@ Widget _buildLearningDevelopmentCard() {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-
-                  // ── Global Save / Edit / Cancel row ──────────────
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      if (_isEditingOtherInfo) ...[
-                        TextButton(
-                          onPressed: () {
-                            // Cancel: re-parse from the cached record
-                            setState(() {
-                              _parseOtherInfoData();
-                              _isEditingOtherInfo = false;
-                              _editingSpecialSkillIndex = null;
-                              _editingNonAcademicDistinctionIndex = null;
-                              _editingMembershipIndex = null;
-                            });
-                          },
-                          child: const Text(
-                            'Cancel',
-                            style: TextStyle(color: Colors.red),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        ElevatedButton.icon(
-                          onPressed: _saveOtherInfo,
-                          icon: const Icon(Icons.save, size: 16),
-                          label: const Text('Save'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2C5F4F),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 6),
-                            textStyle: const TextStyle(fontSize: 13),
-                          ),
-                        ),
-                      ] else
-                        IconButton(
-                          icon: const Icon(Icons.edit,
-                              size: 20, color: Color(0xFF2C5F4F)),
-                          tooltip: 'Edit Other Information',
-                          onPressed: () =>
-                              setState(() => _isEditingOtherInfo = true),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-
                   // ── Special Skills and Hobbies ────────────────────
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Special Skills and Hobbies',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: Color.fromARGB(255, 97, 97, 97),
-                        ),
-                      ),
-                      if (_isEditingOtherInfo)
-                        Row(
-                          children: [
-                            const Text(
-                              'Actions',
-                              style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.grey),
-                            ),
-                            const SizedBox(width: 8),
-                            IconButton(
-                              icon: const Icon(Icons.add,
-                                  size: 20, color: Color(0xFF2C5F4F)),
-                              onPressed: () {
-                                setState(() {
-                                  _specialSkillsData.add({'skill': ''});
-                                  _editingSpecialSkillIndex =
-                                      _specialSkillsData.length - 1;
-                                });
-                              },
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                            ),
-                          ],
-                        ),
-                    ],
+                  const Text(
+                    'Special Skills and Hobbies',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: Color.fromARGB(255, 97, 97, 97),
+                    ),
                   ),
                   const SizedBox(height: 5),
 
-                  if (_specialSkillsData.isEmpty && !_isEditingOtherInfo)
+                  if (_specialSkillsData.isEmpty)
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4),
                       child: Text(
                         'No skills added yet.',
                         style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey[500],
-                            fontStyle: FontStyle.italic),
+                          fontSize: 13,
+                          color: Colors.grey[500],
+                          fontStyle: FontStyle.italic,
+                        ),
                       ),
                     ),
 
@@ -5725,7 +6569,7 @@ Widget _buildLearningDevelopmentCard() {
                     final bool isEditing = _editingSpecialSkillIndex == index;
 
                     return Container(
-                      padding: const EdgeInsets.all(10),
+                      padding: const EdgeInsets.only(left: 10),
                       decoration: const BoxDecoration(color: Colors.white),
                       child: Row(
                         children: [
@@ -5740,34 +6584,64 @@ Widget _buildLearningDevelopmentCard() {
                                   )
                                 : _buildInfoFieldInline('', skill['skill']),
                           ),
-                          const SizedBox(width: 8),
-                          if (_isEditingOtherInfo) ...[
-                            IconButton(
-                              icon: Icon(
-                                isEditing ? Icons.check : Icons.edit,
+                          IconButton(
+                            icon: Icon(
+                              isEditing ? Icons.check : Icons.edit,
+                              size: 18,
+                              color: Colors.black,
+                            ),
+                            onPressed: () async {
+                              if (isEditing || _isEditingOtherInfo) {
+                                // Save to backend when clicking check icon
+                                await _saveOtherInfo();
+                              }
+                              setState(() {
+                                _editingSpecialSkillIndex = isEditing
+                                    ? null
+                                    : index;
+                              });
+                            },
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+                         IconButton(
+                              icon: const Icon(
+                                Icons.delete,
                                 size: 18,
-                                color: const Color(0xFF2C5F4F),
+                                color: Colors.black,
                               ),
-                              onPressed: () => setState(() {
-                                _editingSpecialSkillIndex =
-                                    isEditing ? null : index;
-                              }),
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.delete,
-                                  size: 18, color: Colors.red),
-                              onPressed: () => setState(() {
-                                _specialSkillsData.removeAt(index);
-                                if (_editingSpecialSkillIndex == index) {
-                                  _editingSpecialSkillIndex = null;
+                              onPressed: () async {
+                                final recordId = skill['_recordId']?.toString();
+                                if (recordId == null) {
+                                  setState(() {
+                                    _specialSkillsData.removeAt(index);
+                                    if (_editingSpecialSkillIndex == index) _editingSpecialSkillIndex = null;
+                                  });
+                                  return;
                                 }
-                              }),
+                                final response = await _userService.deleteOtherInfo(widget.token, recordId);
+                                if (response['success']) {
+                                  await _fetchOtherInfoData();
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Skill deleted successfully'),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                } else {
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Failed to delete: ${response['error']}'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                }
+                              },
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(),
                             ),
-                          ],
                         ],
                       ),
                     );
@@ -5776,57 +6650,26 @@ Widget _buildLearningDevelopmentCard() {
                   const SizedBox(height: 30),
 
                   // ── Non-Academic Distinctions ─────────────────────
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Non-Academic Distinctions /\nRecognition',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: Color.fromARGB(255, 97, 97, 97),
-                        ),
-                      ),
-                      if (_isEditingOtherInfo)
-                        Row(
-                          children: [
-                            const Text(
-                              'Actions',
-                              style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.grey),
-                            ),
-                            const SizedBox(width: 8),
-                            IconButton(
-                              icon: const Icon(Icons.add,
-                                  size: 20, color: Color(0xFF2C5F4F)),
-                              onPressed: () {
-                                setState(() {
-                                  _nonAcademicDistinctionsData
-                                      .add({'distinction': ''});
-                                  _editingNonAcademicDistinctionIndex =
-                                      _nonAcademicDistinctionsData.length - 1;
-                                });
-                              },
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                            ),
-                          ],
-                        ),
-                    ],
+                  const Text(
+                    'Non-Academic Distinctions /\nRecognition',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: Color.fromARGB(255, 97, 97, 97),
+                    ),
                   ),
+                  const SizedBox(height: 5),
 
-                  if (_nonAcademicDistinctionsData.isEmpty &&
-                      !_isEditingOtherInfo)
+                  if (_nonAcademicDistinctionsData.isEmpty)
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4),
                       child: Text(
                         'No distinctions added yet.',
                         style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey[500],
-                            fontStyle: FontStyle.italic),
+                          fontSize: 13,
+                          color: Colors.grey[500],
+                          fontStyle: FontStyle.italic,
+                        ),
                       ),
                     ),
 
@@ -5838,7 +6681,7 @@ Widget _buildLearningDevelopmentCard() {
 
                     return Container(
                       margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.only(left: 10),
                       decoration: const BoxDecoration(color: Colors.white),
                       child: Row(
                         children: [
@@ -5847,41 +6690,73 @@ Widget _buildLearningDevelopmentCard() {
                                 ? _buildEditableFieldInline(
                                     '',
                                     distinction['distinction'],
-                                    (value) => _nonAcademicDistinctionsData[
-                                        index]['distinction'] = value,
+                                    (value) =>
+                                        _nonAcademicDistinctionsData[index]['distinction'] =
+                                            value,
                                   )
                                 : _buildInfoFieldInline(
-                                    '', distinction['distinction']),
+                                    '',
+                                    distinction['distinction'],
+                                  ),
                           ),
-                          const SizedBox(width: 8),
-                          if (_isEditingOtherInfo) ...[
-                            IconButton(
-                              icon: Icon(
-                                isEditing ? Icons.check : Icons.edit,
+                          IconButton(
+                            icon: Icon(
+                              isEditing ? Icons.check : Icons.edit,
+                              size: 18,
+                              color: Colors.black,
+                            ),
+                            onPressed: () async {
+                              if (isEditing) {
+                                // Save to backend when clicking check icon
+                                await _saveOtherInfo();
+                              }
+                              setState(() {
+                               _editingNonAcademicDistinctionIndex = isEditing
+                                    ? null
+                                    : index;
+                              });
+                            },
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+                          IconButton(
+                              icon: const Icon(
+                                Icons.delete,
                                 size: 18,
-                                color: const Color(0xFF2C5F4F),
+                                color: Colors.black,
                               ),
-                              onPressed: () => setState(() {
-                                _editingNonAcademicDistinctionIndex =
-                                    isEditing ? null : index;
-                              }),
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.delete,
-                                  size: 18, color: Colors.red),
-                              onPressed: () => setState(() {
-                                _nonAcademicDistinctionsData.removeAt(index);
-                                if (_editingNonAcademicDistinctionIndex ==
-                                    index) {
-                                  _editingNonAcademicDistinctionIndex = null;
+                              onPressed: () async {
+                                final recordId = distinction['_recordId']?.toString();
+                                if (recordId == null) {
+                                  setState(() {
+                                    _nonAcademicDistinctionsData.removeAt(index);
+                                    if (_editingNonAcademicDistinctionIndex == index) _editingNonAcademicDistinctionIndex = null;
+                                  });
+                                  return;
                                 }
-                              }),
+                                final response = await _userService.deleteOtherInfo(widget.token, recordId);
+                                if (response['success']) {
+                                  await _fetchOtherInfoData();
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Distinction deleted successfully'),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                } else {
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Failed to delete: ${response['error']}'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                }
+                              },
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(),
                             ),
-                          ],
                         ],
                       ),
                     );
@@ -5890,56 +6765,26 @@ Widget _buildLearningDevelopmentCard() {
                   const SizedBox(height: 30),
 
                   // ── Membership in Association / Organization ──────
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Membership in Association /\nOrganization',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: Color.fromARGB(255, 97, 97, 97),
-                        ),
-                      ),
-                      if (_isEditingOtherInfo)
-                        Row(
-                          children: [
-                            const Text(
-                              'Actions',
-                              style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.grey),
-                            ),
-                            const SizedBox(width: 8),
-                            IconButton(
-                              icon: const Icon(Icons.add,
-                                  size: 20, color: Color(0xFF2C5F4F)),
-                              onPressed: () {
-                                setState(() {
-                                  _membershipData.add({'organization': ''});
-                                  _editingMembershipIndex =
-                                      _membershipData.length - 1;
-                                });
-                              },
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                            ),
-                          ],
-                        ),
-                    ],
+                  const Text(
+                    'Membership in Association /\nOrganization',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: Color.fromARGB(255, 97, 97, 97),
+                    ),
                   ),
                   const SizedBox(height: 12),
 
-                  if (_membershipData.isEmpty && !_isEditingOtherInfo)
+                  if (_membershipData.isEmpty)
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4),
                       child: Text(
                         'No memberships added yet.',
                         style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey[500],
-                            fontStyle: FontStyle.italic),
+                          fontSize: 13,
+                          color: Colors.grey[500],
+                          fontStyle: FontStyle.italic,
+                        ),
                       ),
                     ),
 
@@ -5950,7 +6795,7 @@ Widget _buildLearningDevelopmentCard() {
 
                     return Container(
                       margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.only(left: 10),
                       decoration: const BoxDecoration(color: Colors.white),
                       child: Row(
                         children: [
@@ -5959,40 +6804,76 @@ Widget _buildLearningDevelopmentCard() {
                                 ? _buildEditableFieldInline(
                                     '',
                                     membership['organization'],
-                                    (value) => _membershipData[index]
-                                        ['organization'] = value,
+                                    (value) =>
+                                        _membershipData[index]['organization'] =
+                                            value,
                                   )
                                 : _buildInfoFieldInline(
-                                    '', membership['organization']),
+                                    '',
+                                    membership['organization'],
+                                  ),
                           ),
-                          const SizedBox(width: 8),
-                          if (_isEditingOtherInfo) ...[
-                            IconButton(
+                           Container(
+                             margin: const EdgeInsets.only(bottom: 2),
+                             child: IconButton(
                               icon: Icon(
                                 isEditing ? Icons.check : Icons.edit,
                                 size: 18,
-                                color: const Color(0xFF2C5F4F),
+                                color: Colors.black,
                               ),
-                              onPressed: () => setState(() {
-                                _editingMembershipIndex =
-                                    isEditing ? null : index;
-                              }),
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.delete,
-                                  size: 18, color: Colors.red),
-                              onPressed: () => setState(() {
-                                _membershipData.removeAt(index);
-                                if (_editingMembershipIndex == index) {
-                                  _editingMembershipIndex = null;
+                              onPressed: () async {
+                                if (isEditing) {
+                                  // Save to backend when clicking check icon
+                                  await _saveOtherInfo();
                                 }
-                              }),
+                                setState(() {
+                                  _editingMembershipIndex = isEditing
+                                      ? null
+                                      : index;
+                                });
+                              },
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                                                       ),
+                           ),
+                          IconButton(
+                              icon: const Icon(
+                                Icons.delete,
+                                size: 18,
+                                color: Colors.black,
+                              ),
+                              onPressed: () async {
+                                final recordId = membership['_recordId']?.toString();
+                                if (recordId == null) {
+                                  setState(() {
+                                    _membershipData.removeAt(index);
+                                    if (_editingMembershipIndex == index) _editingMembershipIndex = null;
+                                  });
+                                  return;
+                                }
+                                final response = await _userService.deleteOtherInfo(widget.token, recordId);
+                                if (response['success']) {
+                                  await _fetchOtherInfoData();
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Membership deleted successfully'),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                } else {
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Failed to delete: ${response['error']}'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                }
+                              },
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(),
                             ),
-                          ],
                         ],
                       ),
                     );
@@ -6005,23 +6886,171 @@ Widget _buildLearningDevelopmentCard() {
     );
   }
 
-   Widget _buildPersonReferenceCard() {
+  // Add this new method for the dialog
+  void _showAddOtherInfoDialog() {
+    final TextEditingController skillController = TextEditingController();
+    final TextEditingController distinctionController = TextEditingController();
+    final TextEditingController membershipController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            // Check which fields have text
+            bool hasSkillText = skillController.text.isNotEmpty;
+            bool hasDistinctionText = distinctionController.text.isNotEmpty;
+            bool hasMembershipText = membershipController.text.isNotEmpty;
+
+            return AlertDialog(
+              title: const Text(
+                'Add Other Information',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2C5F4F),
+                ),
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Fill in only ONE field below:',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontStyle: FontStyle.italic,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // Special Skills Field
+                    TextField(
+                      controller: skillController,
+                      enabled: !hasDistinctionText && !hasMembershipText,
+                      decoration: InputDecoration(
+                        labelText: 'Special Skill/Hobby',
+                        labelStyle: TextStyle(
+                          fontSize: 14,
+                          color: (!hasDistinctionText && !hasMembershipText)
+                              ? Colors.black
+                              : Colors.grey,
+                        ),
+                        border: const OutlineInputBorder(),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                      ),
+                      onChanged: (value) => setDialogState(() {}),
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // Non-Academic Distinction Field
+                    TextField(
+                      controller: distinctionController,
+                      enabled: !hasSkillText && !hasMembershipText,
+                      decoration: InputDecoration(
+                        labelText: 'Non-Academic Distinction/Recognition',
+                        labelStyle: TextStyle(
+                          fontSize: 14,
+                          color: (!hasSkillText && !hasMembershipText)
+                              ? Colors.black
+                              : Colors.grey,
+                        ),
+                        border: const OutlineInputBorder(),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                      ),
+                      onChanged: (value) => setDialogState(() {}),
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // Membership Field
+                    TextField(
+                      controller: membershipController,
+                      enabled: !hasSkillText && !hasDistinctionText,
+                      decoration: InputDecoration(
+                        labelText: 'Membership in Association/Organization',
+                        labelStyle: TextStyle(
+                          fontSize: 14,
+                          color: (!hasSkillText && !hasDistinctionText)
+                              ? Colors.black
+                              : Colors.grey,
+                        ),
+                        border: const OutlineInputBorder(),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                      ),
+                      onChanged: (value) => setDialogState(() {}),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    // Add to the appropriate list based on which field has text
+                    if (skillController.text.isNotEmpty) {
+                      setState(() {
+                        _specialSkillsData.add({'skill': skillController.text});
+                        _editingSpecialSkillIndex = null;
+                      });
+                    } else if (distinctionController.text.isNotEmpty) {
+                      setState(() {
+                        _nonAcademicDistinctionsData.add({
+                          'distinction': distinctionController.text
+                        });
+                        _editingNonAcademicDistinctionIndex =
+                            null;
+                      });
+                    } else if (membershipController.text.isNotEmpty) {
+                      setState(() {
+                        _membershipData.add({
+                          'organization': membershipController.text
+                        });
+                        _editingMembershipIndex = null;
+                      });
+                    }
+                    
+                    Navigator.of(context).pop();
+                    _saveOtherInfo();  
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2C5F4F),
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Add'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildPersonReferenceCard() {
     final bool hasRecord =
         _personRefData.containsKey('id') && _personRefData['id'] != null;
 
     return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+      padding: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -6053,8 +7082,7 @@ Widget _buildLearningDevelopmentCard() {
                     height: 16,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      valueColor:
-                          AlwaysStoppedAnimation<Color>(Colors.white),
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   ),
               ],
@@ -6075,8 +7103,8 @@ Widget _buildLearningDevelopmentCard() {
                       TextButton.icon(
                         onPressed: () => setState(() {
                           _personRefData = {
-                            'refName':      '',
-                            'refAddress':   '',
+                            'refName': '',
+                            'refAddress': '',
                             'refTelephone': '',
                           };
                           _isEditingPersonRef = true;
@@ -6094,8 +7122,7 @@ Widget _buildLearningDevelopmentCard() {
                           ),
                         ),
                         style: TextButton.styleFrom(
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
                         ),
                       ),
 
@@ -6120,7 +7147,9 @@ Widget _buildLearningDevelopmentCard() {
                           backgroundColor: const Color(0xFF2C5F4F),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           textStyle: const TextStyle(fontSize: 13),
                         ),
                       ),
@@ -6129,8 +7158,11 @@ Widget _buildLearningDevelopmentCard() {
                     // EDIT + DELETE — when record exists and not editing
                     if (hasRecord && !_isEditingPersonRef) ...[
                       IconButton(
-                        icon: const Icon(Icons.edit,
-                            size: 20, color: Color(0xFF2C5F4F)),
+                        icon: const Icon(
+                          Icons.edit,
+                          size: 20,
+                          color: Colors.black,
+                        ),
                         tooltip: 'Edit',
                         onPressed: () =>
                             setState(() => _isEditingPersonRef = true),
@@ -6139,8 +7171,11 @@ Widget _buildLearningDevelopmentCard() {
                       ),
                       const SizedBox(width: 8),
                       IconButton(
-                        icon: const Icon(Icons.delete,
-                            size: 20, color: Colors.red),
+                        icon: const Icon(
+                          Icons.delete,
+                          size: 20,
+                          color: Colors.black,
+                        ),
                         tooltip: 'Delete',
                         onPressed: _deletePersonReference,
                         padding: EdgeInsets.zero,
@@ -6159,8 +7194,11 @@ Widget _buildLearningDevelopmentCard() {
                       padding: const EdgeInsets.symmetric(vertical: 24.0),
                       child: Column(
                         children: [
-                          Icon(Icons.people_alt_outlined,
-                              size: 48, color: Colors.grey[400]),
+                          Icon(
+                            Icons.people_alt_outlined,
+                            size: 48,
+                            color: Colors.grey[400],
+                          ),
                           const SizedBox(height: 8),
                           Text(
                             'No reference information added yet.\nTap "Add Reference" to get started.',
@@ -6188,7 +7226,9 @@ Widget _buildLearningDevelopmentCard() {
                           },
                         )
                       : _buildInfoFieldInline(
-                          'Reference Name', _personRefData['refName']),
+                          'Reference Name',
+                          _personRefData['refName'],
+                        ),
 
                   const SizedBox(height: 16),
 
@@ -6202,7 +7242,9 @@ Widget _buildLearningDevelopmentCard() {
                           },
                         )
                       : _buildInfoFieldInline(
-                          'Address', _personRefData['refAddress']),
+                          'Address',
+                          _personRefData['refAddress'],
+                        ),
 
                   const SizedBox(height: 16),
 
@@ -6216,7 +7258,9 @@ Widget _buildLearningDevelopmentCard() {
                           },
                         )
                       : _buildInfoFieldInline(
-                          'Telephone No.', _personRefData['refTelephone']),
+                          'Telephone No.',
+                          _personRefData['refTelephone'],
+                        ),
 
                   const SizedBox(height: 8),
                 ],
@@ -6227,8 +7271,6 @@ Widget _buildLearningDevelopmentCard() {
       ),
     );
   }
-
-
 
   Widget _buildDailyTimeRecordCard() {
     return DtrWidget(

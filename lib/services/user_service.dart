@@ -1084,45 +1084,41 @@ Future<Map<String, dynamic>> deleteVoluntaryWork(
     }
   }
 
-  // OTHER INFORMATION
-   /// GET  /adminuser/other-info/get-other-info/{employeeId}
-  Future<Map<String, dynamic>> getOtherInfo(
-    String token,
-    String employeeId,
-  ) async {
-    print('\n📋 [UserService] GET Other Info for employee: $employeeId');
+  Future<Map<String, dynamic>> getAllOtherInfo(
+  String token,
+  String employeeId,
+) async {
+  print('\n📋 [UserService] GET All Other Info for employee: $employeeId');
 
-    final currentToken = TokenManager().token ?? token;
-    final url = Uri.parse(
-      '${ApiConfig.baseUrl}${ApiConfig.getOtherInfoEndpoint}$employeeId',
+  final currentToken = TokenManager().token ?? token;
+  final url = Uri.parse(
+    '${ApiConfig.baseUrl}${ApiConfig.getOtherInfoEndpoint}$employeeId',
+  );
+  print('🌐 [UserService] Request URL Other Info: $url');
+
+  try {
+    final response = await http.get(
+      url,
+      headers: {
+        'Authorization': 'Bearer $currentToken',
+        'Content-Type': 'application/json',
+      },
     );
 
-    try {
-      final response = await http.get(
-        url,
-        headers: {
-          'Authorization': 'Bearer $currentToken',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      print('📡 [UserService] Response status: ${response.statusCode}');
-      print('📦 [UserService] Response body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        return {'success': true, 'data': data};
-      } else {
-        return {
-          'success': false,
-          'error': 'Failed to fetch other info: ${response.statusCode}',
-        };
-      }
-    } catch (e) {
-      print('💥 [UserService] Error getting other info: $e');
-      return {'success': false, 'error': 'Error: $e'};
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return {'success': true, 'data': data};
+    } else {
+      return {
+        'success': false,
+        'error': 'Failed to fetch other info: ${response.statusCode}',
+      };
     }
+  } catch (e) {
+    print('💥 [UserService] Error getting all other info: $e');
+    return {'success': false, 'error': 'Error: $e'};
   }
+}
 
   /// POST  /adminuser/other-infor/add-other-info{employeeId}
   Future<Map<String, dynamic>> addOtherInfo(
@@ -1135,7 +1131,7 @@ Future<Map<String, dynamic>> deleteVoluntaryWork(
     final currentToken = TokenManager().token ?? token;
     final url =
         '${ApiConfig.baseUrl}${ApiConfig.addOtherInfoEndpoint}$employeeId';
-
+    print('🌐 [UserService] Full API URL Add Other Info: $url');
     try {
       final response = await http.post(
         Uri.parse(url),
@@ -1369,5 +1365,7 @@ Future<Map<String, dynamic>> deleteVoluntaryWork(
       return {'success': false, 'error': 'Error: $e'};
     }
   }
+
+  Future<dynamic> getOtherInfo(String token, String string) async {}
 
 }

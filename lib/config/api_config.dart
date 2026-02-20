@@ -1,7 +1,8 @@
 class ApiConfig {
   // Update this to your actual backend URL
   // static const String baseUrl = 'http://10.0.2.2:8082';
-  static const String baseUrl = 'http://localhost:8082';
+  // static const String baseUrl = 'http://localhost:8082';
+  static const String baseUrl = 'http://192.168.79.55:8082';
   //Hello Dianna
   
   static const String loginEndpoint = '/auth/login';
@@ -49,10 +50,10 @@ class ApiConfig {
   static const String deleteEligibilityEndpoint = '/adminuser/eligibility/delete-eligibility/';
 
   // Other Information
-  static const String getOtherInfoEndpoint = '/adminuser/other-info/get-other-info/';
-  static const String addOtherInfoEndpoint = '/adminuser/other-infor/add-other-info';
-  static const String updateOtherInfoEndpoint = '/adminuser/other-infor/update-other-information/';
-  static const String deleteOtherInfoEndpoint = '/adminuser/other-infor/delete-other-information/';
+  static const String getOtherInfoEndpoint = '/adminuser/other-info/get-all-other-info/';
+  static const String addOtherInfoEndpoint = '/adminuser/other-info/add-other-info/';
+  static const String updateOtherInfoEndpoint = '/adminuser/other-info/update-other-info/';
+  static const String deleteOtherInfoEndpoint = '/adminuser/other-info/delete-other-info/';
 
   //Person Reference
   static const String getPersonReferenceEndpoint = '/adminuser/person-reference/get-person-reference/';

@@ -399,27 +399,16 @@ class _DtrWidgetState extends State<DtrWidget> {
     }
 
     return Container(
-      padding: EdgeInsets.all(1),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+      padding: EdgeInsets.zero,
       child: Column(
         children: [
           Container(
-            margin: const EdgeInsets.all(12),
+            margin: EdgeInsets.zero,
             child: Column(
               children: [
                 // Header section with filter and refresh buttons
                 Container(
-                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: const BoxDecoration(
                     color: Color(0xFF2C5F4F),
                     borderRadius: BorderRadius.only(
@@ -515,11 +504,11 @@ class _DtrWidgetState extends State<DtrWidget> {
 
   Widget _buildDtrCard(Map<String, dynamic> record) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 10),
+      
       elevation: 0,
       color: Colors.white,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.zero,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
