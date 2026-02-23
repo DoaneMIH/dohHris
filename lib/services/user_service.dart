@@ -1223,18 +1223,19 @@ Future<Map<String, dynamic>> deleteVoluntaryWork(
     }
   }
 
-  /// GET  /adminuser/person-reference/get-person-reference/{employeeId}
-  Future<Map<String, dynamic>> getPersonReference(
+
+  /// GET  /adminuser/person-reference/get-all-person-references/{employeeId}
+  Future<Map<String, dynamic>> getAllPersonReferences(
     String token,
     String employeeId,
   ) async {
-    print('\n👥 [UserService] GET Person Reference for employee: $employeeId');
+    print('\n👥 [UserService] GET All Person References for employee: $employeeId');
 
     final currentToken = TokenManager().token ?? token;
     final url = Uri.parse(
       '${ApiConfig.baseUrl}${ApiConfig.getPersonReferenceEndpoint}$employeeId',
     );
-    print('🌐 [UserService] Request URL Personal Reference: $url');
+    print('🌐 [UserService] Request URL All Person References: $url');
 
     try {
       final response = await http.get(
@@ -1254,11 +1255,11 @@ Future<Map<String, dynamic>> deleteVoluntaryWork(
       } else {
         return {
           'success': false,
-          'error': 'Failed to fetch person reference: ${response.statusCode}',
+          'error': 'Failed to fetch all person references: ${response.statusCode}',
         };
       }
     } catch (e) {
-      print('💥 [UserService] Error getting person reference: $e');
+      print('💥 [UserService] Error getting all person references: $e');
       return {'success': false, 'error': 'Error: $e'};
     }
   }
@@ -1366,6 +1367,6 @@ Future<Map<String, dynamic>> deleteVoluntaryWork(
     }
   }
 
-  Future<dynamic> getOtherInfo(String token, String string) async {}
+  // Future<dynamic> getOtherInfo(String token, String string) async {}
 
 }

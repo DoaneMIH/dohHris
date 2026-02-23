@@ -34,7 +34,7 @@ class _Splash2State extends State<Splash2> {
             final containerH = (containerW * 0.58).clamp(180.0, 260.0);
 
             // Make logo size responsive too
-            final logoSize = (containerH * 0.75).clamp(120.0, 220.0);
+            (containerH * 0.75).clamp(120.0, 220.0);
 
             return Center(
               child: Padding(

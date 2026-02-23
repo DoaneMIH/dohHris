@@ -56,7 +56,7 @@ class ApiConfig {
   static const String deleteOtherInfoEndpoint = '/adminuser/other-info/delete-other-info/';
 
   //Person Reference
-  static const String getPersonReferenceEndpoint = '/adminuser/person-reference/get-person-reference/';
+  static const String getPersonReferenceEndpoint = '/adminuser/person-reference/get-all-person-references/';
   static const String addPersonReferenceEndpoint = '/adminuser/person-reference/add-person-reference/';
   static const String updatePersonReferenceEndpoint = '/adminuser/person-reference/update-person-reference/';
   static const String deletePersonReferenceEndpoint = '/adminuser/person-reference/delete-person-reference/';

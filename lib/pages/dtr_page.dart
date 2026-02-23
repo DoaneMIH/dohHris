@@ -28,7 +28,6 @@ class _DtrWidgetState extends State<DtrWidget> {
   int? _selectedMonth;
   int? _selectedYear;
   List<int> _availableYears = [];
-  List<int> _availableMonths = [];
 
   @override
   void initState() {
@@ -124,7 +123,7 @@ class _DtrWidgetState extends State<DtrWidget> {
       }
     }
 
-    _availableMonths = months.toList()..sort((a, b) => b.compareTo(a)); // Descending
+// Descending
     
     // Set default filter to latest month and year if not already set
     if (_selectedMonth == null && _selectedYear == null && _dtrRecords.isNotEmpty) {
