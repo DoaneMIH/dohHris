@@ -265,35 +265,35 @@ class _PersonReferenceWidgetState extends State<PersonReferenceWidget> {
   }
 
 
-  Widget _buildPersonReferenceCard() {
-    return Container(
-      padding: EdgeInsets.zero,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Header bar ──────────────────────────────────────────────────
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: const BoxDecoration(
-              color: Color(0xFF2C5F4F),
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(8),
-                topRight: Radius.circular(8),
-              ),
+ Widget _buildPersonReferenceCard() {
+  return Container(
+    padding: EdgeInsets.zero,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── Header bar ──────────────────────────────────────────────────
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: const BoxDecoration(
+            color: Color(0xFF2C5F4F),
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(8),
+              topRight: Radius.circular(8),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'REFERENCES',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
-                  ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'REFERENCES',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
                 ),
-                GestureDetector(
+              ),
+              GestureDetector(
                 onTap: () {
                   setState(() {
                     _newPersonRefData = {
@@ -301,134 +301,118 @@ class _PersonReferenceWidgetState extends State<PersonReferenceWidget> {
                       'refAddress': '',
                       'refTelephone': '',
                     };
-                   _isAddingPersonRef = true;
-                  _editingPersonRefIndex = null;
+                    _isAddingPersonRef = true;
+                    _editingPersonRefIndex = null;
                   });
                 },
-                child: const Icon(Icons.add_circle, size: 24, color: Colors.white),
+                child: const Icon(Icons.add_circle, size: 20, color: Colors.white),
               ),
-                // if (_isFetchingPersonRef)
-                //   const SizedBox(
-                //     width: 16,
-                //     height: 16,
-                //     child: CircularProgressIndicator(
-                //       strokeWidth: 2,
-                //       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                //     ),
-                //   ),
-              ],
-            ),
+            ],
           ),
+        ),
 
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+        Padding(
+          padding:EdgeInsets.zero,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
 
-                // ── Add-new form ────────────────────────────────────────
-                if (_isAddingPersonRef) ...[
-                  const Divider(),
-                  const Text(
-                    'New Reference',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF2C5F4F),
+              // ── Add-new form ────────────────────────────────────────
+              if (_isAddingPersonRef) ...[
+                const Divider(),
+                const Text(
+                  'New Reference',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2C5F4F),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _buildEditableFieldInline(
+                  'Reference Name',
+                  _newPersonRefData['refName'],
+                  (v) => setState(() => _newPersonRefData['refName'] = v),
+                ),
+                const SizedBox(height: 12),
+                _buildEditableFieldInline(
+                  'Address',
+                  _newPersonRefData['refAddress'],
+                  (v) => setState(() => _newPersonRefData['refAddress'] = v),
+                ),
+                const SizedBox(height: 12),
+                _buildPhoneFieldInline(
+                  'Telephone No.',
+                  _newPersonRefData['refTelephone'],
+                  (v) => setState(() => _newPersonRefData['refTelephone'] = v),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => setState(() {
+                        _isAddingPersonRef = false;
+                        _newPersonRefData = {};
+                      }),
+                      child: const Text('Cancel', style: TextStyle(color: Colors.red)),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildEditableFieldInline(
-                    'Reference Name',
-                    _newPersonRefData['refName'],
-                    (v) => setState(() => _newPersonRefData['refName'] = v),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildEditableFieldInline(
-                    'Address',
-                    _newPersonRefData['refAddress'],
-                    (v) => setState(() => _newPersonRefData['refAddress'] = v),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildPhoneFieldInline(
-                    'Telephone No.',
-                    _newPersonRefData['refTelephone'],
-                    (v) =>
-                        setState(() => _newPersonRefData['refTelephone'] = v),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton(
-                        onPressed: () => setState(() {
-                          _isAddingPersonRef = false;
-                          _newPersonRefData = {};
-                        }),
-                        child: const Text(
-                          'Cancel',
-                          style: TextStyle(color: Colors.red),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      ElevatedButton.icon(
-                        onPressed: _saveNewPersonReference,
-                        icon: const Icon(Icons.save, size: 16),
-                        label: const Text('Save'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF2C5F4F),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          textStyle: const TextStyle(fontSize: 13),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Divider(height: 32),
-                ],
-
-                // ── Empty state ─────────────────────────────────────────
-                if (_personRefList.isEmpty && !_isAddingPersonRef)
-                  Center(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 24.0),
-                      child: Column(
-                        children: [
-                          Icon(
-                            Icons.people_alt_outlined,
-                            size: 48,
-                            color: Colors.grey[400],
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'No reference information added yet.\nTap "Add Reference" to get started.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey[500],
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                        ],
+                    const SizedBox(width: 8),
+                    ElevatedButton.icon(
+                      onPressed: _saveNewPersonReference,
+                      icon: const Icon(Icons.save, size: 16),
+                      label: const Text('Save'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2C5F4F),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        textStyle: const TextStyle(fontSize: 13),
                       ),
                     ),
+                  ],
+                ),
+                const Divider(height: 32),
+              ],
+
+              // ── Empty state ─────────────────────────────────────────
+              if (_personRefList.isEmpty && !_isAddingPersonRef)
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24.0),
+                    child: Column(
+                      children: [
+                        Icon(Icons.people_alt_outlined, size: 48, color: Colors.grey[400]),
+                        const SizedBox(height: 8),
+                        Text(
+                          'No reference information added yet.\nTap "Add Reference" to get started.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[500],
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
+                ),
 
-                // ── List of existing references ─────────────────────────
-                ...List.generate(_personRefList.length, (index) {
-                  final item = _personRefList[index];
-                  final bool isEditing = _editingPersonRefIndex == index;
+              // ── List of existing references ─────────────────────────
+              ...List.generate(_personRefList.length, (index) {
+                final item = _personRefList[index];
+                final bool isEditing = _editingPersonRefIndex == index;
 
-                  return Column(
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (index > 0 || _isAddingPersonRef)
-                        const Divider(height: 32),
-
-                      // Item header row with edit / delete
+                      // ── Item header row ──────────────────────────
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -440,34 +424,19 @@ class _PersonReferenceWidgetState extends State<PersonReferenceWidget> {
                               color: Color(0xFF2C5F4F),
                             ),
                           ),
-                          if (isEditing)
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                TextButton(
-                                  onPressed: () async {
-                                    await _fetchPersonReferenceData();
-                                    setState(() => _editingPersonRefIndex = null);
-                                  },
-                                  child: const Text('Cancel', style: TextStyle(color: Colors.red)),
-                                ),
-                                const SizedBox(width: 4),
-                                ElevatedButton.icon(
-                                  onPressed: () => _updatePersonReference(index),
-                                  icon: const Icon(Icons.save, size: 16),
-                                  label: const Text('Save'),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF2C5F4F),
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                    textStyle: const TextStyle(fontSize: 13),
-                                  ),
-                                ),
-                              ],
-                            )
-                          else
+                          // ✅ 3-dots hidden when editing
+                          if (!isEditing)
                             PopupMenuButton<String>(
-                              icon: const Icon(Icons.more_horiz, size: 22, color: Colors.black54),
+                              color: Colors.white,
+                              position: PopupMenuPosition.under,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                side: BorderSide(color: Colors.grey.shade200),
+                              ),
+                              icon: Container(
+                                padding: const EdgeInsets.all(6),
+                                child: const Icon(Icons.more_horiz, size: 18, color: Colors.black87),
+                              ),
                               padding: EdgeInsets.zero,
                               onSelected: (value) async {
                                 if (value == 'edit') {
@@ -477,19 +446,31 @@ class _PersonReferenceWidgetState extends State<PersonReferenceWidget> {
                                   });
                                 } else if (value == 'delete') {
                                   _deletePersonReference(index);
-                                } else if (value == 'cancel') {
-                                  await _fetchPersonReferenceData();
-                                  setState(() => _editingPersonRefIndex = null);
                                 }
                               },
                               itemBuilder: (context) => [
-                                const PopupMenuItem(
+                                PopupMenuItem<String>(
                                   value: 'edit',
-                                  child: Row(children: [Icon(Icons.edit, size: 18, color: Colors.black87), SizedBox(width: 8), Text('Edit', style: TextStyle(fontSize: 14))]),
+                                  height: 30,
+                                  child: Row(
+                                    children: const [
+                                      Icon(Icons.edit, size: 15, color: Colors.black87),
+                                      SizedBox(width: 8),
+                                      Text('Edit', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+                                    ],
+                                  ),
                                 ),
-                                const PopupMenuItem(
+                                const PopupMenuDivider(height: 8),
+                                PopupMenuItem<String>(
                                   value: 'delete',
-                                  child: Row(children: [Icon(Icons.delete, size: 18, color: Colors.red), SizedBox(width: 8), Text('Delete', style: TextStyle(fontSize: 14, color: Colors.red))]),
+                                  height: 30,
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.delete, size: 15, color: Colors.red.shade600),
+                                      const SizedBox(width: 8),
+                                      Text('Delete', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.red.shade600)),
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),
@@ -498,19 +479,14 @@ class _PersonReferenceWidgetState extends State<PersonReferenceWidget> {
 
                       const SizedBox(height: 8),
 
-                      // Fields — editable or read-only
+                      // ── Fields ───────────────────────────────────
                       isEditing
                           ? _buildEditableFieldInline(
                               'Reference Name',
                               item['refName'],
-                              (v) => setState(
-                                () => _personRefList[index]['refName'] = v,
-                              ),
+                              (v) => setState(() => _personRefList[index]['refName'] = v),
                             )
-                          : _buildInfoFieldInline(
-                              'Reference Name',
-                              item['refName'],
-                            ),
+                          : _buildInfoFieldInline('Reference Name', item['refName']),
 
                       const SizedBox(height: 12),
 
@@ -518,9 +494,7 @@ class _PersonReferenceWidgetState extends State<PersonReferenceWidget> {
                           ? _buildEditableFieldInline(
                               'Address',
                               item['refAddress'],
-                              (v) => setState(
-                                () => _personRefList[index]['refAddress'] = v,
-                              ),
+                              (v) => setState(() => _personRefList[index]['refAddress'] = v),
                             )
                           : _buildInfoFieldInline('Address', item['refAddress']),
 
@@ -530,30 +504,49 @@ class _PersonReferenceWidgetState extends State<PersonReferenceWidget> {
                           ? _buildPhoneFieldInline(
                               'Telephone No.',
                               item['refTelephone'],
-                              (v) => setState(
-                                () =>
-                                    _personRefList[index]['refTelephone'] = v,
-                              ),
+                              (v) => setState(() => _personRefList[index]['refTelephone'] = v),
                             )
-                          : _buildInfoFieldInline(
-                              'Telephone No.',
-                              item['refTelephone'],
+                          : _buildInfoFieldInline('Telephone No.', item['refTelephone']),
+
+                      // ✅ Save/Cancel at the bottom, only when editing
+                      if (isEditing) ...[
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            TextButton(
+                              onPressed: () async {
+                                await _fetchPersonReferenceData();
+                                setState(() => _editingPersonRefIndex = null);
+                              },
+                              child: const Text('Cancel', style: TextStyle(color: Colors.red)),
                             ),
-
-                      const SizedBox(height: 8),
+                            const SizedBox(width: 8),
+                            ElevatedButton.icon(
+                              onPressed: () => _updatePersonReference(index),
+                              icon: const Icon(Icons.save, size: 16),
+                              label: const Text('Save'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF2C5F4F),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                textStyle: const TextStyle(fontSize: 13),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
-                  );
-                }),
-              ],
-            ),
+                  ),
+                );
+              }),
+            ],
           ),
-        ],
-      ),
-    );
-  }
-
-
-
+        ),
+      ],
+    ),
+  );
+}
 
   Widget _buildInfoFieldInline(String label, dynamic value) {
     String displayValue = 'N/A';
@@ -615,52 +608,7 @@ class _PersonReferenceWidgetState extends State<PersonReferenceWidget> {
     );
   }
 
-  Widget _buildDateFieldInline(String label, String? value, Function(String) onChanged) {
-    final controller = TextEditingController(text: value ?? '');
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: TextStyle(fontSize: 10, color: Colors.grey[600], fontWeight: FontWeight.w500)),
-        GestureDetector(
-          onTap: () async {
-            DateTime? initialDate;
-            if (value != null && value.isNotEmpty) {
-              try {
-                initialDate = DateTime.tryParse(value);
-              } catch (e) {}
-            }
-            final DateTime? pickedDate = await showDatePicker(
-              context: context,
-              initialDate: initialDate ?? DateTime.now(),
-              firstDate: DateTime(1900),
-              lastDate: DateTime(2100),
-              builder: (context, child) => Theme(
-                data: Theme.of(context).copyWith(colorScheme: const ColorScheme.light(primary: Color(0xFF2C5F4F), onPrimary: Colors.white, onSurface: Colors.black)),
-                child: child!,
-              ),
-            );
-            if (pickedDate != null) {
-              final formatted = '${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}';
-              controller.text = formatted;
-              onChanged(formatted);
-            }
-          },
-          child: AbsorbPointer(
-            child: TextFormField(
-              controller: controller,
-              readOnly: true,
-              style: const TextStyle(fontSize: 13, color: Colors.black87, fontWeight: FontWeight.bold),
-              decoration: const InputDecoration(
-                suffixIcon: Icon(Icons.calendar_today, size: 20, color: Color(0xFF2C5F4F)),
-                contentPadding: EdgeInsets.symmetric(vertical: 4),
-                isDense: true,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+  
   
   @override
   Widget build(BuildContext context) {

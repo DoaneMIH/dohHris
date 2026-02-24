@@ -21,8 +21,8 @@ class TokenManager {
 
   String? get token => _token;
 
-  /// Initialize token manager with the first token AND the credentials
-  /// that produced it so we can re-login silently on every refresh cycle.
+  //Initialize token manager with the first token AND the credentials
+  //that produced it so we can re-login silently on every refresh cycle.
   void initialize(
     String token, {
     required String email,
@@ -41,7 +41,7 @@ class TokenManager {
     _startAutoRefresh();
   }
 
-  /// Start the periodic refresh timer
+  // Start the periodic refresh timer
   void _startAutoRefresh() {
     print('⏰ [TokenManager] Starting auto-refresh timer');
     print(
@@ -54,8 +54,8 @@ class TokenManager {
     });
   }
 
-  /// Re-login using stored credentials to get a brand-new token.
-  /// This hits POST /auth/login — the same endpoint the app uses on first login.
+  // Re-login using stored credentials to get a brand-new token.
+  // This hits POST /auth/login — the same endpoint the app uses on first login.
   Future<bool> refreshToken() async {
     if (_email == null || _password == null) {
       print('❌ [TokenManager] No stored credentials — cannot refresh');

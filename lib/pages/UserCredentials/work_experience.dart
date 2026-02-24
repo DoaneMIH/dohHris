@@ -259,7 +259,7 @@ Widget _buildWorkExperienceCard() {
       children: [
         // Header with Add button
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: const BoxDecoration(
             color: Color(0xFF2C5F4F),
             borderRadius: BorderRadius.only(
@@ -289,7 +289,7 @@ Widget _buildWorkExperienceCard() {
                     _editingWorkExperienceIndex = 0;
                   });
                 },
-                child: const Icon(Icons.add_circle, size: 24, color: Colors.white),
+                child: const Icon(Icons.add_circle, size: 20, color: Colors.white),
               ),
             ],
           ),
@@ -342,6 +342,7 @@ Widget _buildWorkExperienceCard() {
                                           : Text(work['position'] ?? 'N/A', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black)),
                                     ),
                                     // Collapse/expand arrow
+                                    if(!isEditing)
                                     GestureDetector(
                                       onTap: () {
                                         if (!isEditing) {
@@ -357,25 +358,89 @@ Widget _buildWorkExperienceCard() {
                                       child: Icon(isCollapsed ? Icons.expand_more : Icons.expand_less, size: 20, color: Colors.black),
                                     ),
                                     const SizedBox(width: 4),
-                                    // 3-dot menu or save
-                                  
-                                      PopupMenuButton<String>(
-                                        icon: const Icon(Icons.more_horiz, size: 22, color: Colors.black54),
-                                        padding: EdgeInsets.zero,
-                                        onSelected: (value) {
-                                          if (value == 'edit') {
-                                            setState(() {
-                                              _collapsedWorkExperienceIndexes.remove(index);
-                                              _editingWorkExperienceIndex = index;
-                                            });
-                                          } else if (value == 'delete') {
-                                            _deleteWorkExperience(index);
-                                          }
-                                        },
-                                        itemBuilder: (context) => [
-                                          const PopupMenuItem(value: 'edit', child: Row(children: [Icon(Icons.edit, size: 18, color: Colors.black87), SizedBox(width: 8), Text('Edit', style: TextStyle(fontSize: 14))])),
-                                          const PopupMenuItem(value: 'delete', child: Row(children: [Icon(Icons.delete, size: 18, color: Colors.red), SizedBox(width: 8), Text('Delete', style: TextStyle(fontSize: 14, color: Colors.red))])),
-                                        ],
+                                      // 3-dot menu or save
+                                      if (!isEditing)
+                                        PopupMenuButton<String>(
+                                          color: Colors.white,
+                                          position: PopupMenuPosition.under,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              14,
+                                            ),
+                                            side: BorderSide(
+                                              color: Colors.grey.shade200,
+                                            ),
+                                          ),
+                                          icon: Container(
+                                            padding: const EdgeInsets.all(6),
+                                            child: const Icon(
+                                              Icons.more_horiz,
+                                              size: 18,
+                                              color: Colors.black87,
+                                            ),
+                                          ),
+                                          padding: EdgeInsets.zero,
+                                          onSelected: (value) {
+                                            if (value == 'edit') {
+                                              setState(() {
+                                                _collapsedWorkExperienceIndexes
+                                                    .remove(index);
+                                                _editingWorkExperienceIndex =
+                                                    index;
+                                              });
+                                            } else if (value == 'delete') {
+                                              _deleteWorkExperience(index);
+                                            }
+                                          },
+                                          itemBuilder: (context) => [
+                                            PopupMenuItem<String>(
+                                              value: 'edit',
+                                              height: 30,
+                                              child: Row(
+                                                children: const [
+                                                  Icon(
+                                                    Icons.edit,
+                                                    size: 15,
+                                                    color: Colors.black87,
+                                                  ),
+                                                  SizedBox(width: 8),
+                                                  Text(
+                                                    'Edit',
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            const PopupMenuDivider(height: 8),
+                                            PopupMenuItem<String>(
+                                              value: 'delete',
+                                              height: 30,
+                                              child: Row(
+                                                children: [
+                                                  Icon(
+                                                    Icons.delete,
+                                                    size: 15,
+                                                    color: Colors.red.shade600,
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  Text(
+                                                    'Delete',
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                      color:
+                                                          Colors.red.shade600,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
                                       ),
                                   ],
                                 ),
@@ -475,7 +540,6 @@ Widget _buildWorkExperienceCard() {
   );
 }
 
-
   // Voluntary Work Section
 
 
@@ -516,28 +580,28 @@ Widget _buildWorkExperienceCard() {
     );
   }
 
-  Widget _buildPhoneFieldInline(String label, String? value, Function(String) onChanged) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: TextStyle(fontSize: 10, color: Colors.grey[600], fontWeight: FontWeight.w500)),
-        TextFormField(
-          initialValue: value ?? '',
-          onChanged: onChanged,
-          keyboardType: TextInputType.phone,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(11)],
-          style: const TextStyle(fontSize: 13, color: Colors.black87, fontWeight: FontWeight.bold),
-          decoration: InputDecoration(
-            border: UnderlineInputBorder(borderSide: BorderSide(color: const Color(0xFF2C5F4F))),
-            enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey[300]!)),
-            focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF2C5F4F), width: 2)),
-            contentPadding: const EdgeInsets.symmetric(vertical: 4),
-            isDense: true,
-          ),
-        ),
-      ],
-    );
-  }
+  // Widget _buildPhoneFieldInline(String label, String? value, Function(String) onChanged) {
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       Text(label, style: TextStyle(fontSize: 10, color: Colors.grey[600], fontWeight: FontWeight.w500)),
+  //       TextFormField(
+  //         initialValue: value ?? '',
+  //         onChanged: onChanged,
+  //         keyboardType: TextInputType.phone,
+  //         inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(11)],
+  //         style: const TextStyle(fontSize: 13, color: Colors.black87, fontWeight: FontWeight.bold),
+  //         decoration: InputDecoration(
+  //           border: UnderlineInputBorder(borderSide: BorderSide(color: const Color(0xFF2C5F4F))),
+  //           enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey[300]!)),
+  //           focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF2C5F4F), width: 2)),
+  //           contentPadding: const EdgeInsets.symmetric(vertical: 4),
+  //           isDense: true,
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
 
   Widget _buildDateFieldInline(String label, String? value, Function(String) onChanged) {
     final controller = TextEditingController(text: value ?? '');

@@ -37,8 +37,6 @@ class AuthService {
           data['token'],
           email: email,
           password: password,
-          // Caller can supply this callback; e.g. navigate to login screen
-          // onTokenExpired: () { ... },
         );
 
         return {

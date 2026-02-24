@@ -60,16 +60,6 @@ class _LoginPageState extends State<LoginPage> {
           );
           print('🎫 [LoginPage] Token will be used to fetch profile');
 
-          // Navigator.pushReplacement(
-          //   context,
-          //   MaterialPageRoute(
-          //     builder: (context) => UserDetailsPageContent(
-          //       token: token,
-          //       baseUrl: ApiConfig.baseUrl,
-          //     ),
-          //   ),
-          // );
-
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(

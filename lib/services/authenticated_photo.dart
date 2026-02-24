@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:typed_data';
@@ -27,7 +26,8 @@ class AuthenticatedProfilePhoto extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<AuthenticatedProfilePhoto> createState() => _AuthenticatedProfilePhotoState();
+  State<AuthenticatedProfilePhoto> createState() =>
+      _AuthenticatedProfilePhotoState();
 }
 
 class _AuthenticatedProfilePhotoState extends State<AuthenticatedProfilePhoto> {
@@ -39,8 +39,8 @@ class _AuthenticatedProfilePhotoState extends State<AuthenticatedProfilePhoto> {
   @override
   void initState() {
     super.initState();
-    if (widget.photoUrl != null && 
-        widget.photoUrl!.isNotEmpty && 
+    if (widget.photoUrl != null &&
+        widget.photoUrl!.isNotEmpty &&
         widget.photoUrl != 'N/A') {
       _loadImage();
     }
@@ -57,10 +57,11 @@ class _AuthenticatedProfilePhotoState extends State<AuthenticatedProfilePhoto> {
       String fullPhotoUrl;
       if (widget.photoUrl!.startsWith('http')) {
         fullPhotoUrl = widget.photoUrl!;
-      } else if (widget.photoUrl!.startsWith('/employee/image/')) {
+      } else if (widget.photoUrl!.startsWith(ApiConfig.getEmployeePhoto)) {
         fullPhotoUrl = '${widget.baseUrl ?? ''}${widget.photoUrl}';
       } else {
-        fullPhotoUrl = '${widget.baseUrl ?? ''}/employee/image/${widget.photoUrl}';
+        fullPhotoUrl =
+            '${widget.baseUrl ?? ''}${ApiConfig.getEmployeePhoto}${widget.photoUrl}';
       }
 
       print('📷 [AuthProfilePhoto] Loading image from: $fullPhotoUrl');
@@ -71,9 +72,7 @@ class _AuthenticatedProfilePhotoState extends State<AuthenticatedProfilePhoto> {
       // Fetch image with authentication
       final response = await http.get(
         Uri.parse(fullPhotoUrl),
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
+        headers: {'Authorization': 'Bearer $token'},
       );
 
       print('📷 [AuthProfilePhoto] Response status: ${response.statusCode}');
@@ -89,7 +88,9 @@ class _AuthenticatedProfilePhotoState extends State<AuthenticatedProfilePhoto> {
           _hasError = true;
           _isLoading = false;
         });
-        print('❌ [AuthProfilePhoto] Failed to load image: ${response.statusCode}');
+        print(
+          '❌ [AuthProfilePhoto] Failed to load image: ${response.statusCode}',
+        );
       }
     } catch (e) {
       setState(() {
@@ -149,184 +150,102 @@ class _AuthenticatedProfilePhotoState extends State<AuthenticatedProfilePhoto> {
     } catch (e) {
       print('❌ [AuthProfilePhoto] Error picking image: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error selecting image: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error selecting image: $e')));
       }
     }
   }
 
-  // Future<void> _uploadPhoto(XFile imageFile) async {
-  //   try {
-  //     if (widget.employeeId == null) {
-  //       throw Exception('Employee ID is required to update photo');
-  //     }
-
-  //     final token = TokenManager().token ?? widget.token;
-  //     if (token == null) {
-  //       throw Exception('No authentication token available');
-  //     }
-
-  //     // Read image bytes
-  //     final bytes = await imageFile.readAsBytes();
-      
-  //     // Get file extension
-  //     final fileName = imageFile.name;
-  //     final fileExtension = fileName.split('.').last;
-
-  //     // Create multipart request
-  //     final uri = Uri.parse('${widget.baseUrl}${ApiConfig.updateEmployeePhotoEndpoint}${widget.employeeId}');
-  //     final request = http.MultipartRequest('PUT', uri);
-  //     print('📷 [AuthProfilePhoto] Upload URI: $uri');
-  //     // Add headers
-  //     request.headers['Authorization'] = 'Bearer $token';
-      
-  //     // Add file
-  //     request.files.add(
-  //       http.MultipartFile.fromBytes(
-  //         'photo',
-  //         bytes,
-  //         filename: fileName,
-  //       ),
-  //     );
-
-  //     print('📤 [AuthProfilePhoto] Uploading photo to: $uri');
-      
-  //     // Send request
-  //     final streamedResponse = await request.send();
-  //     final response = await http.Response.fromStream(streamedResponse);
-
-  //     print('📷 [AuthProfilePhoto] Upload response status: ${response.statusCode}');
-  //     print('📷 [AuthProfilePhoto] Upload response body: ${response.body}');
-
-  //     if (response.statusCode == 200) {
-  //       // Successfully uploaded
-  //       setState(() {
-  //         _imageBytes = bytes;
-  //         _isLoading = false;
-  //       });
-        
-  //       if (mounted) {
-  //         ScaffoldMessenger.of(context).showSnackBar(
-  //           const SnackBar(
-  //             content: Text('Profile photo updated successfully'),
-  //             backgroundColor: Colors.green,
-  //           ),
-  //         );
-  //       }
-
-  //       // Call callback if provided
-  //       widget.onPhotoUpdated?.call();
-  //     } else {
-  //       throw Exception('Failed to upload photo: ${response.statusCode}');
-  //     }
-  //   } catch (e) {
-  //     print('❌ [AuthProfilePhoto] Error uploading photo: $e');
-  //     setState(() {
-  //       _isLoading = false;
-  //     });
-      
-  //     if (mounted) {
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         SnackBar(
-  //           content: Text('Failed to update photo: $e'),
-  //           backgroundColor: Colors.red,
-  //         ),
-  //       );
-  //     }
-  //   }
-  // }
-
-
   Future<void> _uploadPhoto(XFile imageFile) async {
-  try {
-    if (widget.employeeId == null) {
-      throw Exception('Employee ID is required to update photo');
-    }
+    try {
+      if (widget.employeeId == null) {
+        throw Exception('Employee ID is required to update photo');
+      }
 
-    final token = TokenManager().token ?? widget.token;
-    if (token == null) {
-      throw Exception('No authentication token available');
-    }
+      final token = TokenManager().token ?? widget.token;
+      if (token == null) {
+        throw Exception('No authentication token available');
+      }
 
-    // Read image bytes
-    final bytes = await imageFile.readAsBytes();
-    
-    // Get file name
-    final fileName = imageFile.name;
+      final bytes = await imageFile.readAsBytes(); // Read image bytes
+      final fileName = imageFile.name; // Get file name
 
-    // ⭐ UPDATED: Use the same endpoint pattern as employee details update
-    final uri = Uri.parse('${widget.baseUrl}${ApiConfig.updateEmployeePhotoEndpoint}${widget.employeeId}');
-    
-    print('📷 [AuthProfilePhoto] Upload URI: $uri');
-    
-    // Create multipart request
-    var request = http.MultipartRequest('PUT', uri);
-    
-    // Add headers
-    request.headers['Authorization'] = 'Bearer $token';
-    
-    // ⭐ UPDATED: Add the photo file with the field name 'photo'
-    request.files.add(
-      http.MultipartFile.fromBytes(
-        'photo',  // This is the field name the backend expects
-        bytes,
-        filename: fileName,
-      ),
-    );
+      // UPDATED: Use the same endpoint pattern as employee details update
+      final uri = Uri.parse(
+        '${widget.baseUrl}${ApiConfig.updateEmployeePhotoEndpoint}${widget.employeeId}',
+      );
+      print('📷 [AuthProfilePhoto] Upload URI: $uri');
 
-    print('📤 [AuthProfilePhoto] Uploading photo to: $uri');
-    
-    // Send request
-    final streamedResponse = await request.send();
-    final response = await http.Response.fromStream(streamedResponse);
+      // Create multipart request
+      var request = http.MultipartRequest('PUT', uri);
 
-    print('📷 [AuthProfilePhoto] Upload response status: ${response.statusCode}');
-    print('📷 [AuthProfilePhoto] Upload response body: ${response.body}');
+      // Add headers
+      request.headers['Authorization'] = 'Bearer $token';
 
-    if (response.statusCode == 200) {
-      // Successfully uploaded
+      // UPDATED: Add the photo file with the field name 'photo'
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          'photo', // This is the field name the backend expects
+          bytes,
+          filename: fileName,
+        ),
+      );
+
+      print('📤 [AuthProfilePhoto] Uploading photo to: $uri');
+
+      // Send request
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      print(
+        '📷 [AuthProfilePhoto] Upload response status: ${response.statusCode}',
+      );
+      print('📷 [AuthProfilePhoto] Upload response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        // Successfully uploaded
+        setState(() {
+          _imageBytes = bytes;
+          _isLoading = false;
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Profile photo updated successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+
+        // Call callback if provided
+        widget.onPhotoUpdated?.call();
+      } else {
+        throw Exception('Failed to upload photo: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('❌ [AuthProfilePhoto] Error uploading photo: $e');
       setState(() {
-        _imageBytes = bytes;
         _isLoading = false;
       });
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profile photo updated successfully'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: Text('Failed to update photo: $e'),
+            backgroundColor: Colors.red,
           ),
         );
       }
-
-      // Call callback if provided
-      widget.onPhotoUpdated?.call();
-    } else {
-      throw Exception('Failed to upload photo: ${response.statusCode}');
-    }
-  } catch (e) {
-    print('❌ [AuthProfilePhoto] Error uploading photo: $e');
-    setState(() {
-      _isLoading = false;
-    });
-    
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to update photo: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
     }
   }
-}
 
   @override
   Widget build(BuildContext context) {
     // Get the first letter for fallback
-    final firstLetter = widget.userName.isNotEmpty 
-        ? widget.userName[0].toUpperCase() 
+    final firstLetter = widget.userName.isNotEmpty
+        ? widget.userName[0].toUpperCase()
         : 'U';
 
     return Stack(
@@ -340,22 +259,23 @@ class _AuthenticatedProfilePhotoState extends State<AuthenticatedProfilePhoto> {
           child: _isLoading
               ? _buildLoadingAvatar()
               : (_hasError || _imageBytes == null)
-                  ? _buildLetterAvatar(firstLetter)
-                  : CircleAvatar(
-                      radius: widget.radius,
-                      backgroundColor: Colors.blue.shade100,
-                      child: ClipOval(
-                        child: Image.memory(
-                          _imageBytes!,
-                          width: widget.radius * 2,
-                          height: widget.radius * 2,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
+              ? _buildLetterAvatar(firstLetter)
+              : CircleAvatar(
+                  radius: widget.radius,
+                  backgroundColor: Colors.blue.shade100,
+                  child: ClipOval(
+                    child: Image.memory(
+                      _imageBytes!,
+                      width: widget.radius * 2,
+                      height: widget.radius * 2,
+                      fit: BoxFit.cover,
                     ),
+                  ),
+                ),
         ),
         // Edit icon button
-        if (widget.employeeId != null) // Only show edit icon if employeeId is provided
+        if (widget.employeeId !=
+            null) // Only show edit icon if employeeId is provided
           Positioned(
             right: 0,
             bottom: 0,
@@ -366,10 +286,7 @@ class _AuthenticatedProfilePhotoState extends State<AuthenticatedProfilePhoto> {
                 decoration: BoxDecoration(
                   color: const Color.fromARGB(255, 255, 255, 255),
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Colors.white,
-                    width: 2,
-                  ),
+                  border: Border.all(color: Colors.white, width: 2),
                 ),
                 child: const Icon(
                   Icons.edit,

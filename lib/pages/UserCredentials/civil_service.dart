@@ -245,7 +245,7 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
         children: [
           // Header with Add button
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: const BoxDecoration(
               color: Color(0xFF2C5F4F),
               borderRadius: BorderRadius.only(
@@ -281,7 +281,7 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
                       _editingCivilServiceIndex = 0;
                     });
                   },
-                  child: const Icon(Icons.add_circle, size: 24, color: Colors.white),
+                  child: const Icon(Icons.add_circle, size: 20, color: Colors.white),
                 ),
               ],
             ),
@@ -378,6 +378,7 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
                                               ),
                                       ),
                                       // Collapse/expand arrow
+                                         if (!isEditing)
                                       GestureDetector(
                                         onTap: () {
                                           if (!isEditing) {
@@ -398,14 +399,33 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
                                       ),
                                       const SizedBox(width: 4),
                                       // 3-dot menu or save button
-                                     
+                                      
+                                      if (!isEditing)
                                         PopupMenuButton<String>(
-                                          icon: const Icon(Icons.more_horiz, size: 22, color: Colors.black54),
+                                          color: Colors.white,
+                                          position: PopupMenuPosition.under,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              14,
+                                            ),
+                                            side: BorderSide(
+                                              color: Colors.grey.shade200,
+                                            ),
+                                          ),
+                                          icon: Container(
+                                            padding: const EdgeInsets.all(6),
+                                            child: const Icon(
+                                              Icons.more_horiz,
+                                              size: 18,
+                                              color: Colors.black87,
+                                            ),
+                                          ),
                                           padding: EdgeInsets.zero,
                                           onSelected: (value) {
                                             if (value == 'edit') {
                                               setState(() {
-                                                _collapsedCivilServiceIndexes.remove(index);
+                                                _collapsedCivilServiceIndexes
+                                                    .remove(index);
                                                 _editingCivilServiceIndex = index;
                                               });
                                             } else if (value == 'delete') {
@@ -413,14 +433,50 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
                                             }
                                           },
                                           itemBuilder: (context) => [
-                                            const PopupMenuItem(
-                                              value: 'edit',
-                                              child: Row(children: [Icon(Icons.edit, size: 18, color: Colors.black87), SizedBox(width: 8), Text('Edit', style: TextStyle(fontSize: 14))]),
-                                            ),
-                                            const PopupMenuItem(
-                                              value: 'delete',
-                                              child: Row(children: [Icon(Icons.delete, size: 18, color: Colors.red), SizedBox(width: 8), Text('Delete', style: TextStyle(fontSize: 14, color: Colors.red))]),
-                                            ),
+                                           PopupMenuItem<String>(
+                            value: 'edit',
+                            height: 30,
+                            child: Row(
+                              children: const [
+                                Icon(
+                                  Icons.edit,
+                                  size: 15,
+                                  color: Colors.black87,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Edit',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                                            const PopupMenuDivider(height: 8),
+                            PopupMenuItem<String>(
+                              value: 'delete',
+                              height: 30,
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.delete,
+                                    size: 15,
+                                    color: Colors.red.shade600,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Delete',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.red.shade600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                                           ],
                                         ),
                                     ],
@@ -530,29 +586,7 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
     );
   }
 
-  Widget _buildPhoneFieldInline(String label, String? value, Function(String) onChanged) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: TextStyle(fontSize: 10, color: Colors.grey[600], fontWeight: FontWeight.w500)),
-        TextFormField(
-          initialValue: value ?? '',
-          onChanged: onChanged,
-          keyboardType: TextInputType.phone,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(11)],
-          style: const TextStyle(fontSize: 13, color: Colors.black87, fontWeight: FontWeight.bold),
-          decoration: InputDecoration(
-            border: UnderlineInputBorder(borderSide: BorderSide(color: const Color(0xFF2C5F4F))),
-            enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey[300]!)),
-            focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF2C5F4F), width: 2)),
-            contentPadding: const EdgeInsets.symmetric(vertical: 4),
-            isDense: true,
-          ),
-        ),
-      ],
-    );
-  }
-
+  
   Widget _buildDateFieldInline(String label, String? value, Function(String) onChanged) {
     final controller = TextEditingController(text: value ?? '');
     return Column(

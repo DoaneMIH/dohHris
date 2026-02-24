@@ -328,6 +328,7 @@ Widget _buildLearningDevelopmentCard() {
                                           : Text(training['title'] ?? 'N/A', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black)),
                                     ),
                                     // Collapse/expand arrow
+                                    if (!isEditing)
                                     GestureDetector(
                                       onTap: () {
                                         if (!isEditing) {
@@ -344,9 +345,27 @@ Widget _buildLearningDevelopmentCard() {
                                     ),
                                     const SizedBox(width: 4),
                                     // 3-dot menu
-                                    PopupMenuButton<String>(
-                                        icon: const Icon(Icons.more_horiz, size: 22, color: Colors.black54),
-                                        padding: EdgeInsets.zero,
+                                    if (!isEditing)
+                                  PopupMenuButton<String>(
+                                          color: Colors.white,
+                                          position: PopupMenuPosition.under,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              14,
+                                            ),
+                                            side: BorderSide(
+                                              color: Colors.grey.shade200,
+                                            ),
+                                          ),
+                                          icon: Container(
+                                            padding: const EdgeInsets.all(6),
+                                            child: const Icon(
+                                              Icons.more_horiz,
+                                              size: 18,
+                                              color: Colors.black87,
+                                            ),
+                                          ),
+                                          padding: EdgeInsets.zero,
                                         onSelected: (value) {
                                           if (value == 'edit') {
                                             setState(() {
@@ -358,8 +377,53 @@ Widget _buildLearningDevelopmentCard() {
                                           }
                                         },
                                         itemBuilder: (context) => [
-                                          const PopupMenuItem(value: 'edit', child: Row(children: [Icon(Icons.edit, size: 18, color: Colors.black87), SizedBox(width: 8), Text('Edit', style: TextStyle(fontSize: 14))])),
-                                          const PopupMenuItem(value: 'delete', child: Row(children: [Icon(Icons.delete, size: 18, color: Colors.red), SizedBox(width: 8), Text('Delete', style: TextStyle(fontSize: 14, color: Colors.red))])),
+                                        PopupMenuItem<String>(
+                                              value: 'edit',
+                                              height: 30,
+                                              child: Row(
+                                                children: const [
+                                                  Icon(
+                                                    Icons.edit,
+                                                    size: 15,
+                                                    color: Colors.black87,
+                                                  ),
+                                                  SizedBox(width: 8),
+                                                  Text(
+                                                    'Edit',
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            const PopupMenuDivider(height: 8),
+                                            PopupMenuItem<String>(
+                                              value: 'delete',
+                                              height: 30,
+                                              child: Row(
+                                                children: [
+                                                  Icon(
+                                                    Icons.delete,
+                                                    size: 15,
+                                                    color: Colors.red.shade600,
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  Text(
+                                                    'Delete',
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                      color:
+                                                          Colors.red.shade600,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
                                         ],
                                       ),
                                   ],
@@ -452,7 +516,6 @@ Widget _buildLearningDevelopmentCard() {
 }
 
 
-
   Widget _buildInfoFieldInline(String label, dynamic value) {
     String displayValue = 'N/A';
     if (value != null && value.toString().isNotEmpty && value.toString() != 'null') {
@@ -490,29 +553,7 @@ Widget _buildLearningDevelopmentCard() {
     );
   }
 
-  Widget _buildPhoneFieldInline(String label, String? value, Function(String) onChanged) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: TextStyle(fontSize: 10, color: Colors.grey[600], fontWeight: FontWeight.w500)),
-        TextFormField(
-          initialValue: value ?? '',
-          onChanged: onChanged,
-          keyboardType: TextInputType.phone,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(11)],
-          style: const TextStyle(fontSize: 13, color: Colors.black87, fontWeight: FontWeight.bold),
-          decoration: InputDecoration(
-            border: UnderlineInputBorder(borderSide: BorderSide(color: const Color(0xFF2C5F4F))),
-            enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey[300]!)),
-            focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF2C5F4F), width: 2)),
-            contentPadding: const EdgeInsets.symmetric(vertical: 4),
-            isDense: true,
-          ),
-        ),
-      ],
-    );
-  }
-
+ 
   Widget _buildDateFieldInline(String label, String? value, Function(String) onChanged) {
     final controller = TextEditingController(text: value ?? '');
     return Column(

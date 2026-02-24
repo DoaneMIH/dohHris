@@ -768,51 +768,77 @@ class _FamilyBackgroundWidgetState extends State<FamilyBackgroundWidget> {
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                 ),
-              )
+              ),
             // Show Edit + Delete buttons only when spouse exists (or currently adding)
-            else if (hasSpouse || _isEditingSpouse)
-          
+            if (!_isEditingSpouse)
               PopupMenuButton<String>(
-  icon: const Icon(Icons.more_horiz, size: 20, color: Colors.black),
-  padding: EdgeInsets.zero,
-  onSelected: (value) {
-    if (value == 'edit') {
-      if (_isEditingSpouse) {
-        _saveSpouse();
-      } else {
-        setState(() => _isEditingSpouse = true);
-      }
-    } else if (value == 'delete') {
-      _deleteSpouse();
-    } else if (value == 'cancel') {
-      setState(() => _isEditingSpouse = false);
-    }
-  },
-  itemBuilder: (context) => [
-    PopupMenuItem(
-      value: 'edit',
-      child: Row(
-        children: [
-          Icon(_isEditingSpouse ? Icons.check : Icons.edit, size: 20),
-          const SizedBox(width: 8),
-          Text(_isEditingSpouse ? 'Save' : 'Edit'),
-        ],
-      ),
-    ),
-    if (hasSpouse)
-      const PopupMenuItem(
-        value: 'delete',
-        child: Row(
-          children: [
-            Icon(Icons.delete, size: 20),
-            SizedBox(width: 8),
-            Text('Delete'),
-          ],
-        ),
-      ),
-    
-  ],
-),
+                color: Colors.white,
+                position: PopupMenuPosition.under,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  side: BorderSide(color: Colors.grey.shade200),
+                ),
+                icon: Container(
+                  padding: const EdgeInsets.all(6),
+                  child: const Icon(
+                    Icons.more_horiz,
+                    size: 18,
+                    color: Colors.black87,
+                  ),
+                ),
+                padding: EdgeInsets.zero,
+                onSelected: (value) {
+                  if (value == 'edit') {
+                    setState(() => _isEditingSpouse = true);
+                  } else if (value == 'delete') {
+                    _deleteSpouse();
+                  }
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem<String>(
+                    value: 'edit',
+                    height: 30,
+                    child: Row(
+                      children: const [
+                        Icon(Icons.edit, size: 15, color: Colors.black87),
+                        SizedBox(width: 8),
+                        Text(
+                          'Edit',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (hasSpouse) ...[
+                    const PopupMenuDivider(height: 8),
+                    PopupMenuItem<String>(
+                      value: 'delete',
+                       height: 30,
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.delete,
+                            size: 15,
+                            color: Colors.red.shade600,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Delete',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.red.shade600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
           ],
         ),
 
@@ -990,7 +1016,15 @@ Widget _buildChildrenSection() {
             // Single 3-dot menu at the top level for adding
             if (_editingChildIndex == null)
               PopupMenuButton<String>(
-                icon: const Icon(Icons.more_horiz, size: 20, color: Colors.black),
+                color: Colors.white,
+                        position: PopupMenuPosition.under,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          side: BorderSide(color: Colors.grey.shade200),
+                        ),
+                icon: Container(
+                  padding: const EdgeInsets.all(6),
+                  child: const Icon(Icons.more_horiz, size: 20, color: Colors.black)),
                 padding: EdgeInsets.zero,
                 onSelected: (value) {
                   if (value == 'add') {
@@ -1021,6 +1055,7 @@ Widget _buildChildrenSection() {
           Map<String, dynamic> child = entry.value;
           bool isEditing = _editingChildIndex == index;
 
+          var hasChild = child.containsKey('id') && child['id'] != null;
           return Container(
             padding: const EdgeInsets.all(5),
             decoration: const BoxDecoration(color: Colors.white),
@@ -1039,55 +1074,79 @@ Widget _buildChildrenSection() {
                         ),
                       ),
                     ),
-                    PopupMenuButton<String>(
-                      icon: const Icon(Icons.more_horiz, size: 20, color: Colors.black),
-                      padding: EdgeInsets.zero,
-                      onSelected: (value) {
-                        if (value == 'edit') {
-                          if (isEditing) {
-                            _saveChild(index);
-                          } else {
+                    // Hide the 3-dot menu when this child is being edited
+                    if (!isEditing)
+                      PopupMenuButton<String>(
+                        color: Colors.white,
+                        position: PopupMenuPosition.under,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          side: BorderSide(color: Colors.grey.shade200),
+                        ),
+                        icon: Container(
+                          padding: const EdgeInsets.all(6),
+                          child: const Icon(
+                            Icons.more_horiz,
+                            size: 18,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        padding: EdgeInsets.zero,
+                        onSelected: (value) {
+                          if (value == 'edit') {
                             setState(() => _editingChildIndex = index);
+                          } else if (value == 'delete') {
+                            _deleteChild(index);
                           }
-                        } else if (value == 'delete') {
-                          _deleteChild(index);
-                        } else if (value == 'cancel') {
-                          setState(() => _editingChildIndex = null);
-                        }
-                      },
-                      itemBuilder: (context) => [
-                        PopupMenuItem(
-                          value: 'edit',
-                          child: Row(
-                            children: [
-                              Icon(isEditing ? Icons.check : Icons.edit, size: 18),
-                              const SizedBox(width: 8),
-                              Text(isEditing ? 'Save' : 'Edit'),
-                            ],
+                        },
+                        itemBuilder: (context) => [
+                          PopupMenuItem<String>(
+                            value: 'edit',
+                            height: 30,
+                            child: Row(
+                              children: const [
+                                Icon(
+                                  Icons.edit,
+                                  size: 15,
+                                  color: Colors.black87,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Edit',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        const PopupMenuItem(
-                          value: 'delete',
-                          child: Row(
-                            children: [
-                              Icon(Icons.delete, size: 18),
-                              SizedBox(width: 8),
-                              Text('Delete'),
-                            ],
-                          ),
-                        ),
-                        const PopupMenuItem(
-                          value: 'cancel',
-                          child: Row(
-                            children: [
-                              Icon(Icons.cancel, size: 18),
-                              SizedBox(width: 8),
-                              Text('Cancel'),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+                          if (hasChild)
+                          const PopupMenuDivider(height: 8),
+                            PopupMenuItem<String>(
+                              value: 'delete',
+                              height: 30,
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.delete,
+                                    size: 15,
+                                    color: Colors.red.shade600,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Delete',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.red.shade600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
                   ],
                 ),
 
@@ -1130,6 +1189,39 @@ Widget _buildChildrenSection() {
                               'Birthday (YYYY-MM-DD)',
                               child['birthday'],
                             ),
+                      const SizedBox(height: 25),
+                      // Show Cancel and Save buttons when editing
+                      if (isEditing) ...[
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            TextButton(
+                              onPressed: () => setState(() {
+                                _editingChildIndex = null; // FIXED: Cancel editing
+                              }),
+                              child: const Text(
+                                'Cancel', 
+                                style: TextStyle(color: Colors.red),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            ElevatedButton.icon(
+                              onPressed: () => _saveChild(index),
+                              icon: const Icon(Icons.save, size: 16),
+                              label: const Text('Save'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF2C5F4F),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, 
+                                  vertical: 6,
+                                ),
+                                textStyle: const TextStyle(fontSize: 13),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -1189,12 +1281,25 @@ Widget _buildChildrenSection() {
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                 ),
-              )
+              ),
             // Show 3-dot menu when father record exists or currently editing
-            else if (hasFather || _isEditingFather)
-              PopupMenuButton<String>(
-                icon: const Icon(Icons.more_horiz, size: 20, color: Colors.black),
-                padding: EdgeInsets.zero,
+            if (!_isEditingFather)
+               PopupMenuButton<String>(
+                        color: Colors.white,
+                        position: PopupMenuPosition.under,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          side: BorderSide(color: Colors.grey.shade200),
+                        ),
+                        icon: Container(
+                          padding: const EdgeInsets.all(6),
+                          child: const Icon(
+                            Icons.more_horiz,
+                            size: 18,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        padding: EdgeInsets.zero,
                 onSelected: (value) {
                   if (value == 'edit') {
                     if (_isEditingFather) {
@@ -1202,32 +1307,30 @@ Widget _buildChildrenSection() {
                     } else {
                       setState(() => _isEditingFather = true);
                     }
-                  }  else if (value == 'cancel') {
-                    setState(() => _isEditingFather = false);
-                  }
+                  } 
                 },
                 itemBuilder: (context) => [
-                  PopupMenuItem(
-                    value: 'edit',
-                    child: Row(
-                      children: [
-                        Icon(_isEditingFather ? Icons.check : Icons.edit, size: 18),
-                        const SizedBox(width: 8),
-                        Text(_isEditingFather ? 'Save' : 'Edit'),
-                      ],
-                    ),
-                  ),
-                  
-                  const PopupMenuItem(
-                    value: 'cancel',
-                    child: Row(
-                      children: [
-                        Icon(Icons.cancel, size: 18),
-                        SizedBox(width: 8),
-                        Text('Cancel'),
-                      ],
-                    ),
-                  ),
+                  PopupMenuItem<String>(
+                            value: 'edit',
+                            height: 30,
+                            child: Row(
+                              children: const [
+                                Icon(
+                                  Icons.edit,
+                                  size: 15,
+                                  color: Colors.black87,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Edit',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                 ],
               ),
           ],
@@ -1303,6 +1406,35 @@ Widget _buildChildrenSection() {
                             )
                             .join(' '),
                       ),
+
+                if (_isEditingFather) ...[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => setState(() {
+                          _isEditingFather = false;
+                        }),
+                        child: const Text('Cancel', style: TextStyle(color: Colors.red)),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton.icon(
+                        onPressed: () => _saveFather(),
+                        icon: const Icon(Icons.save, size: 16),
+                        label: const Text('Save'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF2C5F4F),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          textStyle: const TextStyle(fontSize: 13),
+                        
+                        ),
+                      ),
+                    ],
+                    
+                  ),
+                ],
+
                   ],
                 ),
               ],
@@ -1361,28 +1493,26 @@ Widget _buildChildrenSection() {
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                 ),
-              )
+              ),
             // Show Edit button when mother record exists or currently adding
-            else if (hasMother || _isEditingMother)
-              // IconButton(
-              //   icon: Icon(
-              //     _isEditingMother ? Icons.check : Icons.edit,
-              //     size: 20,
-              //     color: Colors.black,
-              //   ),
-              //   onPressed: () {
-              //     if (_isEditingMother) {
-              //       _saveMother();
-              //     } else {
-              //       setState(() => _isEditingMother = true);
-              //     }
-              //   },
-              //   padding: EdgeInsets.zero,
-              //   constraints: const BoxConstraints(),
-              // ),
+            if (!_isEditingMother)
+          
               PopupMenuButton<String>(
-                icon: const Icon(Icons.more_horiz, size: 20, color: Colors.black),
-                padding: EdgeInsets.zero,
+                        color: Colors.white,
+                        position: PopupMenuPosition.under,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          side: BorderSide(color: Colors.grey.shade200),
+                        ),
+                        icon: Container(
+                          padding: const EdgeInsets.all(6),
+                          child: const Icon(
+                            Icons.more_horiz,
+                            size: 18,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        padding: EdgeInsets.zero,
                 onSelected: (value) {
                   if (value == 'edit') {
                     if (_isEditingMother) {
@@ -1390,32 +1520,30 @@ Widget _buildChildrenSection() {
                     } else {
                       setState(() => _isEditingMother = true);
                     }
-                  }  else if (value == 'cancel') {
-                    setState(() => _isEditingMother = false);
-                  }
+                  }  
                 },
                 itemBuilder: (context) => [
-                  PopupMenuItem(
-                    value: 'edit',
-                    child: Row(
-                      children: [
-                        Icon(_isEditingMother ? Icons.check : Icons.edit, size: 18),
-                        const SizedBox(width: 8),
-                        Text(_isEditingMother ? 'Save' : 'Edit'),
-                      ],
-                    ),
-                  ),
-                  
-                  const PopupMenuItem(
-                    value: 'cancel',
-                    child: Row(
-                      children: [
-                        Icon(Icons.cancel, size: 18),
-                        SizedBox(width: 8),
-                        Text('Cancel'),
-                      ],
-                    ),
-                  ),
+                  PopupMenuItem<String>(
+                            value: 'edit',
+                            height: 30,
+                            child: Row(
+                              children: const [
+                                Icon(
+                                  Icons.edit,
+                                  size: 15,
+                                  color: Colors.black87,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Edit',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                 ],
               ),
           ],
@@ -1489,7 +1617,31 @@ Widget _buildChildrenSection() {
                         )
                         .join(' '),
                   ),
-                const SizedBox(height: 12),
+               if (_isEditingMother) ...[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => setState(() {
+                          _isEditingMother = false;
+                        }),
+                        child: const Text('Cancel', style: TextStyle(color: Colors.red)),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton.icon(
+                        onPressed: () => _saveMother(),
+                        icon: const Icon(Icons.save, size: 16),
+                        label: const Text('Save'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF2C5F4F),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          textStyle: const TextStyle(fontSize: 13),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),

@@ -349,17 +349,17 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
 
   // ─── Personal Information Card (kept here — uses _userDetails directly) ──
   Widget _buildPersonalInformationCard() {
-    return Column(
-      children: [
-        Column(
-          children: [
-            Container(
+    return Container(
+      padding: EdgeInsets.zero,
+      child: Column(
+        children: [
+          Container(
               margin: EdgeInsets.zero,
               child: Column(
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    width: double.infinity,
+                    // width: double.infinity,
                     decoration: const BoxDecoration(
                       color: Color(0xFF2C5F4F),
                       borderRadius: BorderRadius.only(topLeft: Radius.circular(8), topRight: Radius.circular(8)),
@@ -367,24 +367,31 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
+                        
                         const Text('PERSONAL INFORMATION', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
                         Row(
-                          children: [
-                            IconButton(
-                              icon: Icon(_isEditingPersonalInfo ? Icons.check : Icons.edit, size: 15, color: Colors.white),
-                              onPressed: () async {
-                                if (_isEditingPersonalInfo) {
-                                  await _savePersonalInformation();
-                                } else {
-                                  final employee = _userDetails?['employee'];
-                                  if (employee != null) {
-                                    _personalInfoData = {
-                                      'lastName': employee['lastName'] ?? '',
-                                      'firstName': employee['firstName'] ?? '',
-                                      'middleName': employee['middleName'] ?? '',
-                                      'suffix': employee['suffix'] ?? '',
-                                      'sex': employee['sex'] ?? '',
-                                      'civilStatus': employee['civilStatus'] ?? '',
+                        children: [
+                          // if (!_isEditingPersonalInfo)
+                          IconButton(
+                            icon: Icon(
+                              Icons.edit,
+                              size: 15,
+                              color: Colors.white,
+                            ),
+                            onPressed: () async {
+                              if (_isEditingPersonalInfo) {
+                                await _savePersonalInformation();
+                              } else {
+                                final employee = _userDetails?['employee'];
+                                if (employee != null) {
+                                  _personalInfoData = {
+                                    'lastName': employee['lastName'] ?? '',
+                                    'firstName': employee['firstName'] ?? '',
+                                    'middleName': employee['middleName'] ?? '',
+                                    'suffix': employee['suffix'] ?? '',
+                                    'sex': employee['sex'] ?? '',
+                                    'civilStatus':
+                                        employee['civilStatus'] ?? '',
                                       'citizenship': employee['citizenship'] ?? '',
                                       'birthdate': employee['birthdate'] ?? '',
                                       'birthplace': employee['birthplace'] ?? '',
@@ -437,26 +444,166 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 15),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+                         children: [
                           _isEditingPersonalInfo
-                              ? _buildDateFieldInline('Date of Birth (YYYY-MM-DD)', _personalInfoData['birthdate'], (v) => setState(() => _personalInfoData['birthdate'] = v))
-                              : _buildInfoFieldInline('Date of Birth', _userDetails?['employee']?['birthdate']),
+                              ? _buildDateFieldInline(
+                                  'Date of Birth (YYYY-MM-DD)',
+                                  _personalInfoData['birthdate'],
+                                  (value) => setState(
+                                    () => _personalInfoData['birthdate'] = value,
+                                  ),
+                                )
+                              : _buildInfoFieldInline(
+                                  'Date of Birth',
+                                  _userDetails?['employee']?['birthdate'],
+                                ),
                           const SizedBox(height: 20),
-                          _buildInfoFieldInline('Place of Birth', _userDetails?['employee']?['birthplace']),
+                          _isEditingPersonalInfo
+                              ? _buildEditableFieldInline(
+                                  'Place of Birth',
+                                  _personalInfoData['birthplace'],
+                                  (value) => setState(
+                                    () => _personalInfoData['birthplace'] = value,
+                                  ),
+                                )
+                              : _buildInfoFieldInline(
+                                  'Place of Birth',
+                                  _userDetails?['employee']?['birthplace'],
+                                ),
                           const SizedBox(height: 20),
-                          _buildInfoFieldInline('Sex', _userDetails?['employee']?['sex']),
+                          _isEditingPersonalInfo
+                              ? _buildEditableFieldInline(
+                                  'Civil Status',
+                                  _personalInfoData['civilStatus'],
+                                  (value) => setState(
+                                    () =>
+                                        _personalInfoData['civilStatus'] = value,
+                                  ),
+                                )
+                              : _buildInfoFieldInline(
+                                  'Civil Status',
+                                  _userDetails?['employee']?['civilStatus'],
+                                ),
                           const SizedBox(height: 20),
-                          _buildInfoFieldInline('Civil Status', _userDetails?['employee']?['civilStatus']),
+                          _isEditingPersonalInfo
+                              ? _buildEditableFieldInline(
+                                  'Citizenship',
+                                  _personalInfoData['citizenship'],
+                                  (value) => setState(
+                                    () =>
+                                        _personalInfoData['citizenship'] = value,
+                                  ),
+                                )
+                              : _buildInfoFieldInline(
+                                  'Citizenship',
+                                  _userDetails?['employee']?['citizenship'],
+                                ),
                           const SizedBox(height: 20),
-                          _buildInfoFieldInline('Height', _userDetails?['employee']?['height']),
+                          _isEditingPersonalInfo
+                              ? _buildEditableFieldInline(
+                                  'Sex at Birth',
+                                  _personalInfoData['sex'],
+                                  (value) => setState(
+                                    () => _personalInfoData['sex'] = value,
+                                  ),
+                                )
+                              : _buildInfoFieldInline(
+                                  'Sex at Birth',
+                                  _userDetails?['employee']?['sex'],
+                                ),
                           const SizedBox(height: 20),
-                          _buildInfoFieldInline('Weight', _userDetails?['employee']?['weight']),
+                          _isEditingPersonalInfo
+                              ? _buildEditableFieldInline(
+                                  'Blood Type',
+                                  _personalInfoData['bloodType'],
+                                  (value) => setState(
+                                    () => _personalInfoData['bloodType'] = value,
+                                  ),
+                                )
+                              : _buildInfoFieldInline(
+                                  'Blood Type',
+                                  _userDetails?['employee']?['bloodType'],
+                                ),
                           const SizedBox(height: 20),
-                          _buildInfoFieldInline('Blood Type', _userDetails?['employee']?['bloodType']),
+                          _isEditingPersonalInfo
+                              ? _buildEditableFieldInline(
+                                  'Height (cm)',
+                                  _personalInfoData['height']?.toString() ?? '',
+                                  (value) => setState(
+                                    () => _personalInfoData['height'] =
+                                        int.tryParse(value) ?? 0,
+                                  ),
+                                )
+                              : _buildInfoFieldInline(
+                                  'Height (cm)',
+                                  _userDetails?['employee']?['height'],
+                                ),
                           const SizedBox(height: 20),
-                          _buildInfoFieldInline('Citizenship', _userDetails?['employee']?['citizenship']),
+                          _isEditingPersonalInfo
+                              ? _buildEditableFieldInline(
+                                  'Weight (kg)',
+                                  _personalInfoData['weight']?.toString() ?? '',
+                                  (value) => setState(
+                                    () => _personalInfoData['weight'] =
+                                        int.tryParse(value) ?? 0,
+                                  ),
+                                )
+                              : _buildInfoFieldInline(
+                                  'Weight (kg)',
+                                  _userDetails?['employee']?['weight'],
+                                ),
                           const SizedBox(height: 20),
-                          _buildInfoFieldInline(
+                          _isEditingPersonalInfo
+                              ? Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Residential Address',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        color: Colors.grey,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    _buildEditableFieldInline(
+                                      'Barangay',
+                                      _personalInfoData['barangay'],
+                                      (value) => setState(
+                                        () =>
+                                            _personalInfoData['barangay'] = value,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    _buildEditableFieldInline(
+                                      'Municipality',
+                                      _personalInfoData['municipality'],
+                                      (value) => setState(
+                                        () => _personalInfoData['municipality'] =
+                                            value,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    _buildEditableFieldInline(
+                                      'Province',
+                                      _personalInfoData['province'],
+                                      (value) => setState(
+                                        () =>
+                                            _personalInfoData['province'] = value,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    _buildEditableFieldInline(
+                                      'Zip Code',
+                                      _personalInfoData['zipCode'],
+                                      (value) => setState(
+                                        () =>
+                                            _personalInfoData['zipCode'] = value,
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : _buildInfoFieldInline(
                             'Residential Address',
                             "${_userDetails?['employee']?['barangay'] ?? ''}, "
                                 "${_userDetails?['employee']?['municipality'] ?? ''}, "
@@ -487,34 +634,62 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                           const SizedBox(height: 20),
                           _buildInfoFieldInline('Pag-ibig No.', _userDetails?['employee']?['pagibig']),
                           const SizedBox(height: 20),
-                          _buildInfoFieldInline('PhilHealth No.', _userDetails?['employee']?['phic']),
-                          const SizedBox(height: 20),
-                          _buildInfoFieldInline('PhilSys No. (PSN)', _userDetails?['employee']?['philsys']),
-                          const SizedBox(height: 20),
-                          _buildInfoFieldInline('TIN No.', _userDetails?['employee']?['tin']),
-                          if (_isEditingPersonalInfo) ...[
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: GestureDetector(
-                                onTap: () => setState(() => _isEditingPersonalInfo = false),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                  decoration: BoxDecoration(color: const Color(0xFF00674F), borderRadius: BorderRadius.circular(8)),
-                                  child: const Text('Cancel', style: TextStyle(fontSize: 14, color: Colors.white, fontWeight: FontWeight.w600)),
+                        _buildInfoFieldInline(
+                          'PhilHealth No.',
+                          _userDetails?['employee']?['phic'],
+                        ),
+                        const SizedBox(height: 20),
+                        _buildInfoFieldInline(
+                          'PhilSys No. (PSN)',
+                          _userDetails?['employee']?['philsys'],
+                        ),
+                        const SizedBox(height: 20),
+                        _buildInfoFieldInline(
+                          'TIN No.',
+                          _userDetails?['employee']?['tin'],
+                        ),
+
+                        if (_isEditingPersonalInfo) ...[
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              TextButton(
+                                onPressed: () => setState(() {
+                                  _isEditingPersonalInfo = false;
+                                }),
+                                child: const Text(
+                                  'Cancel',
+                                  style: TextStyle(color: Colors.red),
                                 ),
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 8),
+                              ElevatedButton.icon(
+                                onPressed: () => _savePersonalInformation(),
+                                icon: const Icon(Icons.save, size: 16),
+                                label: const Text('Save'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF2C5F4F),
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
+                                  textStyle: const TextStyle(fontSize: 13),
+                                ),
+                              ),
+                            ],
+                          ),
                         ],
-                      ),
+                      ],
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 
