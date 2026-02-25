@@ -33,6 +33,7 @@ class _FamilyBackgroundWidgetState extends State<FamilyBackgroundWidget> {
   bool _isEditingFather = false;
   bool _isEditingMother = false;
   int? _editingChildIndex;
+  bool _isNewChild = false;
 
   @override
   void initState() {
@@ -200,11 +201,12 @@ class _FamilyBackgroundWidgetState extends State<FamilyBackgroundWidget> {
       };
     }
   }
+
   Future<void> _saveSpouse() async {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
+      builder: (context) => const Center(child: CircularProgressIndicator(color: Colors.white)),
     );
 
     try {
@@ -287,6 +289,7 @@ class _FamilyBackgroundWidgetState extends State<FamilyBackgroundWidget> {
     if (confirmed != true) return;
 
     showDialog(
+      // ignore: use_build_context_synchronously
       context: context,
       barrierDismissible: false,
       builder: (context) => const Center(child: CircularProgressIndicator()),
@@ -458,6 +461,7 @@ class _FamilyBackgroundWidgetState extends State<FamilyBackgroundWidget> {
     if (confirmed != true) return;
 
     showDialog(
+      // ignore: use_build_context_synchronously
       context: context,
       barrierDismissible: false,
       builder: (context) => const Center(child: CircularProgressIndicator()),
@@ -626,7 +630,7 @@ class _FamilyBackgroundWidgetState extends State<FamilyBackgroundWidget> {
     }
   }
 
-  //FETCH WORK EXPERIENCE DATA
+  //FETCH FAMILY DATA
   Widget _buildFamilyBackgroundCard() {
     if (!_isFetchingFamily && _familyData.isEmpty && _familyError == null) {
       _fetchFamilyDetails();
@@ -816,7 +820,7 @@ class _FamilyBackgroundWidgetState extends State<FamilyBackgroundWidget> {
                     const PopupMenuDivider(height: 8),
                     PopupMenuItem<String>(
                       value: 'delete',
-                       height: 30,
+                      height: 30,
                       child: Row(
                         children: [
                           Icon(
@@ -972,7 +976,10 @@ class _FamilyBackgroundWidgetState extends State<FamilyBackgroundWidget> {
                         onPressed: () => setState(() {
                           _isEditingSpouse = false;
                         }),
-                        child: const Text('Cancel', style: TextStyle(color: Colors.red)),
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(color: Colors.red),
+                        ),
                       ),
                       const SizedBox(width: 8),
                       ElevatedButton.icon(
@@ -982,7 +989,10 @@ class _FamilyBackgroundWidgetState extends State<FamilyBackgroundWidget> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF2C5F4F),
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           textStyle: const TextStyle(fontSize: 13),
                         ),
                       ),
@@ -998,7 +1008,259 @@ class _FamilyBackgroundWidgetState extends State<FamilyBackgroundWidget> {
   }
 
 
-Widget _buildChildrenSection() {
+
+  // Widget _buildChildrenSection() {
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       Row(
+  //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //         children: [
+  //           const Text(
+  //             'CHILDREN',
+  //             style: TextStyle(
+  //               fontSize: 15,
+  //               fontWeight: FontWeight.w700,
+  //               color: Colors.black,
+  //             ),
+  //           ),
+  //           // Single 3-dot menu at the top level for adding
+  //           if (_editingChildIndex == null)
+  //             PopupMenuButton<String>(
+  //               color: Colors.white,
+  //               position: PopupMenuPosition.under,
+  //               shape: RoundedRectangleBorder(
+  //                 borderRadius: BorderRadius.circular(14),
+  //                 side: BorderSide(color: Colors.grey.shade200),
+  //               ),
+  //               icon: Container(
+  //                 padding: const EdgeInsets.all(6),
+  //                 child: const Icon(
+  //                   Icons.more_horiz,
+  //                   size: 20,
+  //                   color: Colors.black,
+  //                 ),
+  //               ),
+  //               padding: EdgeInsets.zero,
+  //               onSelected: (value) {
+  //                 if (value == 'add') {
+  //                   setState(() {
+  //                     _childrenData.add({'name': '', 'birthday': ''});
+  //                     _editingChildIndex = _childrenData.length - 1;
+  //                     _isNewChild = true;
+  //                   });
+  //                 }
+  //               },
+  //               itemBuilder: (context) => [
+  //                 const PopupMenuItem(
+  //                   value: 'add',
+  //                   child: Row(
+  //                     children: [
+  //                       Icon(
+  //                         Icons.add_circle,
+  //                         size: 18,
+  //                         color: Color(0xFF2C5F4F),
+  //                       ),
+  //                       SizedBox(width: 8),
+  //                       Text('Add Child'),
+  //                     ],
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //         ],
+  //       ),
+
+  //       ..._childrenData.asMap().entries.map((entry) {
+  //         int index = entry.key;
+  //         Map<String, dynamic> child = entry.value;
+  //         bool isEditing = _editingChildIndex == index;
+
+  //         var hasChild = child.containsKey('id') && child['id'] != null;
+  //         return Container(
+  //           padding: const EdgeInsets.all(5),
+  //           decoration: const BoxDecoration(color: Colors.white),
+  //           child: Column(
+  //             children: [
+  //               Row(
+  //                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //                 children: [
+  //                   Expanded(
+  //                     child: Text(
+  //                       'Child ${index + 1}',
+  //                       style: TextStyle(
+  //                         fontSize: 11,
+  //                         fontWeight: FontWeight.bold,
+  //                         color: Colors.grey[700],
+  //                       ),
+  //                     ),
+  //                   ),
+  //                   // Hide the 3-dot menu when this child is being edited
+  //                   if (!isEditing)
+  //                     PopupMenuButton<String>(
+  //                       color: Colors.white,
+  //                       position: PopupMenuPosition.under,
+  //                       shape: RoundedRectangleBorder(
+  //                         borderRadius: BorderRadius.circular(14),
+  //                         side: BorderSide(color: Colors.grey.shade200),
+  //                       ),
+  //                       icon: Container(
+  //                         padding: const EdgeInsets.all(6),
+  //                         child: const Icon(
+  //                           Icons.more_horiz,
+  //                           size: 18,
+  //                           color: Colors.black87,
+  //                         ),
+  //                       ),
+  //                       padding: EdgeInsets.zero,
+  //                       onSelected: (value) {
+  //                         if (value == 'edit') {
+  //                           setState(() {
+  //                             _editingChildIndex = index;
+  //                             _isNewChild = false;
+  //                           });
+  //                         } else if (value == 'delete') {
+  //                           _deleteChild(index);
+  //                         }
+  //                       },
+  //                       itemBuilder: (context) => [
+  //                         PopupMenuItem<String>(
+  //                           value: 'edit',
+  //                           height: 30,
+  //                           child: Row(
+  //                             children: const [
+  //                               Icon(
+  //                                 Icons.edit,
+  //                                 size: 15,
+  //                                 color: Colors.black87,
+  //                               ),
+  //                               SizedBox(width: 8),
+  //                               Text(
+  //                                 'Edit',
+  //                                 style: TextStyle(
+  //                                   fontSize: 12,
+  //                                   fontWeight: FontWeight.w500,
+  //                                 ),
+  //                               ),
+  //                             ],
+  //                           ),
+  //                         ),
+  //                         if (hasChild) const PopupMenuDivider(height: 8),
+  //                         PopupMenuItem<String>(
+  //                           value: 'delete',
+  //                           height: 30,
+  //                           child: Row(
+  //                             children: [
+  //                               Icon(
+  //                                 Icons.delete,
+  //                                 size: 15,
+  //                                 color: Colors.red.shade600,
+  //                               ),
+  //                               const SizedBox(width: 8),
+  //                               Text(
+  //                                 'Delete',
+  //                                 style: TextStyle(
+  //                                   fontSize: 12,
+  //                                   fontWeight: FontWeight.w500,
+  //                                   color: Colors.red.shade600,
+  //                                 ),
+  //                               ),
+  //                             ],
+  //                           ),
+  //                         ),
+  //                       ],
+  //                     ),
+  //                 ],
+  //               ),
+
+  //               Container(
+  //                 margin: const EdgeInsets.symmetric(
+  //                   horizontal: 2,
+  //                   vertical: 6,
+  //                 ),
+  //                 padding: const EdgeInsets.symmetric(horizontal: 10),
+  //                 width: double.infinity,
+  //                 decoration: BoxDecoration(
+  //                   color: Colors.white,
+  //                   borderRadius: BorderRadius.circular(6),
+  //                 ),
+  //                 child: Column(
+  //                   crossAxisAlignment: CrossAxisAlignment.start,
+  //                   children: [
+  //                     isEditing
+  //                         ? _buildEditableFieldInline(
+  //                             'Name of Children',
+  //                             child['name'],
+  //                             (value) {
+  //                               _childrenData[index]['name'] = value;
+  //                             },
+  //                           )
+  //                         : _buildInfoFieldInline(
+  //                             'Name of Children',
+  //                             child['name'],
+  //                           ),
+  //                     const SizedBox(height: 8),
+  //                     isEditing
+  //                         ? _buildDateFieldInline(
+  //                             'Birthday (YYYY-MM-DD)',
+  //                             child['birthday'],
+  //                             (value) {
+  //                               _childrenData[index]['birthday'] = value;
+  //                             },
+  //                           )
+  //                         : _buildInfoFieldInline(
+  //                             'Birthday (YYYY-MM-DD)',
+  //                             child['birthday'],
+  //                           ),
+  //                     const SizedBox(height: 25),
+  //                     // Show Cancel and Save buttons when editing
+  //                     if (isEditing) ...[
+  //                       Row(
+  //                         mainAxisAlignment: MainAxisAlignment.end,
+  //                         children: [
+  //                           TextButton(
+  //                             onPressed: () => setState(() {
+  //                               if (_isNewChild) {
+  //                                 _childrenData.removeAt(index);
+  //                               }
+  //                               _editingChildIndex = null;
+  //                               _isNewChild = false;
+  //                             }),
+  //                             child: const Text(
+  //                               'Cancel',
+  //                               style: TextStyle(color: Colors.red),
+  //                             ),
+  //                           ),
+  //                           const SizedBox(width: 8),
+  //                           ElevatedButton.icon(
+  //                             onPressed: () => _saveChild(index),
+  //                             icon: const Icon(Icons.save, size: 16),
+  //                             label: const Text('Save'),
+  //                             style: ElevatedButton.styleFrom(
+  //                               backgroundColor: const Color(0xFF2C5F4F),
+  //                               foregroundColor: Colors.white,
+  //                               padding: const EdgeInsets.symmetric(
+  //                                 horizontal: 12,
+  //                                 vertical: 6,
+  //                               ),
+  //                               textStyle: const TextStyle(fontSize: 13),
+  //                             ),
+  //                           ),
+  //                         ],
+  //                       ),
+  //                     ],
+  //                   ],
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         );
+  //       }),
+  //     ],
+  //   );
+  // }
+
+  Widget _buildChildrenSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1017,21 +1279,23 @@ Widget _buildChildrenSection() {
             if (_editingChildIndex == null)
               PopupMenuButton<String>(
                 color: Colors.white,
-                        position: PopupMenuPosition.under,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          side: BorderSide(color: Colors.grey.shade200),
-                        ),
+                position: PopupMenuPosition.under,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  side: BorderSide(color: Colors.grey.shade200),
+                ),
                 icon: Container(
                   padding: const EdgeInsets.all(6),
-                  child: const Icon(Icons.more_horiz, size: 20, color: Colors.black)),
+                  child: const Icon(
+                    Icons.more_horiz,
+                    size: 20,
+                    color: Colors.black,
+                  ),
+                ),
                 padding: EdgeInsets.zero,
                 onSelected: (value) {
                   if (value == 'add') {
-                    setState(() {
-                      _childrenData.add({'name': '', 'birthday': ''});
-                      _editingChildIndex = _childrenData.length - 1;
-                    });
+                    _showAddChildDialog(); // ← Show dialog instead
                   }
                 },
                 itemBuilder: (context) => [
@@ -1039,7 +1303,11 @@ Widget _buildChildrenSection() {
                     value: 'add',
                     child: Row(
                       children: [
-                        Icon(Icons.add_circle, size: 18, color: Color(0xFF2C5F4F)),
+                        Icon(
+                          Icons.add_circle,
+                          size: 18,
+                          color: Color(0xFF2C5F4F),
+                        ),
                         SizedBox(width: 8),
                         Text('Add Child'),
                       ],
@@ -1094,7 +1362,10 @@ Widget _buildChildrenSection() {
                         padding: EdgeInsets.zero,
                         onSelected: (value) {
                           if (value == 'edit') {
-                            setState(() => _editingChildIndex = index);
+                            setState(() {
+                              _editingChildIndex = index;
+                              _isNewChild = false;
+                            });
                           } else if (value == 'delete') {
                             _deleteChild(index);
                           }
@@ -1121,30 +1392,29 @@ Widget _buildChildrenSection() {
                               ],
                             ),
                           ),
-                          if (hasChild)
-                          const PopupMenuDivider(height: 8),
-                            PopupMenuItem<String>(
-                              value: 'delete',
-                              height: 30,
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.delete,
-                                    size: 15,
+                          if (hasChild) const PopupMenuDivider(height: 8),
+                          PopupMenuItem<String>(
+                            value: 'delete',
+                            height: 30,
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.delete,
+                                  size: 15,
+                                  color: Colors.red.shade600,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Delete',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
                                     color: Colors.red.shade600,
                                   ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'Delete',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.red.shade600,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
+                          ),
                         ],
                       ),
                   ],
@@ -1197,10 +1467,14 @@ Widget _buildChildrenSection() {
                           children: [
                             TextButton(
                               onPressed: () => setState(() {
-                                _editingChildIndex = null; // FIXED: Cancel editing
+                                if (_isNewChild) {
+                                  _childrenData.removeAt(index);
+                                }
+                                _editingChildIndex = null;
+                                _isNewChild = false;
                               }),
                               child: const Text(
-                                'Cancel', 
+                                'Cancel',
                                 style: TextStyle(color: Colors.red),
                               ),
                             ),
@@ -1213,7 +1487,7 @@ Widget _buildChildrenSection() {
                                 backgroundColor: const Color(0xFF2C5F4F),
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, 
+                                  horizontal: 12,
                                   vertical: 6,
                                 ),
                                 textStyle: const TextStyle(fontSize: 13),
@@ -1228,11 +1502,157 @@ Widget _buildChildrenSection() {
               ],
             ),
           );
-        }).toList(),
+        }),
       ],
     );
   }
 
+  // Add this new method to show the dialog
+ void _showAddChildDialog() {
+    final TextEditingController nameController = TextEditingController();
+    final TextEditingController birthdayController = TextEditingController();
+
+     showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          insetPadding: EdgeInsets.symmetric(
+            horizontal: MediaQuery.of(context).size.width * 0.025, // 90% width
+            vertical: 24,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── Title ──
+                const Text(
+                  'Add Child',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2C5F4F),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // ── Name Field ──
+                TextField(
+                  controller: nameController,
+                  cursorColor: const Color(0xFF2C5F4F),
+                  decoration: InputDecoration(
+                    labelText: 'Name of Child',
+                    labelStyle: const TextStyle(fontSize: 14, color: Colors.black),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(color: Color(0xFF2C5F4F), width: 1.5),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(color: Color(0xFF2C5F4F), width: 2.0),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // ── Birthday Field ──
+                TextField(
+                  controller: birthdayController,
+                  readOnly: true,
+                  cursorColor: const Color(0xFF2C5F4F),
+                  decoration: InputDecoration(
+                    labelText: 'Birthday (YYYY-MM-DD)',
+                    labelStyle: const TextStyle(fontSize: 14, color: Colors.black),
+                    suffixIcon: const Icon(Icons.calendar_today, size: 20, color: Color(0xFF2C5F4F)),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(color: Color(0xFF2C5F4F), width: 1.5),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(color: Color(0xFF2C5F4F), width: 2.0),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  ),
+                  onTap: () async {
+                    DateTime? initialDate;
+                    if (birthdayController.text.isNotEmpty) {
+                      try {
+                        initialDate = DateTime.tryParse(birthdayController.text);
+                      } catch (e) {}
+                    }
+                    final DateTime? pickedDate = await showDatePicker(
+                      context: context,
+                      initialDate: initialDate ?? DateTime.now(),
+                      firstDate: DateTime(1900),
+                      lastDate: DateTime.now(),
+                      builder: (context, child) {
+                        return Theme(
+                          data: Theme.of(context).copyWith(
+                            colorScheme: const ColorScheme.light(
+                              primary: Color(0xFF2C5F4F),
+                              onPrimary: Colors.white,
+                              onSurface: Colors.black,
+                            ),
+                          ),
+                          child: child!,
+                        );
+                      },
+                    );
+                    if (pickedDate != null) {
+                      birthdayController.text =
+                          '${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}';
+                    }
+                  },
+                ),
+                const SizedBox(height: 20),
+
+                // ── Action Buttons ──
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('Cancel', style: TextStyle(color: Colors.red)),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: () {
+                        if (nameController.text.trim().isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Please enter child name'),
+                              backgroundColor: Colors.orange,
+                            ),
+                          );
+                          return;
+                        }
+                        setState(() {
+                          _childrenData.add({
+                            'name': nameController.text.trim(),
+                            'birthday': birthdayController.text,
+                          });
+                          _editingChildIndex = null;
+                          _isNewChild = false;
+                        });
+                        Navigator.of(context).pop();
+                        _saveChild(_childrenData.length - 1);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2C5F4F),
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('Add'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   Widget _buildFatherSection() {
     final bool hasFather =
@@ -1284,22 +1704,22 @@ Widget _buildChildrenSection() {
               ),
             // Show 3-dot menu when father record exists or currently editing
             if (!_isEditingFather)
-               PopupMenuButton<String>(
-                        color: Colors.white,
-                        position: PopupMenuPosition.under,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          side: BorderSide(color: Colors.grey.shade200),
-                        ),
-                        icon: Container(
-                          padding: const EdgeInsets.all(6),
-                          child: const Icon(
-                            Icons.more_horiz,
-                            size: 18,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        padding: EdgeInsets.zero,
+              PopupMenuButton<String>(
+                color: Colors.white,
+                position: PopupMenuPosition.under,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  side: BorderSide(color: Colors.grey.shade200),
+                ),
+                icon: Container(
+                  padding: const EdgeInsets.all(6),
+                  child: const Icon(
+                    Icons.more_horiz,
+                    size: 18,
+                    color: Colors.black87,
+                  ),
+                ),
+                padding: EdgeInsets.zero,
                 onSelected: (value) {
                   if (value == 'edit') {
                     if (_isEditingFather) {
@@ -1307,30 +1727,26 @@ Widget _buildChildrenSection() {
                     } else {
                       setState(() => _isEditingFather = true);
                     }
-                  } 
+                  }
                 },
                 itemBuilder: (context) => [
                   PopupMenuItem<String>(
-                            value: 'edit',
-                            height: 30,
-                            child: Row(
-                              children: const [
-                                Icon(
-                                  Icons.edit,
-                                  size: 15,
-                                  color: Colors.black87,
-                                ),
-                                SizedBox(width: 8),
-                                Text(
-                                  'Edit',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
+                    value: 'edit',
+                    height: 30,
+                    child: Row(
+                      children: const [
+                        Icon(Icons.edit, size: 15, color: Colors.black87),
+                        SizedBox(width: 8),
+                        Text(
+                          'Edit',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
                           ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
           ],
@@ -1407,34 +1823,37 @@ Widget _buildChildrenSection() {
                             .join(' '),
                       ),
 
-                if (_isEditingFather) ...[
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton(
-                        onPressed: () => setState(() {
-                          _isEditingFather = false;
-                        }),
-                        child: const Text('Cancel', style: TextStyle(color: Colors.red)),
-                      ),
-                      const SizedBox(width: 8),
-                      ElevatedButton.icon(
-                        onPressed: () => _saveFather(),
-                        icon: const Icon(Icons.save, size: 16),
-                        label: const Text('Save'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF2C5F4F),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          textStyle: const TextStyle(fontSize: 13),
-                        
-                        ),
+                    if (_isEditingFather) ...[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () => setState(() {
+                              _isEditingFather = false;
+                            }),
+                            child: const Text(
+                              'Cancel',
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton.icon(
+                            onPressed: () => _saveFather(),
+                            icon: const Icon(Icons.save, size: 16),
+                            label: const Text('Save'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF2C5F4F),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              textStyle: const TextStyle(fontSize: 13),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
-                    
-                  ),
-                ],
-
                   ],
                 ),
               ],
@@ -1496,23 +1915,22 @@ Widget _buildChildrenSection() {
               ),
             // Show Edit button when mother record exists or currently adding
             if (!_isEditingMother)
-          
               PopupMenuButton<String>(
-                        color: Colors.white,
-                        position: PopupMenuPosition.under,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          side: BorderSide(color: Colors.grey.shade200),
-                        ),
-                        icon: Container(
-                          padding: const EdgeInsets.all(6),
-                          child: const Icon(
-                            Icons.more_horiz,
-                            size: 18,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        padding: EdgeInsets.zero,
+                color: Colors.white,
+                position: PopupMenuPosition.under,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  side: BorderSide(color: Colors.grey.shade200),
+                ),
+                icon: Container(
+                  padding: const EdgeInsets.all(6),
+                  child: const Icon(
+                    Icons.more_horiz,
+                    size: 18,
+                    color: Colors.black87,
+                  ),
+                ),
+                padding: EdgeInsets.zero,
                 onSelected: (value) {
                   if (value == 'edit') {
                     if (_isEditingMother) {
@@ -1520,30 +1938,26 @@ Widget _buildChildrenSection() {
                     } else {
                       setState(() => _isEditingMother = true);
                     }
-                  }  
+                  }
                 },
                 itemBuilder: (context) => [
                   PopupMenuItem<String>(
-                            value: 'edit',
-                            height: 30,
-                            child: Row(
-                              children: const [
-                                Icon(
-                                  Icons.edit,
-                                  size: 15,
-                                  color: Colors.black87,
-                                ),
-                                SizedBox(width: 8),
-                                Text(
-                                  'Edit',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
+                    value: 'edit',
+                    height: 30,
+                    child: Row(
+                      children: const [
+                        Icon(Icons.edit, size: 15, color: Colors.black87),
+                        SizedBox(width: 8),
+                        Text(
+                          'Edit',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
                           ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
           ],
@@ -1617,7 +2031,7 @@ Widget _buildChildrenSection() {
                         )
                         .join(' '),
                   ),
-               if (_isEditingMother) ...[
+                if (_isEditingMother) ...[
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
@@ -1625,7 +2039,10 @@ Widget _buildChildrenSection() {
                         onPressed: () => setState(() {
                           _isEditingMother = false;
                         }),
-                        child: const Text('Cancel', style: TextStyle(color: Colors.red)),
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(color: Colors.red),
+                        ),
                       ),
                       const SizedBox(width: 8),
                       ElevatedButton.icon(
@@ -1635,7 +2052,10 @@ Widget _buildChildrenSection() {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF2C5F4F),
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           textStyle: const TextStyle(fontSize: 13),
                         ),
                       ),
@@ -1649,36 +2069,72 @@ Widget _buildChildrenSection() {
     );
   }
 
-
   Widget _buildInfoFieldInline(String label, dynamic value) {
     String displayValue = 'N/A';
-    if (value != null && value.toString().isNotEmpty && value.toString() != 'null') {
+    if (value != null &&
+        value.toString().isNotEmpty &&
+        value.toString() != 'null') {
       displayValue = value.toString();
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(fontSize: 15, color: Colors.grey[600], fontWeight: FontWeight.w500)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 15,
+            color: Colors.grey[600],
+            fontWeight: FontWeight.w500,
+          ),
+        ),
         const SizedBox(height: 1),
-        Text(displayValue, style: const TextStyle(fontSize: 15, color: Colors.black87, fontWeight: FontWeight.bold)),
+        Text(
+          displayValue,
+          style: const TextStyle(
+            fontSize: 15,
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildEditableFieldInline(String label, String? value, Function(String) onChanged) {
+  Widget _buildEditableFieldInline(
+    String label,
+    String? value,
+    Function(String) onChanged,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(fontSize: 10, color: Colors.grey[600], fontWeight: FontWeight.w500)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            color: Colors.grey[600],
+            fontWeight: FontWeight.w500,
+          ),
+        ),
         const SizedBox(height: 4),
         TextFormField(
           initialValue: value ?? '',
           onChanged: onChanged,
-          style: const TextStyle(fontSize: 13, color: Colors.black87, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            fontSize: 13,
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+          ),
           decoration: InputDecoration(
-            border: UnderlineInputBorder(borderSide: BorderSide(color: const Color(0xFF2C5F4F))),
-            enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey[300]!)),
-            focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF2C5F4F), width: 2)),
+            border: UnderlineInputBorder(
+              borderSide: BorderSide(color: const Color(0xFF2C5F4F)),
+            ),
+            enabledBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            focusedBorder: const UnderlineInputBorder(
+              borderSide: BorderSide(color: Color(0xFF2C5F4F), width: 2),
+            ),
             contentPadding: const EdgeInsets.symmetric(vertical: 4),
             isDense: true,
           ),
@@ -1687,21 +2143,45 @@ Widget _buildChildrenSection() {
     );
   }
 
-  Widget _buildPhoneFieldInline(String label, String? value, Function(String) onChanged) {
+  Widget _buildPhoneFieldInline(
+    String label,
+    String? value,
+    Function(String) onChanged,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(fontSize: 10, color: Colors.grey[600], fontWeight: FontWeight.w500)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            color: Colors.grey[600],
+            fontWeight: FontWeight.w500,
+          ),
+        ),
         TextFormField(
           initialValue: value ?? '',
           onChanged: onChanged,
           keyboardType: TextInputType.phone,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(11)],
-          style: const TextStyle(fontSize: 13, color: Colors.black87, fontWeight: FontWeight.bold),
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(11),
+          ],
+          style: const TextStyle(
+            fontSize: 13,
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+          ),
           decoration: InputDecoration(
-            border: UnderlineInputBorder(borderSide: BorderSide(color: const Color(0xFF2C5F4F))),
-            enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey[300]!)),
-            focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF2C5F4F), width: 2)),
+            border: UnderlineInputBorder(
+              borderSide: BorderSide(color: const Color(0xFF2C5F4F)),
+            ),
+            enabledBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            focusedBorder: const UnderlineInputBorder(
+              borderSide: BorderSide(color: Color(0xFF2C5F4F), width: 2),
+            ),
             contentPadding: const EdgeInsets.symmetric(vertical: 4),
             isDense: true,
           ),
@@ -1710,12 +2190,23 @@ Widget _buildChildrenSection() {
     );
   }
 
-  Widget _buildDateFieldInline(String label, String? value, Function(String) onChanged) {
+  Widget _buildDateFieldInline(
+    String label,
+    String? value,
+    Function(String) onChanged,
+  ) {
     final controller = TextEditingController(text: value ?? '');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(fontSize: 10, color: Colors.grey[600], fontWeight: FontWeight.w500)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            color: Colors.grey[600],
+            fontWeight: FontWeight.w500,
+          ),
+        ),
         GestureDetector(
           onTap: () async {
             DateTime? initialDate;
@@ -1723,8 +2214,13 @@ Widget _buildChildrenSection() {
               try {
                 final parts = value.split('/');
                 if (parts.length == 3) {
-                  initialDate = DateTime(int.parse(parts[2]), int.parse(parts[0]), int.parse(parts[1]));
+                  initialDate = DateTime(
+                    int.parse(parts[2]),
+                    int.parse(parts[0]),
+                    int.parse(parts[1]),
+                  );
                 }
+              // ignore: empty_catches
               } catch (e) {}
             }
             final DateTime? pickedDate = await showDatePicker(
@@ -1733,12 +2229,19 @@ Widget _buildChildrenSection() {
               firstDate: DateTime(1900),
               lastDate: DateTime(2100),
               builder: (context, child) => Theme(
-                data: Theme.of(context).copyWith(colorScheme: const ColorScheme.light(primary: Color(0xFF2C5F4F), onPrimary: Colors.white, onSurface: Colors.black)),
+                data: Theme.of(context).copyWith(
+                  colorScheme: const ColorScheme.light(
+                    primary: Color(0xFF2C5F4F),
+                    onPrimary: Colors.white,
+                    onSurface: Colors.black,
+                  ),
+                ),
                 child: child!,
               ),
             );
             if (pickedDate != null) {
-              final formatted = '${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}';
+              final formatted =
+                  '${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}';
               controller.text = formatted;
               onChanged(formatted);
             }
@@ -1747,9 +2250,17 @@ Widget _buildChildrenSection() {
             child: TextFormField(
               controller: controller,
               readOnly: true,
-              style: const TextStyle(fontSize: 13, color: Colors.black87, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontSize: 13,
+                color: Colors.black87,
+                fontWeight: FontWeight.bold,
+              ),
               decoration: InputDecoration(
-                suffixIcon: const Icon(Icons.calendar_today, size: 20, color: Color(0xFF2C5F4F)),
+                suffixIcon: const Icon(
+                  Icons.calendar_today,
+                  size: 20,
+                  color: Color(0xFF2C5F4F),
+                ),
                 contentPadding: const EdgeInsets.symmetric(vertical: 4),
                 isDense: true,
               ),
@@ -1759,7 +2270,7 @@ Widget _buildChildrenSection() {
       ],
     );
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return _buildFamilyBackgroundCard();

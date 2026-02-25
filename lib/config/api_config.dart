@@ -10,6 +10,9 @@ class ApiConfig {
   static const String getUserEndpoint = '/adminuser/get-profile';
   static const String updateUserEndpoint = '/adminuser/update-employee/';
 
+  //Change Password
+  static const String changePasswordEndpoint = '/adminuser/change-password/users';
+
   // Daily Time Record
   static const String dtrEndpoint = '/adminuser/api/v1/dtr';
 

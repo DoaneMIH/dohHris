@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:mobile_application/services/user_service.dart';
 
 class EducationalBackgroundWidget extends StatefulWidget {
@@ -7,23 +6,25 @@ class EducationalBackgroundWidget extends StatefulWidget {
   final String employeeId;
 
   const EducationalBackgroundWidget({
-    Key? key,
+    super.key,
     required this.token,
     required this.employeeId,
-  }) : super(key: key);
+  });
 
   @override
-  State<EducationalBackgroundWidget> createState() => _EducationalBackgroundWidgetState();
+  State<EducationalBackgroundWidget> createState() =>
+      _EducationalBackgroundWidgetState();
 }
 
-class _EducationalBackgroundWidgetState extends State<EducationalBackgroundWidget> {
-
+class _EducationalBackgroundWidgetState
+    extends State<EducationalBackgroundWidget> {
   final _userService = UserService();
   List<Map<String, dynamic>> _educationListData = [];
   List<Map<String, dynamic>> _educationData = [];
   int? _editingEducationIndex;
   Set<int> _collapsedEducationIndexes = <int>{};
-  bool _isEducationalBackgroundExpanded = true;
+   bool _isNewEduc = false;
+  final bool _isEducationalBackgroundExpanded = true;
 
   @override
   void initState() {
@@ -223,6 +224,7 @@ class _EducationalBackgroundWidgetState extends State<EducationalBackgroundWidge
     if (confirmed != true) return;
 
     showDialog(
+      // ignore: use_build_context_synchronously
       context: context,
       barrierDismissible: false,
       builder: (context) => const Center(child: CircularProgressIndicator()),
@@ -271,8 +273,7 @@ class _EducationalBackgroundWidgetState extends State<EducationalBackgroundWidge
     }
   }
 
-
- Widget _buildEducationalBackgroundCard() {
+  Widget _buildEducationalBackgroundCard() {
     return Container(
       padding: EdgeInsets.zero,
       child: Column(
@@ -301,29 +302,7 @@ class _EducationalBackgroundWidgetState extends State<EducationalBackgroundWidge
                 ),
                 // Add button in the header
                 GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      final newEntry = {
-                        'level': 'ELEMENTARY',
-                        'schoolName': '',
-                        'degreeCourse': '',
-                        'attendedFrom': '',
-                        'attendedTo': '',
-                        'highestLevel': '',
-                        'yearGraduated': '',
-                        'academicHonors': '',
-                        'onGoing': false,
-                      };
-                      // Insert at the beginning
-                      _educationData.insert(0, newEntry);
-                      // Update collapsed indexes — shift all existing indexes up by 1
-                      _collapsedEducationIndexes = _collapsedEducationIndexes
-                          .map((i) => i + 1)
-                          .toSet();
-                      // New entry at index 0 is expanded and in edit mode
-                      _editingEducationIndex = 0;
-                    });
-                  },
+                  onTap: () => _showAddEducationDialog(),
                   child: const Icon(
                     Icons.add_circle,
                     size: 20,
@@ -363,7 +342,8 @@ class _EducationalBackgroundWidgetState extends State<EducationalBackgroundWidge
                             int index = entry.key;
                             Map<String, dynamic> education = entry.value;
                             bool isEditing = _editingEducationIndex == index;
-                            bool isCollapsed = _collapsedEducationIndexes.contains(index);
+                            bool isCollapsed = _collapsedEducationIndexes
+                                .contains(index);
 
                             return Container(
                               margin: const EdgeInsets.only(bottom: 8),
@@ -377,7 +357,8 @@ class _EducationalBackgroundWidgetState extends State<EducationalBackgroundWidge
                                 children: [
                                   // Title row: tapping title toggles collapse, 3-dot menu on right
                                   Row(
-                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
                                     children: [
                                       // Tappable title area — toggles collapse/expand
                                       Expanded(
@@ -386,60 +367,82 @@ class _EducationalBackgroundWidgetState extends State<EducationalBackgroundWidge
                                             if (!isEditing) {
                                               setState(() {
                                                 if (isCollapsed) {
-                                                  _collapsedEducationIndexes.remove(index);
+                                                  _collapsedEducationIndexes
+                                                      .remove(index);
                                                 } else {
-                                                  _collapsedEducationIndexes.add(index);
+                                                  _collapsedEducationIndexes
+                                                      .add(index);
                                                 }
                                               });
                                             }
                                           },
                                           child: isEditing
                                               ? DropdownButtonFormField<String>(
-                                                  value: education['level'],
-                                                  decoration: const InputDecoration(
-                                                    labelText: 'Education Level',
-                                                    labelStyle: TextStyle(fontSize: 12),
-                                                    contentPadding: EdgeInsets.symmetric(
-                                                      horizontal: 8,
-                                                      vertical: 4,
-                                                    ),
-                                                    border: OutlineInputBorder(),
-                                                  ),
-                                                  items: [
-                                                    'ELEMENTARY',
-                                                    'SECONDARY',
-                                                    'VOCATIONAL/TRADE COURSE',
-                                                    'COLLEGE',
-                                                    'GRADUATE STUDIES',
-                                                  ].map((level) {
-                                                    return DropdownMenuItem(
-                                                      value: level,
-                                                      child: Text(level, style: const TextStyle(fontSize: 12)),
-                                                    );
-                                                  }).toList(),
+                                                  initialValue:
+                                                      education['level'],
+                                                  decoration:
+                                                      const InputDecoration(
+                                                        labelText:
+                                                            'Education Level',
+                                                        labelStyle: TextStyle(
+                                                          fontSize: 12,
+                                                        ),
+                                                        contentPadding:
+                                                            EdgeInsets.symmetric(
+                                                              horizontal: 8,
+                                                              vertical: 4,
+                                                            ),
+                                                        border:
+                                                            OutlineInputBorder(),
+                                                      ),
+                                                  items:
+                                                      [
+                                                        'ELEMENTARY',
+                                                        'SECONDARY',
+                                                        'VOCATIONAL/TRADE COURSE',
+                                                        'COLLEGE',
+                                                        'GRADUATE STUDIES',
+                                                      ].map((level) {
+                                                        return DropdownMenuItem(
+                                                          value: level,
+                                                          child: Text(
+                                                            level,
+                                                            style:
+                                                                const TextStyle(
+                                                                  fontSize: 12,
+                                                                ),
+                                                          ),
+                                                        );
+                                                      }).toList(),
                                                   onChanged: (value) {
                                                     setState(() {
-                                                      _educationData[index]['level'] = value!;
+                                                      _educationData[index]['level'] =
+                                                          value!;
                                                     });
                                                   },
                                                 )
                                               : Column(
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
                                                   children: [
                                                     Text(
-                                                      education['level'] ?? 'N/A',
+                                                      education['level'] ??
+                                                          'N/A',
                                                       style: const TextStyle(
                                                         fontSize: 15,
                                                         color: Colors.black,
-                                                        fontWeight: FontWeight.bold,
+                                                        fontWeight:
+                                                            FontWeight.bold,
                                                       ),
                                                     ),
                                                     if (isCollapsed)
                                                       Text(
-                                                        education['schoolName'] ?? 'N/A',
+                                                        education['schoolName'] ??
+                                                            'N/A',
                                                         style: TextStyle(
                                                           fontSize: 11,
-                                                          color: Colors.grey[600],
+                                                          color:
+                                                              Colors.grey[600],
                                                         ),
                                                       ),
                                                   ],
@@ -447,25 +450,29 @@ class _EducationalBackgroundWidgetState extends State<EducationalBackgroundWidge
                                         ),
                                       ),
                                       // Collapse/expand arrow
-                                       if (!isEditing)
-                                      GestureDetector(
-                                        onTap: () {
-                                          if (!isEditing) {
-                                            setState(() {
-                                              if (isCollapsed) {
-                                                _collapsedEducationIndexes.remove(index);
-                                              } else {
-                                                _collapsedEducationIndexes.add(index);
-                                              }
-                                            });
-                                          }
-                                        },
-                                        child: Icon(
-                                          isCollapsed ? Icons.expand_more : Icons.expand_less,
-                                          size: 20,
-                                          color: Colors.black,
+                                      if (!isEditing)
+                                        GestureDetector(
+                                          onTap: () {
+                                            if (!isEditing) {
+                                              setState(() {
+                                                if (isCollapsed) {
+                                                  _collapsedEducationIndexes
+                                                      .remove(index);
+                                                } else {
+                                                  _collapsedEducationIndexes
+                                                      .add(index);
+                                                }
+                                              });
+                                            }
+                                          },
+                                          child: Icon(
+                                            isCollapsed
+                                                ? Icons.expand_more
+                                                : Icons.expand_less,
+                                            size: 20,
+                                            color: Colors.black,
+                                          ),
                                         ),
-                                      ),
                                       const SizedBox(width: 4),
 
                                       // 3-dot menu button — always visible on the right
@@ -497,6 +504,7 @@ class _EducationalBackgroundWidgetState extends State<EducationalBackgroundWidge
                                                 _collapsedEducationIndexes
                                                     .remove(index);
                                                 _editingEducationIndex = index;
+                                                _isNewEduc = false;
                                               });
                                             } else if (value == 'delete') {
                                               _deleteEducation(index);
@@ -559,18 +567,27 @@ class _EducationalBackgroundWidgetState extends State<EducationalBackgroundWidge
                                   if (!isCollapsed) ...[
                                     const SizedBox(height: 12),
                                     Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12.0,
+                                      ),
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           // School Name
                                           isEditing
                                               ? _buildEditableFieldInline(
                                                   'School Name',
                                                   education['schoolName'],
-                                                  (value) { _educationData[index]['schoolName'] = value; },
+                                                  (value) {
+                                                    _educationData[index]['schoolName'] =
+                                                        value;
+                                                  },
                                                 )
-                                              : _buildInfoFieldInline('School Name', education['schoolName']),
+                                              : _buildInfoFieldInline(
+                                                  'School Name',
+                                                  education['schoolName'],
+                                                ),
                                           const SizedBox(height: 12),
 
                                           // Degree/Course
@@ -578,9 +595,15 @@ class _EducationalBackgroundWidgetState extends State<EducationalBackgroundWidge
                                               ? _buildEditableFieldInline(
                                                   'Degree/Course',
                                                   education['degreeCourse'],
-                                                  (value) { _educationData[index]['degreeCourse'] = value; },
+                                                  (value) {
+                                                    _educationData[index]['degreeCourse'] =
+                                                        value;
+                                                  },
                                                 )
-                                              : _buildInfoFieldInline('Degree/Course', education['degreeCourse']),
+                                              : _buildInfoFieldInline(
+                                                  'Degree/Course',
+                                                  education['degreeCourse'],
+                                                ),
                                           const SizedBox(height: 12),
 
                                           // Period Attended - From/To
@@ -591,9 +614,15 @@ class _EducationalBackgroundWidgetState extends State<EducationalBackgroundWidge
                                                     ? _buildDateFieldInline(
                                                         'From',
                                                         education['attendedFrom'],
-                                                        (value) { _educationData[index]['attendedFrom'] = value; },
+                                                        (value) {
+                                                          _educationData[index]['attendedFrom'] =
+                                                              value;
+                                                        },
                                                       )
-                                                    : _buildInfoFieldInline('From', education['attendedFrom']),
+                                                    : _buildInfoFieldInline(
+                                                        'From',
+                                                        education['attendedFrom'],
+                                                      ),
                                               ),
                                               const SizedBox(width: 12),
                                               Expanded(
@@ -601,9 +630,15 @@ class _EducationalBackgroundWidgetState extends State<EducationalBackgroundWidge
                                                     ? _buildDateFieldInline(
                                                         'To',
                                                         education['attendedTo'],
-                                                        (value) { _educationData[index]['attendedTo'] = value; },
+                                                        (value) {
+                                                          _educationData[index]['attendedTo'] =
+                                                              value;
+                                                        },
                                                       )
-                                                    : _buildInfoFieldInline('To', education['attendedTo']),
+                                                    : _buildInfoFieldInline(
+                                                        'To',
+                                                        education['attendedTo'],
+                                                      ),
                                               ),
                                             ],
                                           ),
@@ -617,9 +652,15 @@ class _EducationalBackgroundWidgetState extends State<EducationalBackgroundWidge
                                                     ? _buildEditableFieldInline(
                                                         'Highest Level/Units',
                                                         education['highestLevel'],
-                                                        (value) { _educationData[index]['highestLevel'] = value; },
+                                                        (value) {
+                                                          _educationData[index]['highestLevel'] =
+                                                              value;
+                                                        },
                                                       )
-                                                    : _buildInfoFieldInline('Highest Level/Units', education['highestLevel']),
+                                                    : _buildInfoFieldInline(
+                                                        'Highest Level/Units',
+                                                        education['highestLevel'],
+                                                      ),
                                               ),
                                               const SizedBox(width: 12),
                                               Expanded(
@@ -627,9 +668,15 @@ class _EducationalBackgroundWidgetState extends State<EducationalBackgroundWidge
                                                     ? _buildEditableFieldInline(
                                                         'Year Graduated',
                                                         education['yearGraduated'],
-                                                        (value) { _educationData[index]['yearGraduated'] = value; },
+                                                        (value) {
+                                                          _educationData[index]['yearGraduated'] =
+                                                              value;
+                                                        },
                                                       )
-                                                    : _buildInfoFieldInline('Year Graduated', education['yearGraduated']),
+                                                    : _buildInfoFieldInline(
+                                                        'Year Graduated',
+                                                        education['yearGraduated'],
+                                                      ),
                                               ),
                                             ],
                                           ),
@@ -640,37 +687,73 @@ class _EducationalBackgroundWidgetState extends State<EducationalBackgroundWidge
                                               ? _buildEditableFieldInline(
                                                   'Academic Honors',
                                                   education['academicHonors'],
-                                                  (value) { _educationData[index]['academicHonors'] = value; },
+                                                  (value) {
+                                                    _educationData[index]['academicHonors'] =
+                                                        value;
+                                                  },
                                                 )
-                                              : _buildInfoFieldInline('Academic Honors', education['academicHonors']),
-                                        if (isEditing) ...[
-                                          const SizedBox(height: 12),
-                                          Row(
-                                            mainAxisAlignment: MainAxisAlignment.end,
-                                            children: [
-                                              TextButton(
-                                                onPressed: () => setState(() {
-                                                  _editingEducationIndex = null;
-                                                  _collapsedEducationIndexes.add(index);
-                                                }),
-                                                child: const Text('Cancel', style: TextStyle(color: Colors.red)),
-                                              ),
-                                              const SizedBox(width: 8),
-                                              ElevatedButton.icon(
-                                                onPressed: () => _saveEducation(index),
-                                                icon: const Icon(Icons.save, size: 16),
-                                                label: const Text('Save'),
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor: const Color(0xFF2C5F4F),
-                                                  foregroundColor: Colors.white,
-                                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                                  textStyle: const TextStyle(fontSize: 13),
+                                              : _buildInfoFieldInline(
+                                                  'Academic Honors',
+                                                  education['academicHonors'],
                                                 ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                       
+                                          if (isEditing) ...[
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.end,
+                                              children: [
+                                                TextButton(
+                                                  onPressed: () => setState(() {
+                                                    if (_isNewEduc) {
+                                                      _educationData.removeAt(
+                                                        index,
+                                                      );
+                                                      // Shift all collapsed indexes back down by 1 to compensate
+                                                      _collapsedEducationIndexes =
+                                                          _collapsedEducationIndexes
+                                                              .where(
+                                                                (i) => i > 0,
+                                                              )
+                                                              .map((i) => i - 1)
+                                                              .toSet();
+                                                    }
+                                                    _editingEducationIndex =
+                                                        null;
+                                                    _isNewEduc = false;
+                                                  }),
+                                                  child: const Text(
+                                                    'Cancel',
+                                                    style: TextStyle(
+                                                      color: Colors.red,
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                ElevatedButton.icon(
+                                                  onPressed: () =>
+                                                      _saveEducation(index),
+                                                  icon: const Icon(
+                                                    Icons.save,
+                                                    size: 16,
+                                                  ),
+                                                  label: const Text('Save'),
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor:
+                                                        const Color(0xFF2C5F4F),
+                                                    foregroundColor:
+                                                        Colors.white,
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 12,
+                                                          vertical: 6,
+                                                        ),
+                                                    textStyle: const TextStyle(
+                                                      fontSize: 13,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
                                         ],
                                       ),
                                     ),
@@ -678,7 +761,7 @@ class _EducationalBackgroundWidgetState extends State<EducationalBackgroundWidge
                                 ],
                               ),
                             );
-                          }).toList(),
+                          }),
                         ],
                 ),
               ),
@@ -688,35 +771,335 @@ class _EducationalBackgroundWidgetState extends State<EducationalBackgroundWidge
     );
   }
 
+void _showAddEducationDialog() {
+    String selectedLevel = 'ELEMENTARY';
+    final schoolController = TextEditingController();
+    final degreeController = TextEditingController();
+    final attendedFromController = TextEditingController();
+    final attendedToController = TextEditingController();
+    final highestLevelController = TextEditingController();
+    final yearGraduatedController = TextEditingController();
+    final academicHonorsController = TextEditingController();
+    bool onGoing = false;
+
+    final levels = [
+      'ELEMENTARY',
+      'SECONDARY',
+      'VOCATIONAL/TRADE COURSE',
+      'COLLEGE',
+      'GRADUATE STUDIES',
+    ];
+
+    InputDecoration fieldDecoration(String label) => InputDecoration(
+          labelText: label,
+          labelStyle: const TextStyle(fontSize: 13, color: Colors.black),
+          enabledBorder: OutlineInputBorder(
+            borderSide: const BorderSide(color: Color(0xFF2C5F4F), width: 1.5),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderSide: const BorderSide(color: Color(0xFF2C5F4F), width: 2.0),
+          ),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        );
+
+    Future<String?> pickDate(BuildContext ctx, String current) async {
+      DateTime? initial;
+      if (current.isNotEmpty) initial = DateTime.tryParse(current);
+      final picked = await showDatePicker(
+        context: ctx,
+        initialDate: initial ?? DateTime.now(),
+        firstDate: DateTime(1900),
+        lastDate: DateTime(2100),
+        builder: (ctx, child) => Theme(
+          data: Theme.of(ctx).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF2C5F4F),
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        ),
+      );
+      if (picked == null) return null;
+      return '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+    }
+
+    showDialog(
+      context: context,
+      builder: (BuildContext ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return Dialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              insetPadding: EdgeInsets.symmetric(
+                horizontal: MediaQuery.of(ctx).size.width * 0.025, // 10% each side = 90% width
+                vertical: 24,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ── Title ──
+                    const Text(
+                      'Add Education',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF2C5F4F),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // ── Scrollable content ──
+                    Flexible(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Education Level dropdown
+                            DropdownButtonFormField<String>(
+                              value: selectedLevel,
+                              decoration: fieldDecoration('Education Level'),
+                              items: levels
+                                  .map((l) => DropdownMenuItem(
+                                        value: l,
+                                        child: Text(l, style: const TextStyle(fontSize: 13)),
+                                      ))
+                                  .toList(),
+                              onChanged: (v) => setDialogState(() => selectedLevel = v!),
+                            ),
+                            const SizedBox(height: 12),
+
+                            // School Name
+                            TextField(
+                              controller: schoolController,
+                              cursorColor: const Color(0xFF2C5F4F),
+                              decoration: fieldDecoration('School Name *'),
+                            ),
+                            const SizedBox(height: 12),
+
+                            // Degree / Course
+                            TextField(
+                              controller: degreeController,
+                              cursorColor: const Color(0xFF2C5F4F),
+                              decoration: fieldDecoration('Degree / Course'),
+                            ),
+                            const SizedBox(height: 12),
+
+                            // Attended From
+                            TextField(
+                              controller: attendedFromController,
+                              readOnly: true,
+                              cursorColor: const Color(0xFF2C5F4F),
+                              decoration: fieldDecoration('Attended From').copyWith(
+                                suffixIcon: const Icon(Icons.calendar_today, size: 18, color: Color(0xFF2C5F4F)),
+                              ),
+                              onTap: () async {
+                                final d = await pickDate(ctx, attendedFromController.text);
+                                if (d != null) setDialogState(() => attendedFromController.text = d);
+                              },
+                            ),
+                            const SizedBox(height: 12),
+
+                            // Attended To
+                            TextField(
+                              controller: attendedToController,
+                              readOnly: true,
+                              enabled: !onGoing,
+                              cursorColor: const Color(0xFF2C5F4F),
+                              decoration: fieldDecoration('Attended To').copyWith(
+                                suffixIcon: const Icon(Icons.calendar_today, size: 18, color: Color(0xFF2C5F4F)),
+                              ),
+                              onTap: () async {
+                                final d = await pickDate(ctx, attendedToController.text);
+                                if (d != null) setDialogState(() => attendedToController.text = d);
+                              },
+                            ),
+                            const SizedBox(height: 4),
+
+                            // On-going checkbox
+                            Row(
+                              children: [
+                                Checkbox(
+                                  value: onGoing,
+                                  activeColor: const Color(0xFF2C5F4F),
+                                  onChanged: (v) {
+                                    setDialogState(() {
+                                      onGoing = v!;
+                                      if (onGoing) attendedToController.clear();
+                                    });
+                                  },
+                                ),
+                                const Text('On-going', style: TextStyle(fontSize: 13)),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+
+                            // Highest Level Earned
+                            TextField(
+                              controller: highestLevelController,
+                              cursorColor: const Color(0xFF2C5F4F),
+                              decoration: fieldDecoration('Highest Level Earned'),
+                            ),
+                            const SizedBox(height: 12),
+
+                            // Year Graduated
+                            TextField(
+                              controller: yearGraduatedController,
+                              cursorColor: const Color(0xFF2C5F4F),
+                              keyboardType: TextInputType.number,
+                              decoration: fieldDecoration('Year Graduated'),
+                            ),
+                            const SizedBox(height: 12),
+
+                            // Academic Honors
+                            TextField(
+                              controller: academicHonorsController,
+                              cursorColor: const Color(0xFF2C5F4F),
+                              decoration: fieldDecoration('Academic Honors'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // ── Action Buttons ──
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(),
+                          child: const Text('Cancel', style: TextStyle(color: Colors.red)),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2C5F4F),
+                            foregroundColor: Colors.white,
+                          ),
+                          onPressed: () {
+                            if (schoolController.text.trim().isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Please enter school name'),
+                                  backgroundColor: Colors.orange,
+                                ),
+                              );
+                              return;
+                            }
+
+                            final newEntry = {
+                              'level': selectedLevel,
+                              'schoolName': schoolController.text.trim(),
+                              'degreeCourse': degreeController.text.trim(),
+                              'attendedFrom': attendedFromController.text,
+                              'attendedTo': attendedToController.text,
+                              'highestLevel': highestLevelController.text.trim(),
+                              'yearGraduated': yearGraduatedController.text.trim(),
+                              'academicHonors': academicHonorsController.text.trim(),
+                              'onGoing': onGoing,
+                            };
+
+                            Navigator.of(ctx).pop();
+
+                            setState(() {
+                              _educationData.insert(0, newEntry);
+                              _collapsedEducationIndexes = _collapsedEducationIndexes
+                                  .map((i) => i + 1)
+                                  .toSet();
+                              _editingEducationIndex = null;
+                              _isNewEduc = false;
+                            });
+
+                            _saveEducation(0);
+                          },
+                          child: const Text('Add'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   Widget _buildInfoFieldInline(String label, dynamic value) {
     String displayValue = 'N/A';
-    if (value != null && value.toString().isNotEmpty && value.toString() != 'null') {
+    if (value != null &&
+        value.toString().isNotEmpty &&
+        value.toString() != 'null') {
       displayValue = value.toString();
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(fontSize: 15, color: Colors.grey[600], fontWeight: FontWeight.w500)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 15,
+            color: Colors.grey[600],
+            fontWeight: FontWeight.w500,
+          ),
+        ),
         const SizedBox(height: 1),
-        Text(displayValue, style: const TextStyle(fontSize: 15, color: Colors.black87, fontWeight: FontWeight.bold)),
+        Text(
+          displayValue,
+          style: const TextStyle(
+            fontSize: 15,
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildEditableFieldInline(String label, String? value, Function(String) onChanged) {
+  Widget _buildEditableFieldInline(
+    String label,
+    String? value,
+    Function(String) onChanged,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(fontSize: 10, color: Colors.grey[600], fontWeight: FontWeight.w500)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            color: Colors.grey[600],
+            fontWeight: FontWeight.w500,
+          ),
+        ),
         const SizedBox(height: 4),
         TextFormField(
           initialValue: value ?? '',
           onChanged: onChanged,
-          style: const TextStyle(fontSize: 13, color: Colors.black87, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            fontSize: 13,
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+          ),
           decoration: InputDecoration(
-            border: UnderlineInputBorder(borderSide: BorderSide(color: const Color(0xFF2C5F4F))),
-            enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey[300]!)),
-            focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF2C5F4F), width: 2)),
+            border: UnderlineInputBorder(
+              borderSide: BorderSide(color: const Color(0xFF2C5F4F)),
+            ),
+            enabledBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            focusedBorder: const UnderlineInputBorder(
+              borderSide: BorderSide(color: Color(0xFF2C5F4F), width: 2),
+            ),
             contentPadding: const EdgeInsets.symmetric(vertical: 4),
             isDense: true,
           ),
@@ -725,19 +1108,30 @@ class _EducationalBackgroundWidgetState extends State<EducationalBackgroundWidge
     );
   }
 
-  
-  Widget _buildDateFieldInline(String label, String? value, Function(String) onChanged) {
+  Widget _buildDateFieldInline(
+    String label,
+    String? value,
+    Function(String) onChanged,
+  ) {
     final controller = TextEditingController(text: value ?? '');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(fontSize: 10, color: Colors.grey[600], fontWeight: FontWeight.w500)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            color: Colors.grey[600],
+            fontWeight: FontWeight.w500,
+          ),
+        ),
         GestureDetector(
           onTap: () async {
             DateTime? initialDate;
             if (value != null && value.isNotEmpty) {
               try {
                 initialDate = DateTime.tryParse(value);
+              // ignore: empty_catches
               } catch (e) {}
             }
             final DateTime? pickedDate = await showDatePicker(
@@ -746,12 +1140,19 @@ class _EducationalBackgroundWidgetState extends State<EducationalBackgroundWidge
               firstDate: DateTime(1900),
               lastDate: DateTime(2100),
               builder: (context, child) => Theme(
-                data: Theme.of(context).copyWith(colorScheme: const ColorScheme.light(primary: Color(0xFF2C5F4F), onPrimary: Colors.white, onSurface: Colors.black)),
+                data: Theme.of(context).copyWith(
+                  colorScheme: const ColorScheme.light(
+                    primary: Color(0xFF2C5F4F),
+                    onPrimary: Colors.white,
+                    onSurface: Colors.black,
+                  ),
+                ),
                 child: child!,
               ),
             );
             if (pickedDate != null) {
-              final formatted = '${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}';
+              final formatted =
+                  '${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}';
               controller.text = formatted;
               onChanged(formatted);
             }
@@ -760,9 +1161,17 @@ class _EducationalBackgroundWidgetState extends State<EducationalBackgroundWidge
             child: TextFormField(
               controller: controller,
               readOnly: true,
-              style: const TextStyle(fontSize: 13, color: Colors.black87, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontSize: 13,
+                color: Colors.black87,
+                fontWeight: FontWeight.bold,
+              ),
               decoration: const InputDecoration(
-                suffixIcon: Icon(Icons.calendar_today, size: 20, color: Color(0xFF2C5F4F)),
+                suffixIcon: Icon(
+                  Icons.calendar_today,
+                  size: 20,
+                  color: Color(0xFF2C5F4F),
+                ),
                 contentPadding: EdgeInsets.symmetric(vertical: 4),
                 isDense: true,
               ),
@@ -772,10 +1181,9 @@ class _EducationalBackgroundWidgetState extends State<EducationalBackgroundWidge
       ],
     );
   }
-  
+
   @override
   Widget build(Object context) {
     return _buildEducationalBackgroundCard();
   }
-
 }

@@ -204,6 +204,52 @@ class UserService {
     }
   }
 
+  // CHANGE PASSWORD
+  Future<Map<String, dynamic>> changePassword(
+    String token, {
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    print('\n🔐 [UserService] CHANGE PASSWORD');
+
+    final currentToken = TokenManager().token ?? token;
+    final url = '${ApiConfig.baseUrl}${ApiConfig.changePasswordEndpoint}';
+    print('🌐 [UserService] Request URL: $url');
+
+    try {
+      final response = await http.patch(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $currentToken',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'currentPassword': currentPassword,
+          'newPassword': newPassword,
+        }),
+      );
+
+      print('📥 [UserService] Status: ${response.statusCode}');
+      print('📥 [UserService] Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        return {'success': true, 'data': jsonDecode(response.body)};
+      } else {
+        String errorMessage = 'Failed to change password.';
+        try {
+          final errorData = jsonDecode(response.body);
+          errorMessage =
+              errorData['message'] ?? errorData['error'] ?? errorMessage;
+        } catch (_) {}
+        print('❌ [UserService] Change password failed: $errorMessage');
+        return {'success': false, 'error': errorMessage};
+      }
+    } catch (e) {
+      print('💥 [UserService] Exception: $e');
+      return {'success': false, 'error': 'Error: $e'};
+    }
+  }
+
   // Optional: Method to manually clear cache if needed
   void clearCache() {
     _cachedUserData = null;

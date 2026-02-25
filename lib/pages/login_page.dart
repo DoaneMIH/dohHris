@@ -60,6 +60,16 @@ class _LoginPageState extends State<LoginPage> {
           );
           print('🎫 [LoginPage] Token will be used to fetch profile');
 
+          // Navigator.pushReplacement(
+          //   context,
+          //   MaterialPageRoute(
+          //     builder: (context) => UserDetailsPageContent(
+          //       token: token,
+          //       baseUrl: ApiConfig.baseUrl,
+          //     ),
+          //   ),
+          // );
+
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -169,7 +179,7 @@ class _LoginPageState extends State<LoginPage> {
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w800,
                         color: const Color(0xFF27592D),
-                        fontSize: 18,
+                        fontSize: 15,
                         letterSpacing: 0.5,
                         height: 1.2,
                       ),
@@ -191,7 +201,7 @@ class _LoginPageState extends State<LoginPage> {
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w800,
                         color: const Color(0xFF27592D),
-                        fontSize: 18,
+                        fontSize: 15,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -201,7 +211,7 @@ class _LoginPageState extends State<LoginPage> {
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Colors.black,
-                        fontSize: 19,
+                        fontSize: 17,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -211,14 +221,14 @@ class _LoginPageState extends State<LoginPage> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                            spreadRadius: 2,
-                          ),
-                        ],
+                        // boxShadow: [
+                        //   BoxShadow(
+                        //     color: Colors.black.withOpacity(0.1),
+                        //     blurRadius: 10,
+                        //     offset: const Offset(0, 4),
+                        //     spreadRadius: 2,
+                        //   ),
+                        // ],
                       ),
                       child: Column(
                         children: [

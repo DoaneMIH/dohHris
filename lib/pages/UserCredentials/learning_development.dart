@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:mobile_application/services/user_service.dart';
 
 class LearningDevelopmentWidget extends StatefulWidget {
@@ -7,10 +6,10 @@ class LearningDevelopmentWidget extends StatefulWidget {
   final String employeeId;
 
   const LearningDevelopmentWidget({
-    Key? key,
+    super.key,
     required this.token,
     required this.employeeId,
-  }) : super(key: key);
+  });
 
   @override
   State<LearningDevelopmentWidget> createState() => _LearningDevelopmentWidgetState();
@@ -19,11 +18,12 @@ class LearningDevelopmentWidget extends StatefulWidget {
 class _LearningDevelopmentWidgetState extends State<LearningDevelopmentWidget> {
 
   final _userService = UserService();
-  bool _isLearningDevelopmentExpanded = true;
+  final bool _isLearningDevelopmentExpanded = true;
   List<Map<String, dynamic>> _learningDevelopmentListData = [];
   List<Map<String, dynamic>> _learningDevelopmentData = [];
   int? _editingLearningDevelopmentIndex;
   Set<int> _collapsedLearningDevIndexes = <int>{};
+  bool _isNewLearningDevelopment = false;
 
   @override
   void initState() {
@@ -264,21 +264,7 @@ Widget _buildLearningDevelopmentCard() {
                 ),
               ),
               GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _learningDevelopmentData.insert(0, {
-                      'title': '',
-                      'attendedFrom': '',
-                      'attendedTo': '',
-                      'hours': '',
-                      'ldType': '',
-                      'conductedBy': '',
-                      'certificate_url': '',
-                    });
-                    _collapsedLearningDevIndexes = _collapsedLearningDevIndexes.map((i) => i + 1).toSet();
-                    _editingLearningDevelopmentIndex = 0;
-                  });
-                },
+                onTap: () => _showAddLearningDevelopmentDialog(),
                 child: const Icon(Icons.add_circle, size: 24, color: Colors.white),
               ),
             ],
@@ -371,6 +357,7 @@ Widget _buildLearningDevelopmentCard() {
                                             setState(() {
                                               _collapsedLearningDevIndexes.remove(index);
                                               _editingLearningDevelopmentIndex = index;
+                                              _isNewLearningDevelopment = false;
                                             });
                                           } else if (value == 'delete') {
                                             _deleteLearningDevelopment(index);
@@ -478,8 +465,22 @@ Widget _buildLearningDevelopmentCard() {
                                             children: [
                                               TextButton(
                                                 onPressed: () => setState(() {
-                                                  _editingLearningDevelopmentIndex = null;
-                                                  _collapsedLearningDevIndexes.add(index);
+                                                  if (_isNewLearningDevelopment) {
+                                                      _learningDevelopmentData.removeAt(
+                                                        index,
+                                                      );
+                                                      // Shift all collapsed indexes back down by 1 to compensate
+                                                      _collapsedLearningDevIndexes =
+                                                          _collapsedLearningDevIndexes
+                                                              .where(
+                                                                (i) => i > 0,
+                                                              )
+                                                              .map((i) => i - 1)
+                                                              .toSet();
+                                                    }
+                                                    _editingLearningDevelopmentIndex =
+                                                        null;
+                                                    _isNewLearningDevelopment = false;
                                                 }),
                                                 child: const Text('Cancel', style: TextStyle(color: Colors.red)),
                                               ),
@@ -515,6 +516,220 @@ Widget _buildLearningDevelopmentCard() {
   );
 }
 
+  void _showAddLearningDevelopmentDialog() {
+    final titleController = TextEditingController();
+    final hoursController = TextEditingController();
+    final ldTypeController = TextEditingController();
+    final conductedByController = TextEditingController();
+    final attendedFromController = TextEditingController();
+    final attendedToController = TextEditingController();
+
+    InputDecoration fieldDecoration(String label) => InputDecoration(
+          labelText: label,
+          labelStyle: const TextStyle(fontSize: 13, color: Colors.black),
+          enabledBorder: const OutlineInputBorder(
+            borderSide: BorderSide(color: Color(0xFF2C5F4F), width: 1.5),
+          ),
+          focusedBorder: const OutlineInputBorder(
+            borderSide: BorderSide(color: Color(0xFF2C5F4F), width: 2.0),
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        );
+
+    Future<String?> pickDate(BuildContext ctx, String current) async {
+      DateTime? initial;
+      if (current.isNotEmpty) initial = DateTime.tryParse(current);
+      final picked = await showDatePicker(
+        context: ctx,
+        initialDate: initial ?? DateTime.now(),
+        firstDate: DateTime(1900),
+        lastDate: DateTime(2100),
+        builder: (ctx, child) => Theme(
+          data: Theme.of(ctx).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF2C5F4F),
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        ),
+      );
+      if (picked == null) return null;
+      return '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+    }
+
+    showDialog(
+      context: context,
+      builder: (BuildContext ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return Dialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              insetPadding: EdgeInsets.symmetric(
+                horizontal: MediaQuery.of(ctx).size.width * 0.025, // 2.5% each side = 95% width
+                vertical: 24,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ── Title ──
+                    const Text(
+                      'Add Training / L&D',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF2C5F4F)),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // ── Scrollable content ──
+                    Flexible(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Title
+                            TextField(
+                              controller: titleController,
+                              cursorColor: const Color(0xFF2C5F4F),
+                              decoration: fieldDecoration('Training Program Title *'),
+                            ),
+                            const SizedBox(height: 12),
+
+                            // Date From & Date To side by side
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    controller: attendedFromController,
+                                    readOnly: true,
+                                    cursorColor: const Color(0xFF2C5F4F),
+                                    decoration: fieldDecoration('Date From').copyWith(
+                                      suffixIcon: const Icon(Icons.calendar_today, size: 16, color: Color(0xFF2C5F4F)),
+                                    ),
+                                    onTap: () async {
+                                      final d = await pickDate(ctx, attendedFromController.text);
+                                      if (d != null) setDialogState(() => attendedFromController.text = d);
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: TextField(
+                                    controller: attendedToController,
+                                    readOnly: true,
+                                    cursorColor: const Color(0xFF2C5F4F),
+                                    decoration: fieldDecoration('Date To').copyWith(
+                                      suffixIcon: const Icon(Icons.calendar_today, size: 16, color: Color(0xFF2C5F4F)),
+                                    ),
+                                    onTap: () async {
+                                      final d = await pickDate(ctx, attendedToController.text);
+                                      if (d != null) setDialogState(() => attendedToController.text = d);
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+
+                            // Hours & Type side by side
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    controller: hoursController,
+                                    cursorColor: const Color(0xFF2C5F4F),
+                                    keyboardType: TextInputType.number,
+                                    decoration: fieldDecoration('No. of Hours'),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: TextField(
+                                    controller: ldTypeController,
+                                    cursorColor: const Color(0xFF2C5F4F),
+                                    decoration: fieldDecoration('Type of L&D'),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+
+                            // Conducted By
+                            TextField(
+                              controller: conductedByController,
+                              cursorColor: const Color(0xFF2C5F4F),
+                              decoration: fieldDecoration('Conducted / Sponsored By'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // ── Action Buttons ──
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(),
+                          child: const Text('Cancel', style: TextStyle(color: Colors.red)),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2C5F4F),
+                            foregroundColor: Colors.white,
+                          ),
+                          onPressed: () {
+                            if (titleController.text.trim().isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Please enter the training program title'),
+                                  backgroundColor: Colors.orange,
+                                ),
+                              );
+                              return;
+                            }
+
+                            final newEntry = {
+                              'title': titleController.text.trim(),
+                              'attendedFrom': attendedFromController.text,
+                              'attendedTo': attendedToController.text,
+                              'hours': hoursController.text.trim(),
+                              'ldType': ldTypeController.text.trim(),
+                              'conductedBy': conductedByController.text.trim(),
+                              'certificate_url': '',
+                            };
+
+                            Navigator.of(ctx).pop();
+
+                            setState(() {
+                              _learningDevelopmentData.insert(0, newEntry);
+                              _collapsedLearningDevIndexes =
+                                  _collapsedLearningDevIndexes.map((i) => i + 1).toSet();
+                              _editingLearningDevelopmentIndex = null;
+                              _isNewLearningDevelopment = false;
+                            });
+
+                            _saveLearningDevelopment(0);
+                          },
+                          child: const Text('Add'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
 
   Widget _buildInfoFieldInline(String label, dynamic value) {
     String displayValue = 'N/A';

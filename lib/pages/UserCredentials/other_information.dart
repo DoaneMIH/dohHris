@@ -17,11 +17,10 @@ class OtherInformationWidget extends StatefulWidget {
 }
 
 class _OtherInformationWidgetState extends State<OtherInformationWidget> {
-
   final _userService = UserService();
   bool _isOtherInformationExpanded = true;
   bool _isFetchingOtherInfo = false;
-  bool _isEditingOtherInfo = false;
+  // bool _isEditingOtherInfo = false;
   List<Map<String, dynamic>> _specialSkillsData = [];
   int? _editingSpecialSkillIndex;
   List<Map<String, dynamic>> _nonAcademicDistinctionsData = [];
@@ -129,123 +128,116 @@ class _OtherInformationWidgetState extends State<OtherInformationWidget> {
     }
   }
 
-
   Future<void> _saveOtherInfo() async {
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (context) => const Center(child: CircularProgressIndicator()),
-  );
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
 
-  try {
-    final employeeId = widget.employeeId;
+    try {
+      final employeeId = widget.employeeId;
 
-    // ── 1. Handle EXISTING records: group by _recordId and update only changed fields ──
-    final Map<String, Map<String, List<String>>> grouped = {};
+      // ── 1. Handle EXISTING records: group by _recordId and update only changed fields ──
+      final Map<String, Map<String, List<String>>> grouped = {};
 
-    void addToGroup(String recordId, String field, String value) {
-      grouped.putIfAbsent(recordId, () => {});
-      grouped[recordId]!.putIfAbsent(field, () => []);
-      grouped[recordId]![field]!.add(value);
-    }
+      void addToGroup(String recordId, String field, String value) {
+        grouped.putIfAbsent(recordId, () => {});
+        grouped[recordId]!.putIfAbsent(field, () => []);
+        grouped[recordId]![field]!.add(value);
+      }
 
-    for (final e in _specialSkillsData) {
-      final v = e['skill']?.toString().trim() ?? '';
-      final id = e['_recordId']?.toString();
-      if (v.isNotEmpty && id != null) addToGroup(id, 'skills', v);
-    }
-    for (final e in _nonAcademicDistinctionsData) {
-      final v = e['distinction']?.toString().trim() ?? '';
-      final id = e['_recordId']?.toString();
-      if (v.isNotEmpty && id != null) addToGroup(id, 'recognition', v);
-    }
-    for (final e in _membershipData) {
-      final v = e['organization']?.toString().trim() ?? '';
-      final id = e['_recordId']?.toString();
-      if (v.isNotEmpty && id != null) addToGroup(id, 'membership', v);
-    }
+      for (final e in _specialSkillsData) {
+        final v = e['skill']?.toString().trim() ?? '';
+        final id = e['_recordId']?.toString();
+        if (v.isNotEmpty && id != null) addToGroup(id, 'skills', v);
+      }
+      for (final e in _nonAcademicDistinctionsData) {
+        final v = e['distinction']?.toString().trim() ?? '';
+        final id = e['_recordId']?.toString();
+        if (v.isNotEmpty && id != null) addToGroup(id, 'recognition', v);
+      }
+      for (final e in _membershipData) {
+        final v = e['organization']?.toString().trim() ?? '';
+        final id = e['_recordId']?.toString();
+        if (v.isNotEmpty && id != null) addToGroup(id, 'membership', v);
+      }
 
-    for (final entry in grouped.entries) {
-      final fields = entry.value;
-      final payload = {
-        if (fields.containsKey('skills'))
-          'skills': fields['skills']!.join(', '),
-        if (fields.containsKey('recognition'))
-          'recognition': fields['recognition']!.join(', '),
-        if (fields.containsKey('membership'))
-          'membership': fields['membership']!.join(', '),
-      };
-      await _userService.updateOtherInfo(
-        widget.token,
-        entry.key,
-        payload,
-      );
-    }
+      for (final entry in grouped.entries) {
+        final fields = entry.value;
+        final payload = {
+          if (fields.containsKey('skills'))
+            'skills': fields['skills']!.join(', '),
+          if (fields.containsKey('recognition'))
+            'recognition': fields['recognition']!.join(', '),
+          if (fields.containsKey('membership'))
+            'membership': fields['membership']!.join(', '),
+        };
+        await _userService.updateOtherInfo(widget.token, entry.key, payload);
+      }
 
-    // ── 2. Handle NEW items: each one gets its own addOtherInfo call ──
-    // New skills — each becomes its own record
-    for (final e in _specialSkillsData) {
-      final v = e['skill']?.toString().trim() ?? '';
-      if (v.isNotEmpty && e['_recordId'] == null) {
-        await _userService.addOtherInfo(
-          widget.token,
-          employeeId.toString(),
-          {'skills': v, 'recognition': '', 'membership': ''},
+      // ── 2. Handle NEW items: each one gets its own addOtherInfo call ──
+      // New skills — each becomes its own record
+      for (final e in _specialSkillsData) {
+        final v = e['skill']?.toString().trim() ?? '';
+        if (v.isNotEmpty && e['_recordId'] == null) {
+          await _userService.addOtherInfo(widget.token, employeeId.toString(), {
+            'skills': v,
+            'recognition': '',
+            'membership': '',
+          });
+        }
+      }
+
+      // New recognitions — each becomes its own record
+      for (final e in _nonAcademicDistinctionsData) {
+        final v = e['distinction']?.toString().trim() ?? '';
+        if (v.isNotEmpty && e['_recordId'] == null) {
+          await _userService.addOtherInfo(widget.token, employeeId.toString(), {
+            'skills': '',
+            'recognition': v,
+            'membership': '',
+          });
+        }
+      }
+
+      // New memberships — each becomes its own record
+      for (final e in _membershipData) {
+        final v = e['organization']?.toString().trim() ?? '';
+        if (v.isNotEmpty && e['_recordId'] == null) {
+          await _userService.addOtherInfo(widget.token, employeeId.toString(), {
+            'skills': '',
+            'recognition': '',
+            'membership': v,
+          });
+        }
+      }
+
+      if (mounted) Navigator.pop(context);
+      await _fetchOtherInfoData();
+      if (mounted) {
+        // setState(() => _isEditingOtherInfo = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Other information saved successfully'),
+            backgroundColor: Colors.green,
+          ),
         );
       }
-    }
-
-    // New recognitions — each becomes its own record
-    for (final e in _nonAcademicDistinctionsData) {
-      final v = e['distinction']?.toString().trim() ?? '';
-      if (v.isNotEmpty && e['_recordId'] == null) {
-        await _userService.addOtherInfo(
-          widget.token,
-          employeeId.toString(),
-          {'skills': '', 'recognition': v, 'membership': ''},
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
-    }
-
-    // New memberships — each becomes its own record
-    for (final e in _membershipData) {
-      final v = e['organization']?.toString().trim() ?? '';
-      if (v.isNotEmpty && e['_recordId'] == null) {
-        await _userService.addOtherInfo(
-          widget.token,
-          employeeId.toString(),
-          {'skills': '', 'recognition': '', 'membership': v},
-        );
-      }
-    }
-
-    if (mounted) Navigator.pop(context);
-    await _fetchOtherInfoData();
-    if (mounted) {
-      setState(() => _isEditingOtherInfo = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Other information saved successfully'),
-          backgroundColor: Colors.green,
-        ),
-      );
-    }
-  } catch (e) {
-    if (mounted) {
-      Navigator.of(context, rootNavigator: true).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to save: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
     }
   }
-}
 
-
-
-Widget _buildOtherInformationCard() {
+  Widget _buildOtherInformationCard() {
     return Container(
       padding: EdgeInsets.zero,
       child: Column(
@@ -280,22 +272,23 @@ Widget _buildOtherInformationCard() {
                         // height: 16,
                         child: CircularProgressIndicator(
                           // strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
                         ),
                       ),
                     // if (!_isFetchingOtherInfo) ...[
-                      IconButton(
-                        icon: const Icon(
-                          Icons.add_circle,
-                          size: 18,
-                          color: Colors.white,
-                        ),
-                        tooltip: 'Add',
-                        onPressed: _showAddOtherInfoDialog,
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.add_circle,
+                        size: 18,
+                        color: Colors.white,
                       ),
-                    
+                      tooltip: 'Add',
+                      onPressed: _showAddOtherInfoDialog,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
                   ],
                 ),
               ],
@@ -344,59 +337,99 @@ Widget _buildOtherInformationCard() {
                       child: Row(
                         children: [
                           Expanded(
-  child: isEditing
-      ? Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildEditableFieldInline(
-              '',
-              skill['skill'],
-              (value) => _specialSkillsData[index]['skill'] = value,
-            ),
-            const SizedBox(height: 8),
-            // ✅ Save and Cancel buttons
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: () => setState(() {
-                    _editingSpecialSkillIndex = null;
-                  }),
-                  child: const Text('Cancel', style: TextStyle(color: Colors.red)),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton.icon(
-                  onPressed: () async {
-                    await _saveOtherInfo();
-                    setState(() => _editingSpecialSkillIndex = null);
-                  },
-                  icon: const Icon(Icons.save, size: 16),
-                  label: const Text('Save'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2C5F4F),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    textStyle: const TextStyle(fontSize: 13),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        )
-      : _buildInfoFieldInline('', skill['skill']),
-),
-// ✅ Only show 3-dots when NOT editing
-if (!isEditing)
-  PopupMenuButton<String>(
-    icon: const Icon(Icons.more_horiz, size: 20, color: Colors.black54),
-    padding: EdgeInsets.zero,
-    onSelected: (value) async {
-      if (value == 'edit') {
-        setState(() => _editingSpecialSkillIndex = index);
-      } else if (value == 'delete') {
-        final recordId = skill['_recordId']?.toString();
-        if (recordId == null) {
-          setState(() {
+                            child: isEditing
+                                ? Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      _buildEditableFieldInline(
+                                        '',
+                                        skill['skill'],
+                                        (value) =>
+                                            _specialSkillsData[index]['skill'] =
+                                                value,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      // ✅ Save and Cancel buttons
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
+                                        children: [
+                                          TextButton(
+                                            onPressed: () => setState(() {
+                                              _editingSpecialSkillIndex = null;
+                                            }),
+                                            child: const Text(
+                                              'Cancel',
+                                              style: TextStyle(
+                                                color: Colors.red,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          ElevatedButton.icon(
+                                            onPressed: () async {
+                                              await _saveOtherInfo();
+                                              setState(
+                                                () =>
+                                                    _editingSpecialSkillIndex =
+                                                        null,
+                                              );
+                                            },
+                                            icon: const Icon(
+                                              Icons.save,
+                                              size: 16,
+                                            ),
+                                            label: const Text('Save'),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: const Color(
+                                                0xFF2C5F4F,
+                                              ),
+                                              foregroundColor: Colors.white,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 12,
+                                                    vertical: 6,
+                                                  ),
+                                              textStyle: const TextStyle(
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  )
+                                : _buildInfoFieldInline('', skill['skill']),
+                          ),
+                          // ✅ Only show 3-dots when NOT editing
+                          if (!isEditing)
+                            PopupMenuButton<String>(
+                              color: Colors.white,
+                              position: PopupMenuPosition.under,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                side: BorderSide(color: Colors.grey.shade200),
+                              ),
+                              icon: Container(
+                                padding: const EdgeInsets.all(6),
+                                child: const Icon(
+                                  Icons.more_horiz,
+                                  size: 18,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              padding: EdgeInsets.zero,
+                              onSelected: (value) async {
+                                if (value == 'edit') {
+                                  setState(
+                                    () => _editingSpecialSkillIndex = index,
+                                  );
+                                } else if (value == 'delete') {
+                                  final recordId = skill['_recordId']
+                                      ?.toString();
+                                  if (recordId == null) {
+                                    setState(() {
                                       _specialSkillsData.removeAt(index);
                                       if (_editingSpecialSkillIndex == index)
                                         _editingSpecialSkillIndex = null;
@@ -436,38 +469,45 @@ if (!isEditing)
                                 }
                               },
                               itemBuilder: (context) => [
-                                const PopupMenuItem(
+                                PopupMenuItem<String>(
                                   value: 'edit',
+                                  height: 30,
                                   child: Row(
-                                    children: [
+                                    children: const [
                                       Icon(
                                         Icons.edit,
-                                        size: 18,
+                                        size: 15,
                                         color: Colors.black87,
                                       ),
                                       SizedBox(width: 8),
                                       Text(
                                         'Edit',
-                                        style: TextStyle(fontSize: 14),
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                        ),
                                       ),
                                     ],
                                   ),
                                 ),
-                                const PopupMenuItem(
+                                const PopupMenuDivider(height: 8),
+                                PopupMenuItem<String>(
                                   value: 'delete',
+                                  height: 30,
                                   child: Row(
                                     children: [
                                       Icon(
                                         Icons.delete,
-                                        size: 18,
-                                        color: Colors.red,
+                                        size: 15,
+                                        color: Colors.red.shade600,
                                       ),
-                                      SizedBox(width: 8),
+                                      const SizedBox(width: 8),
                                       Text(
                                         'Delete',
                                         style: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.red,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.red.shade600,
                                         ),
                                       ),
                                     ],
@@ -560,7 +600,8 @@ if (!isEditing)
                   ..._nonAcademicDistinctionsData.asMap().entries.map((entry) {
                     final int index = entry.key;
                     final Map<String, dynamic> distinction = entry.value;
-                    final bool isEditing = _editingNonAcademicDistinctionIndex == index;
+                    final bool isEditing =
+                        _editingNonAcademicDistinctionIndex == index;
 
                     return Container(
                       margin: const EdgeInsets.only(bottom: 8),
@@ -568,7 +609,6 @@ if (!isEditing)
                       decoration: const BoxDecoration(color: Colors.white),
                       child: Row(
                         children: [
-                          
                           // Expanded(
                           //   child: isEditing
                           //       ? _buildEditableFieldInline(
@@ -618,88 +658,195 @@ if (!isEditing)
                           //       const PopupMenuItem(value: 'delete', child: Row(children: [Icon(Icons.delete, size: 18, color: Colors.red), SizedBox(width: 8), Text('Delete', style: TextStyle(fontSize: 14, color: Colors.red))])),
                           //     ],
                           //   ),
-
                           Expanded(
-  child: isEditing
-      ? Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildEditableFieldInline(
-              '',
+                            child: isEditing
+                                ? Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      _buildEditableFieldInline(
+                                        '',
+                                        distinction['distinction'],
+                                        (value) =>
+                                            _nonAcademicDistinctionsData[index]['distinction'] =
+                                                value,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      // ✅ Save and Cancel buttons
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
+                                        children: [
+                                          TextButton(
+                                            onPressed: () => setState(() {
+                                              _editingNonAcademicDistinctionIndex =
+                                                  null;
+                                            }),
+                                            child: const Text(
+                                              'Cancel',
+                                              style: TextStyle(
+                                                color: Colors.red,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          ElevatedButton.icon(
+                                            onPressed: () async {
+                                              await _saveOtherInfo();
+                                              setState(
+                                                () =>
+                                                    _editingNonAcademicDistinctionIndex =
+                                                        null,
+                                              );
+                                            },
+                                            icon: const Icon(
+                                              Icons.save,
+                                              size: 16,
+                                            ),
+                                            label: const Text('Save'),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: const Color(
+                                                0xFF2C5F4F,
+                                              ),
+                                              foregroundColor: Colors.white,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 12,
+                                                    vertical: 6,
+                                                  ),
+                                              textStyle: const TextStyle(
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  )
+                                : _buildInfoFieldInline(
+                                    '',
                                     distinction['distinction'],
-                                    (value) => _nonAcademicDistinctionsData[index]['distinction'] = value,
                                   ),
-              const SizedBox(height: 8),
-            // ✅ Save and Cancel buttons
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: () => setState(() {
-                   _editingNonAcademicDistinctionIndex = null;
-                  }),
-                  child: const Text('Cancel', style: TextStyle(color: Colors.red)),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton.icon(
-                  onPressed: () async {
-                    await _saveOtherInfo();
-                    setState(() => _editingNonAcademicDistinctionIndex = null);
-                  },
-                  icon: const Icon(Icons.save, size: 16),
-                  label: const Text('Save'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2C5F4F),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    textStyle: const TextStyle(fontSize: 13),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        )
-      : _buildInfoFieldInline('', distinction['distinction']),
-),
-// ✅ Only show 3-dots when NOT editing
-if (!isEditing)
-  PopupMenuButton<String>(
-    icon: const Icon(Icons.more_horiz, size: 20, color: Colors.black54),
-    padding: EdgeInsets.zero,
-    onSelected: (value) async {
-      if (value == 'edit') {
-        setState(() => _editingNonAcademicDistinctionIndex = index);
-      } else if (value == 'delete') {
-        final recordId = distinction['_recordId']?.toString();
-        if (recordId == null) {
-          setState(() {
-            _nonAcademicDistinctionsData.removeAt(index);
-            if (_editingNonAcademicDistinctionIndex == index) _editingNonAcademicDistinctionIndex = null;
-          });
-          return;
-        }
-        final response = await _userService.deleteOtherInfo(widget.token, recordId);
-        if (response['success']) {
-          await _fetchOtherInfoData();
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Distinction deleted successfully'), backgroundColor: Colors.green),
-          );
-          }
-        } else {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to delete: ${response['error']}'), backgroundColor: Colors.red),
-          );
-          }
-        }
-      }
-    },
-    itemBuilder: (context) => [
-      const PopupMenuItem(value: 'edit', child: Row(children: [Icon(Icons.edit, size: 18, color: Colors.black87), SizedBox(width: 8), Text('Edit', style: TextStyle(fontSize: 14))])),
-      const PopupMenuItem(value: 'delete', child: Row(children: [Icon(Icons.delete, size: 18, color: Colors.red), SizedBox(width: 8), Text('Delete', style: TextStyle(fontSize: 14, color: Colors.red))])),
-    ],
-  ),
+                          ),
+                          // ✅ Only show 3-dots when NOT editing
+                          if (!isEditing)
+                            PopupMenuButton<String>(
+                              color: Colors.white,
+                              position: PopupMenuPosition.under,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                side: BorderSide(color: Colors.grey.shade200),
+                              ),
+                              icon: Container(
+                                padding: const EdgeInsets.all(6),
+                                child: const Icon(
+                                  Icons.more_horiz,
+                                  size: 18,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              padding: EdgeInsets.zero,
+                              onSelected: (value) async {
+                                if (value == 'edit') {
+                                  setState(
+                                    () => _editingNonAcademicDistinctionIndex =
+                                        index,
+                                  );
+                                } else if (value == 'delete') {
+                                  final recordId = distinction['_recordId']
+                                      ?.toString();
+                                  if (recordId == null) {
+                                    setState(() {
+                                      _nonAcademicDistinctionsData.removeAt(
+                                        index,
+                                      );
+                                      if (_editingNonAcademicDistinctionIndex ==
+                                          index) {
+                                        _editingNonAcademicDistinctionIndex =
+                                            null;
+                                      }
+                                    });
+                                    return;
+                                  }
+                                  final response = await _userService
+                                      .deleteOtherInfo(widget.token, recordId);
+                                  if (response['success']) {
+                                    await _fetchOtherInfoData();
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'Distinction deleted successfully',
+                                          ),
+                                          backgroundColor: Colors.green,
+                                        ),
+                                      );
+                                    }
+                                  } else {
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Failed to delete: ${response['error']}',
+                                          ),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                    }
+                                  }
+                                }
+                              },
+                              itemBuilder: (context) => [
+                                PopupMenuItem<String>(
+                                  value: 'edit',
+                                  height: 30,
+                                  child: Row(
+                                    children: const [
+                                      Icon(
+                                        Icons.edit,
+                                        size: 15,
+                                        color: Colors.black87,
+                                      ),
+                                      SizedBox(width: 8),
+                                      Text(
+                                        'Edit',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const PopupMenuDivider(height: 8),
+                                PopupMenuItem<String>(
+                                  value: 'delete',
+                                  height: 30,
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.delete,
+                                        size: 15,
+                                        color: Colors.red.shade600,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Delete',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.red.shade600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                         ],
                       ),
                     );
@@ -791,93 +938,192 @@ if (!isEditing)
                           //       const PopupMenuItem(value: 'delete', child: Row(children: [Icon(Icons.delete, size: 18, color: Colors.red), SizedBox(width: 8), Text('Delete', style: TextStyle(fontSize: 14, color: Colors.red))])),
                           //     ],
                           //   ),
-Expanded(
-  child: isEditing
-      ? Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-           _buildEditableFieldInline(
+                          Expanded(
+                            child: isEditing
+                                ? Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      _buildEditableFieldInline(
+                                        '',
+                                        membership['organization'],
+                                        (value) =>
+                                            _membershipData[index]['organization'] =
+                                                value,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      // ✅ Save and Cancel buttons
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
+                                        children: [
+                                          TextButton(
+                                            onPressed: () => setState(() {
+                                              _editingMembershipIndex = null;
+                                            }),
+                                            child: const Text(
+                                              'Cancel',
+                                              style: TextStyle(
+                                                color: Colors.red,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          ElevatedButton.icon(
+                                            onPressed: () async {
+                                              await _saveOtherInfo();
+                                              setState(
+                                                () => _editingMembershipIndex =
+                                                    null,
+                                              );
+                                            },
+                                            icon: const Icon(
+                                              Icons.save,
+                                              size: 16,
+                                            ),
+                                            label: const Text('Save'),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: const Color(
+                                                0xFF2C5F4F,
+                                              ),
+                                              foregroundColor: Colors.white,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 12,
+                                                    vertical: 6,
+                                                  ),
+                                              textStyle: const TextStyle(
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  )
+                                : _buildInfoFieldInline(
                                     '',
                                     membership['organization'],
-                                    (value) => _membershipData[index]['organization'] = value,
                                   ),
-            const SizedBox(height: 8),
-            // ✅ Save and Cancel buttons
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: () => setState(() {
-                    _editingMembershipIndex = null;
-                  }),
-                  child: const Text('Cancel', style: TextStyle(color: Colors.red)),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton.icon(
-                  onPressed: () async {
-                    await _saveOtherInfo();
-                    setState(() => _editingMembershipIndex = null);
-                  },
-                  icon: const Icon(Icons.save, size: 16),
-                  label: const Text('Save'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2C5F4F),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    textStyle: const TextStyle(fontSize: 13),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        )
-      : _buildInfoFieldInline('', membership['organization']),
-),
-// ✅ Only show 3-dots when NOT editing
-if (!isEditing)
-  PopupMenuButton<String>(
-    icon: const Icon(Icons.more_horiz, size: 20, color: Colors.black54),
-    padding: EdgeInsets.zero,
-    onSelected: (value) async {
-      if (value == 'edit') {
-        setState(() => _editingMembershipIndex = index);
-      } else if (value == 'delete') {
-        final recordId = membership['_recordId']?.toString();
-        if (recordId == null) {
-          setState(() {
-            _membershipData.removeAt(index);
-            if (_editingMembershipIndex == index) _editingMembershipIndex = null;
-          });
-          return;
-        }
-        final response = await _userService.deleteOtherInfo(widget.token, recordId);
-        if (response['success']) {
-          await _fetchOtherInfoData();
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Membership deleted successfully'), backgroundColor: Colors.green),
-          );
-          }
-        } else {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to delete: ${response['error']}'), backgroundColor: Colors.red),
-          );
-          }
-        }
-      }
-    },
-    itemBuilder: (context) => [
-      const PopupMenuItem(value: 'edit', child: Row(children: [Icon(Icons.edit, size: 18, color: Colors.black87), SizedBox(width: 8), Text('Edit', style: TextStyle(fontSize: 14))])),
-      const PopupMenuItem(value: 'delete', child: Row(children: [Icon(Icons.delete, size: 18, color: Colors.red), SizedBox(width: 8), Text('Delete', style: TextStyle(fontSize: 14, color: Colors.red))])),
-    ],
-  ),
-
-                          
+                          ),
+                          // ✅ Only show 3-dots when NOT editing
+                          if (!isEditing)
+                            PopupMenuButton<String>(
+                              color: Colors.white,
+                              position: PopupMenuPosition.under,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                side: BorderSide(color: Colors.grey.shade200),
+                              ),
+                              icon: Container(
+                                padding: const EdgeInsets.all(6),
+                                child: const Icon(
+                                  Icons.more_horiz,
+                                  size: 18,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              padding: EdgeInsets.zero,
+                              onSelected: (value) async {
+                                if (value == 'edit') {
+                                  setState(
+                                    () => _editingMembershipIndex = index,
+                                  );
+                                } else if (value == 'delete') {
+                                  final recordId = membership['_recordId']
+                                      ?.toString();
+                                  if (recordId == null) {
+                                    setState(() {
+                                      _membershipData.removeAt(index);
+                                      if (_editingMembershipIndex == index) {
+                                        _editingMembershipIndex = null;
+                                      }
+                                    });
+                                    return;
+                                  }
+                                  final response = await _userService
+                                      .deleteOtherInfo(widget.token, recordId);
+                                  if (response['success']) {
+                                    await _fetchOtherInfoData();
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'Membership deleted successfully',
+                                          ),
+                                          backgroundColor: Colors.green,
+                                        ),
+                                      );
+                                    }
+                                  } else {
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Failed to delete: ${response['error']}',
+                                          ),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                    }
+                                  }
+                                }
+                              },
+                              itemBuilder: (context) => [
+                                PopupMenuItem<String>(
+                                  value: 'edit',
+                                  height: 30,
+                                  child: Row(
+                                    children: const [
+                                      Icon(
+                                        Icons.edit,
+                                        size: 15,
+                                        color: Colors.black87,
+                                      ),
+                                      SizedBox(width: 8),
+                                      Text(
+                                        'Edit',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const PopupMenuDivider(height: 8),
+                                PopupMenuItem<String>(
+                                  value: 'delete',
+                                  height: 30,
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.delete,
+                                        size: 15,
+                                        color: Colors.red.shade600,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Delete',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.red.shade600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                         ],
                       ),
                     );
-                  }).toList(),
+                  })
                 ],
               ),
             ),
@@ -887,7 +1133,7 @@ if (!isEditing)
   }
 
   // Add this new method for the dialog
-  void _showAddOtherInfoDialog() {
+    void _showAddOtherInfoDialog() {
     final TextEditingController skillController = TextEditingController();
     final TextEditingController distinctionController = TextEditingController();
     final TextEditingController membershipController = TextEditingController();
@@ -897,147 +1143,168 @@ if (!isEditing)
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
-            // Check which fields have text
             bool hasSkillText = skillController.text.isNotEmpty;
             bool hasDistinctionText = distinctionController.text.isNotEmpty;
             bool hasMembershipText = membershipController.text.isNotEmpty;
 
-            return AlertDialog(
-              title: const Text(
-                'Add Other Information',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF2C5F4F),
-                ),
+            return Dialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              insetPadding: EdgeInsets.symmetric(
+                horizontal: MediaQuery.of(context).size.width * 0.025, // 2.5% each side = 95% width
+                vertical: 24,
               ),
-              content: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // ── Title ──
                     const Text(
-                      'Fill in only ONE field below:',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontStyle: FontStyle.italic,
-                        color: Colors.grey,
-                      ),
+                      'Add Other Information',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF2C5F4F)),
                     ),
                     const SizedBox(height: 16),
-                    
-                    // Special Skills Field
-                    TextField(
-                      controller: skillController,
-                      enabled: !hasDistinctionText && !hasMembershipText,
-                      decoration: InputDecoration(
-                        labelText: 'Special Skill/Hobby',
-                        labelStyle: TextStyle(
-                          fontSize: 14,
-                          color: (!hasDistinctionText && !hasMembershipText)
-                              ? Colors.black
-                              : Colors.grey,
-                        ),
-                        border: const OutlineInputBorder(),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
+
+                    // ── Scrollable content ──
+                    Flexible(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Fill in only ONE field below:',
+                              style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: Colors.grey),
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Special Skills Field
+                            TextField(
+                              controller: skillController,
+                              enabled: !hasDistinctionText && !hasMembershipText,
+                              cursorColor: Colors.black,
+                              decoration: InputDecoration(
+                                labelText: 'Special Skill/Hobby',
+                                labelStyle: TextStyle(
+                                  fontSize: 14,
+                                  color: (!hasDistinctionText && !hasMembershipText) ? Colors.black : Colors.grey,
+                                ),
+                                enabledBorder: const OutlineInputBorder(
+                                  borderSide: BorderSide(color: Color(0xFF2C5F4F), width: 1.5),
+                                ),
+                                focusedBorder: const OutlineInputBorder(
+                                  borderSide: BorderSide(color: Color(0xFF2C5F4F), width: 2.0),
+                                ),
+                                disabledBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.grey[300]!, width: 1.0),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              ),
+                              onChanged: (value) => setDialogState(() {}),
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Non-Academic Distinction Field
+                            TextField(
+                              controller: distinctionController,
+                              enabled: !hasSkillText && !hasMembershipText,
+                              cursorColor: Colors.black,
+                              decoration: InputDecoration(
+                                labelText: 'Non-Academic Distinction/Recognition',
+                                labelStyle: TextStyle(
+                                  fontSize: 14,
+                                  color: (!hasSkillText && !hasMembershipText) ? Colors.black : Colors.grey,
+                                ),
+                                enabledBorder: const OutlineInputBorder(
+                                  borderSide: BorderSide(color: Color(0xFF2C5F4F), width: 1.5),
+                                ),
+                                focusedBorder: const OutlineInputBorder(
+                                  borderSide: BorderSide(color: Color(0xFF2C5F4F), width: 2.0),
+                                ),
+                                disabledBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.grey[300]!, width: 1.0),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              ),
+                              onChanged: (value) => setDialogState(() {}),
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Membership Field
+                            TextField(
+                              controller: membershipController,
+                              enabled: !hasSkillText && !hasDistinctionText,
+                              cursorColor: Colors.black,
+                              decoration: InputDecoration(
+                                labelText: 'Membership in Association/Organization',
+                                labelStyle: TextStyle(
+                                  fontSize: 14,
+                                  color: (!hasSkillText && !hasDistinctionText) ? Colors.black : Colors.grey,
+                                ),
+                                enabledBorder: const OutlineInputBorder(
+                                  borderSide: BorderSide(color: Color(0xFF2C5F4F), width: 1.5),
+                                ),
+                                focusedBorder: const OutlineInputBorder(
+                                  borderSide: BorderSide(color: Color(0xFF2C5F4F), width: 2.0),
+                                ),
+                                disabledBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.grey[300]!, width: 1.0),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              ),
+                              onChanged: (value) => setDialogState(() {}),
+                            ),
+                          ],
                         ),
                       ),
-                      onChanged: (value) => setDialogState(() {}),
                     ),
-                    const SizedBox(height: 16),
-                    
-                    // Non-Academic Distinction Field
-                    TextField(
-                      controller: distinctionController,
-                      enabled: !hasSkillText && !hasMembershipText,
-                      decoration: InputDecoration(
-                        labelText: 'Non-Academic Distinction/Recognition',
-                        labelStyle: TextStyle(
-                          fontSize: 14,
-                          color: (!hasSkillText && !hasMembershipText)
-                              ? Colors.black
-                              : Colors.grey,
+
+                    const SizedBox(height: 20),
+
+                    // ── Action Buttons ──
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: const Text('Cancel', style: TextStyle(color: Colors.red)),
                         ),
-                        border: const OutlineInputBorder(),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2C5F4F),
+                            foregroundColor: Colors.white,
+                          ),
+                          onPressed: () {
+                            if (skillController.text.isNotEmpty) {
+                              setState(() {
+                                _specialSkillsData.add({'skill': skillController.text});
+                                _editingSpecialSkillIndex = null;
+                              });
+                            } else if (distinctionController.text.isNotEmpty) {
+                              setState(() {
+                                _nonAcademicDistinctionsData.add({'distinction': distinctionController.text});
+                                _editingNonAcademicDistinctionIndex = null;
+                              });
+                            } else if (membershipController.text.isNotEmpty) {
+                              setState(() {
+                                _membershipData.add({'organization': membershipController.text});
+                                _editingMembershipIndex = null;
+                              });
+                            }
+
+                            Navigator.of(context).pop();
+                            _saveOtherInfo();
+                          },
+                          child: const Text('Add'),
                         ),
-                      ),
-                      onChanged: (value) => setDialogState(() {}),
-                    ),
-                    const SizedBox(height: 16),
-                    
-                    // Membership Field
-                    TextField(
-                      controller: membershipController,
-                      enabled: !hasSkillText && !hasDistinctionText,
-                      decoration: InputDecoration(
-                        labelText: 'Membership in Association/Organization',
-                        labelStyle: TextStyle(
-                          fontSize: 14,
-                          color: (!hasSkillText && !hasDistinctionText)
-                              ? Colors.black
-                              : Colors.grey,
-                        ),
-                        border: const OutlineInputBorder(),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
-                        ),
-                      ),
-                      onChanged: (value) => setDialogState(() {}),
+                      ],
                     ),
                   ],
                 ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text(
-                    'Cancel',
-                    style: TextStyle(color: Colors.red),
-                  ),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    // Add to the appropriate list based on which field has text
-                    if (skillController.text.isNotEmpty) {
-                      setState(() {
-                        _specialSkillsData.add({'skill': skillController.text});
-                        _editingSpecialSkillIndex = null;
-                      });
-                    } else if (distinctionController.text.isNotEmpty) {
-                      setState(() {
-                        _nonAcademicDistinctionsData.add({
-                          'distinction': distinctionController.text
-                        });
-                        _editingNonAcademicDistinctionIndex =
-                            null;
-                      });
-                    } else if (membershipController.text.isNotEmpty) {
-                      setState(() {
-                        _membershipData.add({
-                          'organization': membershipController.text
-                        });
-                        _editingMembershipIndex = null;
-                      });
-                    }
-                    
-                    Navigator.of(context).pop();
-                    _saveOtherInfo();  
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2C5F4F),
-                    foregroundColor: Colors.white,
-                  ),
-                  child: const Text('Add'),
-                ),
-              ],
             );
           },
         );
@@ -1045,39 +1312,74 @@ if (!isEditing)
     );
   }
 
-
   // Widget _buildPersonReferenceCard() {
-
 
   Widget _buildInfoFieldInline(String label, dynamic value) {
     String displayValue = 'N/A';
-    if (value != null && value.toString().isNotEmpty && value.toString() != 'null') {
+    if (value != null &&
+        value.toString().isNotEmpty &&
+        value.toString() != 'null') {
       displayValue = value.toString();
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(fontSize: 15, color: Colors.grey[600], fontWeight: FontWeight.w500)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 15,
+            color: Colors.grey[600],
+            fontWeight: FontWeight.w500,
+          ),
+        ),
         const SizedBox(height: 1),
-        Text(displayValue, style: const TextStyle(fontSize: 15, color: Colors.black87, fontWeight: FontWeight.bold)),
+        Text(
+          displayValue,
+          style: const TextStyle(
+            fontSize: 15,
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildEditableFieldInline(String label, String? value, Function(String) onChanged) {
+  Widget _buildEditableFieldInline(
+    String label,
+    String? value,
+    Function(String) onChanged,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(fontSize: 10, color: Colors.grey[600], fontWeight: FontWeight.w500)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            color: Colors.grey[600],
+            fontWeight: FontWeight.w500,
+          ),
+        ),
         const SizedBox(height: 4),
         TextFormField(
           initialValue: value ?? '',
           onChanged: onChanged,
-          style: const TextStyle(fontSize: 13, color: Colors.black87, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            fontSize: 13,
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+          ),
           decoration: InputDecoration(
-            border: UnderlineInputBorder(borderSide: BorderSide(color: const Color(0xFF2C5F4F))),
-            enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey[300]!)),
-            focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF2C5F4F), width: 2)),
+            border: UnderlineInputBorder(
+              borderSide: BorderSide(color: const Color(0xFF2C5F4F)),
+            ),
+            enabledBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            focusedBorder: const UnderlineInputBorder(
+              borderSide: BorderSide(color: Color(0xFF2C5F4F), width: 2),
+            ),
             contentPadding: const EdgeInsets.symmetric(vertical: 4),
             isDense: true,
           ),
@@ -1086,11 +1388,8 @@ if (!isEditing)
     );
   }
 
- 
-  
   @override
   Widget build(BuildContext context) {
     return _buildOtherInformationCard();
   }
-
 }
