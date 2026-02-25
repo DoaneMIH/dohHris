@@ -131,7 +131,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
     );
   }
 
-  // ─── Helper to get employeeId string safely ──────────────────────────────
+  //Helper to get employeeId string safely
   String get _employeeId => _userDetails?['employee']?['id']?.toString() ?? '';
 
   @override
@@ -255,7 +255,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
     );
   }
 
-  // ─── Profile Header ───────────────────────────────────────────────────────
+  // Profile Header
   Widget _buildProfileHeader() {
     return Container(
       height: 295,
@@ -319,7 +319,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
     );
   }
 
-  // ─── Content Router ───────────────────────────────────────────────────────
+  //Content Router 
   Widget _buildSelectedContent() {
     switch (_selectedMenu) {
       case 'Personal Information':
@@ -347,7 +347,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
     }
   }
 
-  // ─── Personal Information Card (kept here — uses _userDetails directly) ──
+  //Personal Information Card (kept here — uses _userDetails directly)
   Widget _buildPersonalInformationCard() {
     return Container(
       padding: EdgeInsets.zero,
@@ -359,7 +359,6 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    // width: double.infinity,
                     decoration: const BoxDecoration(
                       color: Color(0xFF2C5F4F),
                       borderRadius: BorderRadius.only(topLeft: Radius.circular(8), topRight: Radius.circular(8)),
@@ -367,11 +366,10 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        
                         const Text('PERSONAL INFORMATION', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
                         Row(
                         children: [
-                          // if (!_isEditingPersonalInfo)
+      
                           IconButton(
                             icon: Icon(
                               Icons.edit,

@@ -8,8 +8,7 @@ class ApiConfig {
 
   // User Profile
   static const String getUserEndpoint = '/adminuser/get-profile';
-  static const String getEmployeeEndpoint = '/admin/get-user';
-  static const String updateUserEndpoint = '/adminuser/employees/service-records/update-record/';
+  static const String updateUserEndpoint = '/adminuser/update-employee/';
 
   // Daily Time Record
   static const String dtrEndpoint = '/adminuser/api/v1/dtr';

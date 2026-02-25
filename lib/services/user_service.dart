@@ -67,7 +67,7 @@ class UserService {
     print('🎫 Token: ${token.substring(0, 20)}...');
 
     final currentToken = TokenManager().token ?? token;
-    final url = '${ApiConfig.baseUrl}/adminuser/update-employee/$employeeId';
+    final url = '${ApiConfig.baseUrl}${ApiConfig.updateUserEndpoint}$employeeId';
 
     // STEP 1: Fetch current user data if not cached
     if (_cachedUserData == null ||
@@ -784,7 +784,7 @@ class UserService {
     }
   }
 
-  // ⭐ ADD LEARNING DEVELOPMENT - Sends JSON in 'learnDevDataReq' part with proper content type
+  // ADD LEARNING DEVELOPMENT 
   Future<Map<String, dynamic>> addLearningDevelopment(
     String token,
     String employeeId,
@@ -801,11 +801,9 @@ class UserService {
     print('🌐 [UserService] Full API URL: $url');
 
     try {
-      // ⭐ Backend expects multipart/form-data with 'learnDevDataReq' part containing JSON
       final request = http.MultipartRequest('POST', Uri.parse(url));
       request.headers['Authorization'] = 'Bearer $currentToken';
 
-      // ⭐ Create the learning object with snake_case for certificate_url
       final learningPayload = {
         'title': learningData['title']?.toString() ?? '',
         'attendedFrom': learningData['attendedFrom']?.toString() ?? '',
@@ -823,10 +821,9 @@ class UserService {
       print('📤 [UserService] JSON payload to send:');
       print('   $jsonString');
 
-      // ⭐ CRITICAL: Backend expects 'learnDevDataReq' for ADD (not 'addLearnDevRequest')
       request.files.add(
         http.MultipartFile.fromString(
-          'learnDevDataReq', // ⭐ CORRECT part name for ADD
+          'learnDevDataReq', 
           jsonString,
           contentType: http.MediaType('application', 'json'),
         ),
@@ -859,7 +856,6 @@ class UserService {
     }
   }
 
-  // ⭐ UPDATE LEARNING DEVELOPMENT - Sends JSON in 'updateLearnDevRequest' part
   Future<Map<String, dynamic>> updateLearningDevelopment(
     String token,
     String learningId,
@@ -886,7 +882,6 @@ class UserService {
         'certificate_url': learningData['certificate_url']?.toString() ?? '',
       };
 
-      // ⭐ Send as MultipartFile with application/json content type
       request.files.add(
         http.MultipartFile.fromString(
           'updateLearnDevRequest',
