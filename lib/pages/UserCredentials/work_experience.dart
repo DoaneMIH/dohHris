@@ -17,14 +17,13 @@ class WorkExperienceWidget extends StatefulWidget {
 }
 
 class _WorkExperienceWidgetState extends State<WorkExperienceWidget> {
-
   final _userService = UserService();
   bool _isWorkExperienceExpanded = true;
   List<Map<String, dynamic>> _workExperienceListData = [];
   List<Map<String, dynamic>> _workExperienceData = [];
   int? _editingWorkExperienceIndex;
   Set<int> _collapsedWorkExperienceIndexes = <int>{};
-  bool _isNewWorkExperience = false;
+
 
   @override
   void initState() {
@@ -58,9 +57,7 @@ class _WorkExperienceWidgetState extends State<WorkExperienceWidget> {
           _parseWorkExperienceData();
         });
 
-        print(
-          '✅ Loaded ${_workExperienceListData.length} work experience records',
-        );
+        print('✅ Loaded ${_workExperienceListData.length} work experience records');
       }
     } catch (e) {
       print('💥 Exception: $e');
@@ -95,6 +92,8 @@ class _WorkExperienceWidgetState extends State<WorkExperienceWidget> {
     print('💼 Parsed ${_workExperienceData.length} work experience records');
   }
 
+  // ─── Save / Delete UNCHANGED ───────────────────────────────────────────────
+
   Future<void> _saveWorkExperience(int index) async {
     final work = _workExperienceData[index];
 
@@ -111,7 +110,8 @@ class _WorkExperienceWidgetState extends State<WorkExperienceWidget> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
+      builder: (context) =>
+          const Center(child: CircularProgressIndicator(color: Colors.white)),
     );
 
     try {
@@ -179,6 +179,7 @@ class _WorkExperienceWidgetState extends State<WorkExperienceWidget> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
         title: const Text('Delete Work Experience'),
         content: const Text(
           'Are you sure you want to delete this work experience record?',
@@ -186,6 +187,7 @@ class _WorkExperienceWidgetState extends State<WorkExperienceWidget> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
+            style: TextButton.styleFrom(foregroundColor: Colors.black),
             child: const Text('Cancel'),
           ),
           TextButton(
@@ -202,7 +204,8 @@ class _WorkExperienceWidgetState extends State<WorkExperienceWidget> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator(color:Colors.white)),
+      builder: (context) =>
+          const Center(child: CircularProgressIndicator(color: Colors.white)),
     );
 
     try {
@@ -249,49 +252,142 @@ class _WorkExperienceWidgetState extends State<WorkExperienceWidget> {
     }
   }
 
- void _showAddWorkExperienceDialog() {
+  // ─── Shared helpers ────────────────────────────────────────────────────────
+
+  InputDecoration _fieldDecoration(String label, {bool isDate = false}) =>
+      InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(fontSize: 14, color: Colors.grey),
+        floatingLabelStyle: const TextStyle(fontSize: 16, color: Color(0xFF2C5F4F)),
+        filled: true,
+        fillColor: const Color(0xFFF5F5F5),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6),
+          borderSide: const BorderSide(color: Color(0xFF2C5F4F), width: 1.5),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        isDense: true,
+        suffixIcon: isDate
+            ? const Icon(Icons.calendar_today,
+                size: 16, color: Color(0xFF2C5F4F))
+            : null,
+      );
+
+  /// Dark green header for dialogs.
+  Widget _dialogHeader(String title) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: const BoxDecoration(
+        color: Color(0xFF2C5F4F),
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(12),
+          topRight: Radius.circular(12),
+        ),
+      ),
+      child: Row(
+        children: [
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Full-width Save / Cancel buttons.
+    Widget _dialogActions(BuildContext ctx, VoidCallback onSave, {String saveLabel = 'Save'}) {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton(
+            onPressed: onSave,
+            style: OutlinedButton.styleFrom(
+              backgroundColor: const Color(0xFF2C5F4F),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.save, size: 16),
+                SizedBox(width: 6),
+                Text('Save'),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.grey[200],
+              foregroundColor: Colors.black87,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              elevation: 0,
+            ),
+            child: const Text('Cancel'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<String?> _pickDate(BuildContext ctx, String current) async {
+    DateTime? initial;
+    if (current.isNotEmpty) initial = DateTime.tryParse(current);
+    final picked = await showDatePicker(
+      context: ctx,
+      initialDate: initial ?? DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime(2100),
+      builder: (ctx, child) => Theme(
+        data: Theme.of(ctx).copyWith(
+          colorScheme: const ColorScheme.light(
+            primary: Color(0xFF2C5F4F),
+            onPrimary: Colors.white,
+            onSurface: Colors.black,
+          ),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked == null) return null;
+    return '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+  }
+
+  // ─── Add Work Experience Dialog (UNCHANGED logic) ─────────────────────────
+
+  void _showAddWorkExperienceDialog() {
     final positionController = TextEditingController();
     final companyController = TextEditingController();
     final appointmentStatusController = TextEditingController();
     final dateFromController = TextEditingController();
     final dateToController = TextEditingController();
     String? selectedGovtService;
-
-    InputDecoration fieldDecoration(String label) => InputDecoration(
-          labelText: label,
-          labelStyle: const TextStyle(fontSize: 13, color: Colors.black),
-          enabledBorder: const OutlineInputBorder(
-            borderSide: BorderSide(color: Color(0xFF2C5F4F), width: 1.5),
-          ),
-          focusedBorder: const OutlineInputBorder(
-            borderSide: BorderSide(color: Color(0xFF2C5F4F), width: 2.0),
-          ),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        );
-
-    Future<String?> pickDate(BuildContext ctx, String current) async {
-      DateTime? initial;
-      if (current.isNotEmpty) initial = DateTime.tryParse(current);
-      final picked = await showDatePicker(
-        context: ctx,
-        initialDate: initial ?? DateTime.now(),
-        firstDate: DateTime(1900),
-        lastDate: DateTime(2100),
-        builder: (ctx, child) => Theme(
-          data: Theme.of(ctx).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF2C5F4F),
-              onPrimary: Colors.white,
-              onSurface: Colors.black,
-            ),
-          ),
-          child: child!,
-        ),
-      );
-      if (picked == null) return null;
-      return '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
-    }
 
     showDialog(
       context: context,
@@ -300,39 +396,219 @@ class _WorkExperienceWidgetState extends State<WorkExperienceWidget> {
           builder: (ctx, setDialogState) {
             return Dialog(
               backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
               insetPadding: EdgeInsets.symmetric(
-                horizontal: MediaQuery.of(ctx).size.width * 0.025, // 2.5% each side = 95% width
+                horizontal: MediaQuery.of(ctx).size.width * 0.025,
                 vertical: 24,
               ),
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // ── Title ──
-                    const Text(
-                      'Add Work Experience',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF2C5F4F),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _dialogHeader('Add Work Experience'),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                            TextField(
+                              controller: positionController,
+                              cursorColor: const Color(0xFF2C5F4F),
+                              decoration: _fieldDecoration('Position Title *'),
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: companyController,
+                              cursorColor: const Color(0xFF2C5F4F),
+                              decoration: _fieldDecoration(
+                                  'Department / Agency / Office / Company'),
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    controller: dateFromController,
+                                    readOnly: true,
+                                    cursorColor: const Color(0xFF2C5F4F),
+                                    decoration:
+                                        _fieldDecoration('From', isDate: true),
+                                    onTap: () async {
+                                      final d = await _pickDate(
+                                          ctx, dateFromController.text);
+                                      if (d != null) {
+                                        setDialogState(
+                                            () => dateFromController.text = d);
+                                      }
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: TextField(
+                                    controller: dateToController,
+                                    readOnly: true,
+                                    cursorColor: const Color(0xFF2C5F4F),
+                                    decoration:
+                                        _fieldDecoration('To', isDate: true),
+                                    onTap: () async {
+                                      final d = await _pickDate(
+                                          ctx, dateToController.text);
+                                      if (d != null) {
+                                        setDialogState(
+                                            () => dateToController.text = d);
+                                      }
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: appointmentStatusController,
+                              cursorColor: const Color(0xFF2C5F4F),
+                              decoration:
+                                  _fieldDecoration('Status of Appointment'),
+                            ),
+                            const SizedBox(height: 12),
+                            Theme(
+                              data: Theme.of(context).copyWith(
+                                popupMenuTheme: PopupMenuThemeData(
+                                  color: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                    side: BorderSide(
+                                        color: Colors.grey.shade200),
+                                  ),
+                                  elevation: 4,
+                                ),
+                              ),
+                              child: DropdownButtonFormField<String>(
+                                value: selectedGovtService,
+                                isExpanded: true,
+                                dropdownColor: Colors.white,
+                                borderRadius: BorderRadius.circular(14),
+                                decoration:
+                                    _fieldDecoration('Government Service'),
+                                items: ['Yes', 'No']
+                                    .map((v) => DropdownMenuItem(
+                                          value: v,
+                                          child: Text(v,
+                                              style: const TextStyle(
+                                                  fontSize: 13)),
+                                        ))
+                                    .toList(),
+                                onChanged: (v) => setDialogState(
+                                    () => selectedGovtService = v),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 16),
 
-                    // ── Scrollable content ──
-                    Flexible(
-                      child: SingleChildScrollView(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
+                 
+
+                    // ── Buttons ──
+                    Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      child: _dialogActions(ctx, () {
+                              if (positionController.text.trim().isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content:
+                                        Text('Please enter position title'),
+                                    backgroundColor: Colors.orange,
+                                  ),
+                                );
+                                return;
+                              }
+                      
+                              final newEntry = {
+                                'position': positionController.text.trim(),
+                                'company': companyController.text.trim(),
+                                'dateFrom': dateFromController.text,
+                                'dateTo': dateToController.text,
+                                'appointmentStatus':
+                                    appointmentStatusController.text.trim(),
+                                'govtService': selectedGovtService ?? 'No',
+                              };
+                      
+                              Navigator.of(ctx).pop();
+                      
+                              setState(() {
+                                _workExperienceData.insert(0, newEntry);
+                                _collapsedWorkExperienceIndexes =
+                                    _collapsedWorkExperienceIndexes
+                                        .map((i) => i + 1)
+                                        .toSet();
+                                _editingWorkExperienceIndex = null;
+                              });
+                      
+                              _saveWorkExperience(0);
+                            }, saveLabel: 'Add'),
+                    ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // ─── NEW: Edit Work Experience Dialog ─────────────────────────────────────
+  /// Same UI as Add, pre-filled with existing values.
+  void _showEditWorkExperienceDialog(int index) {
+    final work = _workExperienceData[index];
+
+    final positionController =
+        TextEditingController(text: work['position'] ?? '');
+    final companyController =
+        TextEditingController(text: work['company'] ?? '');
+    final appointmentStatusController =
+        TextEditingController(text: work['appointmentStatus'] ?? '');
+    final dateFromController =
+        TextEditingController(text: work['dateFrom'] ?? '');
+    final dateToController =
+        TextEditingController(text: work['dateTo'] ?? '');
+
+    // Normalize govtService to 'Yes' or 'No' for the dropdown
+    final rawGovt = work['govtService']?.toString().toUpperCase() ?? '';
+    String? selectedGovtService =
+        (rawGovt == 'YES' || rawGovt == 'TRUE') ? 'Yes' : 'No';
+
+    showDialog(
+      context: context,
+      builder: (BuildContext ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return Dialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              insetPadding: EdgeInsets.symmetric(
+                horizontal: MediaQuery.of(ctx).size.width * 0.025,
+                vertical: 24,
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _dialogHeader('Edit Work Experience'),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
                             // Position Title
                             TextField(
                               controller: positionController,
                               cursorColor: const Color(0xFF2C5F4F),
-                              decoration: fieldDecoration('Position Title *'),
+                              decoration: _fieldDecoration('Position Title *'),
                             ),
                             const SizedBox(height: 12),
 
@@ -340,7 +616,8 @@ class _WorkExperienceWidgetState extends State<WorkExperienceWidget> {
                             TextField(
                               controller: companyController,
                               cursorColor: const Color(0xFF2C5F4F),
-                              decoration: fieldDecoration('Department / Agency / Office / Company'),
+                              decoration: _fieldDecoration(
+                                  'Department / Agency / Office / Company'),
                             ),
                             const SizedBox(height: 12),
 
@@ -352,12 +629,15 @@ class _WorkExperienceWidgetState extends State<WorkExperienceWidget> {
                                     controller: dateFromController,
                                     readOnly: true,
                                     cursorColor: const Color(0xFF2C5F4F),
-                                    decoration: fieldDecoration('From').copyWith(
-                                      suffixIcon: const Icon(Icons.calendar_today, size: 16, color: Color(0xFF2C5F4F)),
-                                    ),
+                                    decoration:
+                                        _fieldDecoration('From', isDate: true),
                                     onTap: () async {
-                                      final d = await pickDate(ctx, dateFromController.text);
-                                      if (d != null) setDialogState(() => dateFromController.text = d);
+                                      final d = await _pickDate(
+                                          ctx, dateFromController.text);
+                                      if (d != null) {
+                                        setDialogState(
+                                            () => dateFromController.text = d);
+                                      }
                                     },
                                   ),
                                 ),
@@ -367,12 +647,15 @@ class _WorkExperienceWidgetState extends State<WorkExperienceWidget> {
                                     controller: dateToController,
                                     readOnly: true,
                                     cursorColor: const Color(0xFF2C5F4F),
-                                    decoration: fieldDecoration('To').copyWith(
-                                      suffixIcon: const Icon(Icons.calendar_today, size: 16, color: Color(0xFF2C5F4F)),
-                                    ),
+                                    decoration:
+                                        _fieldDecoration('To', isDate: true),
                                     onTap: () async {
-                                      final d = await pickDate(ctx, dateToController.text);
-                                      if (d != null) setDialogState(() => dateToController.text = d);
+                                      final d = await _pickDate(
+                                          ctx, dateToController.text);
+                                      if (d != null) {
+                                        setDialogState(
+                                            () => dateToController.text = d);
+                                      }
                                     },
                                   ),
                                 ),
@@ -384,18 +667,20 @@ class _WorkExperienceWidgetState extends State<WorkExperienceWidget> {
                             TextField(
                               controller: appointmentStatusController,
                               cursorColor: const Color(0xFF2C5F4F),
-                              decoration: fieldDecoration('Status of Appointment'),
+                              decoration:
+                                  _fieldDecoration('Status of Appointment'),
                             ),
                             const SizedBox(height: 12),
 
                             // Government Service dropdown
                             Theme(
-                              data: Theme.of(context).copyWith(
+                              data: Theme.of(ctx).copyWith(
                                 popupMenuTheme: PopupMenuThemeData(
                                   color: Colors.white,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(14),
-                                    side: BorderSide(color: Colors.grey.shade200),
+                                    side: BorderSide(
+                                        color: Colors.grey.shade200),
                                   ),
                                   elevation: 4,
                                 ),
@@ -405,14 +690,18 @@ class _WorkExperienceWidgetState extends State<WorkExperienceWidget> {
                                 isExpanded: true,
                                 dropdownColor: Colors.white,
                                 borderRadius: BorderRadius.circular(14),
-                                decoration: fieldDecoration('Government Service'),
+                                decoration:
+                                    _fieldDecoration('Government Service'),
                                 items: ['Yes', 'No']
                                     .map((v) => DropdownMenuItem(
                                           value: v,
-                                          child: Text(v, style: const TextStyle(fontSize: 13)),
+                                          child: Text(v,
+                                              style: const TextStyle(
+                                                  fontSize: 13)),
                                         ))
                                     .toList(),
-                                onChanged: (v) => setDialogState(() => selectedGovtService = v),
+                                onChanged: (v) => setDialogState(
+                                    () => selectedGovtService = v),
                               ),
                             ),
                           ],
@@ -420,62 +709,45 @@ class _WorkExperienceWidgetState extends State<WorkExperienceWidget> {
                       ),
                     ),
 
-                    const SizedBox(height: 20),
+                 
 
-                    // ── Action Buttons ──
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton(
-                          onPressed: () => Navigator.of(ctx).pop(),
-                          child: const Text('Cancel', style: TextStyle(color: Colors.red)),
-                        ),
-                        const SizedBox(width: 8),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2C5F4F),
-                            foregroundColor: Colors.white,
-                          ),
-                          onPressed: () {
-                            if (positionController.text.trim().isEmpty) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Please enter position title'),
-                                  backgroundColor: Colors.orange,
-                                ),
-                              );
-                              return;
-                            }
-
-                            final newEntry = {
-                              'position': positionController.text.trim(),
-                              'company': companyController.text.trim(),
-                              'dateFrom': dateFromController.text,
-                              'dateTo': dateToController.text,
-                              'appointmentStatus': appointmentStatusController.text.trim(),
-                              'govtService': selectedGovtService ?? 'No',
-                            };
-
-                            Navigator.of(ctx).pop();
-
-                            setState(() {
-                              _workExperienceData.insert(0, newEntry);
-                              _collapsedWorkExperienceIndexes =
-                                  _collapsedWorkExperienceIndexes
-                                      .map((i) => i + 1)
-                                      .toSet();
-                              _editingWorkExperienceIndex = null;
-                              _isNewWorkExperience = false;
-                            });
-
-                            _saveWorkExperience(0);
-                          },
-                          child: const Text('Add'),
-                        ),
-                      ],
+                    // ── Buttons ──
+                    Padding(
+                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      child: _dialogActions(ctx, () {
+                              if (positionController.text.trim().isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content:
+                                        Text('Please enter position title'),
+                                    backgroundColor: Colors.orange,
+                                  ),
+                                );
+                                return;
+                              }
+                      
+                              // Write updated values back to _workExperienceData
+                              setState(() {
+                                _workExperienceData[index]['position'] =
+                                    positionController.text.trim();
+                                _workExperienceData[index]['company'] =
+                                    companyController.text.trim();
+                                _workExperienceData[index]['dateFrom'] =
+                                    dateFromController.text;
+                                _workExperienceData[index]['dateTo'] =
+                                    dateToController.text;
+                                _workExperienceData[index]
+                                    ['appointmentStatus'] =
+                                    appointmentStatusController.text.trim();
+                                _workExperienceData[index]['govtService'] =
+                                    selectedGovtService ?? 'No';
+                              });
+                      
+                              Navigator.of(ctx).pop();
+                              _saveWorkExperience(index); // existing save flow
+                            }),
                     ),
-                  ],
-                ),
+                ],
               ),
             );
           },
@@ -483,6 +755,8 @@ class _WorkExperienceWidgetState extends State<WorkExperienceWidget> {
       },
     );
   }
+
+  // ─── Card ──────────────────────────────────────────────────────────────────
 
   Widget _buildWorkExperienceCard() {
     return Container(
@@ -518,6 +792,7 @@ class _WorkExperienceWidgetState extends State<WorkExperienceWidget> {
               ],
             ),
           ),
+
           // Content
           if (_isWorkExperienceExpanded)
             Container(
@@ -545,8 +820,6 @@ class _WorkExperienceWidgetState extends State<WorkExperienceWidget> {
                           ..._workExperienceData.asMap().entries.map((entry) {
                             int index = entry.key;
                             Map<String, dynamic> work = entry.value;
-                            bool isEditing =
-                                _editingWorkExperienceIndex == index;
                             bool isCollapsed =
                                 _collapsedWorkExperienceIndexes.contains(index);
 
@@ -560,121 +833,122 @@ class _WorkExperienceWidgetState extends State<WorkExperienceWidget> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  // ── Title row ──
                                   Row(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.center,
                                     children: [
+                                      // Tappable title — toggles collapse
                                       Expanded(
-                                        child: isEditing
-                                            ? _buildEditableFieldInline(
-                                                'Position Title',
-                                                work['position'], (value) {
-                                                _workExperienceData[index]
-                                                    ['position'] = value;
-                                              })
-                                            : Text(work['position'] ?? 'N/A',
-                                                style: const TextStyle(
-                                                    fontSize: 15,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Colors.black)),
+                                        child: GestureDetector(
+                                          onTap: () => setState(() {
+                                            if (isCollapsed) {
+                                              _collapsedWorkExperienceIndexes
+                                                  .remove(index);
+                                            } else {
+                                              _collapsedWorkExperienceIndexes
+                                                  .add(index);
+                                            }
+                                          }),
+                                          child: Text(
+                                            work['position'] ?? 'N/A',
+                                            style: const TextStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.black),
+                                          ),
+                                        ),
                                       ),
-                                      if (!isEditing)
-                                        GestureDetector(
-                                          onTap: () {
-                                            if (!isEditing) {
-                                              setState(() {
-                                                if (isCollapsed) {
-                                                  _collapsedWorkExperienceIndexes
-                                                      .remove(index);
-                                                } else {
-                                                  _collapsedWorkExperienceIndexes
-                                                      .add(index);
-                                                }
-                                              });
-                                            }
-                                          },
-                                          child: Icon(
-                                              isCollapsed
-                                                  ? Icons.expand_more
-                                                  : Icons.expand_less,
-                                              size: 20,
-                                              color: Colors.black),
+
+                                      // Collapse/expand arrow
+                                      GestureDetector(
+                                        onTap: () => setState(() {
+                                          if (isCollapsed) {
+                                            _collapsedWorkExperienceIndexes
+                                                .remove(index);
+                                          } else {
+                                            _collapsedWorkExperienceIndexes
+                                                .add(index);
+                                          }
+                                        }),
+                                        child: Icon(
+                                          isCollapsed
+                                              ? Icons.expand_more
+                                              : Icons.expand_less,
+                                          size: 20,
+                                          color: Colors.black,
                                         ),
+                                      ),
                                       const SizedBox(width: 4),
-                                      if (!isEditing)
-                                        PopupMenuButton<String>(
-                                          color: Colors.white,
-                                          position: PopupMenuPosition.under,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(14),
-                                            side: BorderSide(
-                                                color: Colors.grey.shade200),
-                                          ),
-                                          icon: Container(
-                                            padding: const EdgeInsets.all(6),
-                                            child: const Icon(Icons.more_horiz,
-                                                size: 18,
-                                                color: Colors.black87),
-                                          ),
-                                          padding: EdgeInsets.zero,
-                                          onSelected: (value) {
-                                            if (value == 'edit') {
-                                              setState(() {
-                                                _collapsedWorkExperienceIndexes
-                                                    .remove(index);
-                                                _editingWorkExperienceIndex =
-                                                    index;
-                                                _isNewWorkExperience = false;
-                                              });
-                                            } else if (value == 'delete') {
-                                              _deleteWorkExperience(index);
-                                            }
-                                          },
-                                          itemBuilder: (context) => [
-                                            PopupMenuItem<String>(
-                                              value: 'edit',
-                                              height: 30,
-                                              child: Row(
-                                                children: const [
-                                                  Icon(Icons.edit,
-                                                      size: 15,
-                                                      color: Colors.black87),
-                                                  SizedBox(width: 8),
-                                                  Text('Edit',
-                                                      style: TextStyle(
-                                                          fontSize: 12,
-                                                          fontWeight:
-                                                              FontWeight.w500)),
-                                                ],
-                                              ),
-                                            ),
-                                            const PopupMenuDivider(height: 8),
-                                            PopupMenuItem<String>(
-                                              value: 'delete',
-                                              height: 30,
-                                              child: Row(
-                                                children: [
-                                                  Icon(Icons.delete,
-                                                      size: 15,
-                                                      color:
-                                                          Colors.red.shade600),
-                                                  const SizedBox(width: 8),
-                                                  Text('Delete',
-                                                      style: TextStyle(
-                                                          fontSize: 12,
-                                                          fontWeight:
-                                                              FontWeight.w500,
-                                                          color: Colors
-                                                              .red.shade600)),
-                                                ],
-                                              ),
-                                            ),
-                                          ],
+
+                                      // 3-dot menu — Edit opens dialog
+                                      PopupMenuButton<String>(
+                                        color: Colors.white,
+                                        position: PopupMenuPosition.under,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(14),
+                                          side: BorderSide(
+                                              color: Colors.grey.shade200),
                                         ),
+                                        icon: Container(
+                                          padding: const EdgeInsets.all(6),
+                                          child: const Icon(Icons.more_horiz,
+                                              size: 18, color: Colors.black87),
+                                        ),
+                                        padding: EdgeInsets.zero,
+                                        onSelected: (value) {
+                                          if (value == 'edit') {
+                                            _showEditWorkExperienceDialog(
+                                                index); // ← dialog
+                                          } else if (value == 'delete') {
+                                            _deleteWorkExperience(index);
+                                          }
+                                        },
+                                        itemBuilder: (context) => [
+                                          PopupMenuItem<String>(
+                                            value: 'edit',
+                                            height: 30,
+                                            child: Row(
+                                              children: const [
+                                                Icon(Icons.edit,
+                                                    size: 15,
+                                                    color: Colors.black87),
+                                                SizedBox(width: 8),
+                                                Text('Edit',
+                                                    style: TextStyle(
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.w500)),
+                                              ],
+                                            ),
+                                          ),
+                                          const PopupMenuDivider(height: 8),
+                                          PopupMenuItem<String>(
+                                            value: 'delete',
+                                            height: 30,
+                                            child: Row(
+                                              children: [
+                                                Icon(Icons.delete,
+                                                    size: 15,
+                                                    color: Colors.red.shade600),
+                                                const SizedBox(width: 8),
+                                                Text('Delete',
+                                                    style: TextStyle(
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.w500,
+                                                        color: Colors
+                                                            .red.shade600)),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ],
                                   ),
 
+                                  // ── Collapsible display-only fields ──
                                   if (!isCollapsed) ...[
                                     const SizedBox(height: 12),
                                     Padding(
@@ -689,213 +963,28 @@ class _WorkExperienceWidgetState extends State<WorkExperienceWidget> {
                                                 CrossAxisAlignment.start,
                                             children: [
                                               Expanded(
-                                                child: isEditing
-                                                    ? _buildDateFieldInline(
-                                                        'From',
-                                                        work['dateFrom'],
-                                                        (value) {
-                                                        _workExperienceData[
-                                                                index]
-                                                            ['dateFrom'] =
-                                                            value;
-                                                      })
-                                                    : _buildInfoFieldInline(
-                                                        'From',
-                                                        work['dateFrom']),
+                                                child: _buildInfoFieldInline(
+                                                    'From', work['dateFrom']),
                                               ),
                                               const SizedBox(width: 12),
                                               Expanded(
-                                                child: isEditing
-                                                    ? _buildDateFieldInline(
-                                                        'To', work['dateTo'],
-                                                        (value) {
-                                                        _workExperienceData[
-                                                                index]
-                                                            ['dateTo'] = value;
-                                                      })
-                                                    : _buildInfoFieldInline(
-                                                        'To', work['dateTo']),
+                                                child: _buildInfoFieldInline(
+                                                    'To', work['dateTo']),
                                               ),
                                             ],
                                           ),
                                           const SizedBox(height: 12),
-                                          isEditing
-                                              ? _buildEditableFieldInline(
-                                                  'Department / Agency / Office / Company',
-                                                  work['company'], (value) {
-                                                  _workExperienceData[index]
-                                                      ['company'] = value;
-                                                })
-                                              : _buildInfoFieldInline(
-                                                  'Department / Agency / Office / Company',
-                                                  work['company']),
+                                          _buildInfoFieldInline(
+                                              'Department / Agency / Office / Company',
+                                              work['company']),
                                           const SizedBox(height: 12),
-                                          isEditing
-                                              ? _buildEditableFieldInline(
-                                                  'Status of Appointment',
-                                                  work['appointmentStatus'],
-                                                  (value) {
-                                                  _workExperienceData[index][
-                                                          'appointmentStatus'] =
-                                                      value;
-                                                })
-                                              : _buildInfoFieldInline(
-                                                  'Status of Appointment',
-                                                  work['appointmentStatus']),
+                                          _buildInfoFieldInline(
+                                              'Status of Appointment',
+                                              work['appointmentStatus']),
                                           const SizedBox(height: 12),
-                                          isEditing
-                                              ? Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(
-                                                      'Government Service',
-                                                      style: TextStyle(
-                                                          fontSize: 10,
-                                                          color:
-                                                              Colors.grey[600],
-                                                          fontWeight:
-                                                              FontWeight.w500),
-                                                    ),
-                                                    const SizedBox(height: 4),
-                                                    Theme(
-                                                      data: Theme.of(context)
-                                                          .copyWith(
-                                                        popupMenuTheme:
-                                                            PopupMenuThemeData(
-                                                          color: Colors.white,
-                                                          shape:
-                                                              RoundedRectangleBorder(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        14),
-                                                            side: BorderSide(
-                                                                color: Colors
-                                                                    .grey
-                                                                    .shade200),
-                                                          ),
-                                                          elevation: 4,
-                                                        ),
-                                                      ),
-                                                      child:
-                                                          DropdownButtonFormField<
-                                                              String>(
-                                                        value: work['govtService']
-                                                                        ?.toString()
-                                                                        .toUpperCase() ==
-                                                                    'TRUE' ||
-                                                                work['govtService']
-                                                                        ?.toString()
-                                                                        .toUpperCase() ==
-                                                                    'YES'
-                                                            ? 'Yes'
-                                                            : work['govtService']
-                                                                            ?.toString()
-                                                                            .toUpperCase() ==
-                                                                        'FALSE' ||
-                                                                    work['govtService']
-                                                                            ?.toString()
-                                                                            .toUpperCase() ==
-                                                                        'NO'
-                                                                ? 'No'
-                                                                : null,
-                                                        dropdownColor:
-                                                            Colors.white,
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(14),
-                                                        decoration:
-                                                            const InputDecoration(
-                                                          contentPadding:
-                                                              EdgeInsets
-                                                                  .symmetric(
-                                                                      horizontal:
-                                                                          8,
-                                                                      vertical:
-                                                                          4),
-                                                          border:
-                                                              UnderlineInputBorder(),
-                                                        ),
-                                                        items: ['Yes', 'No']
-                                                            .map((value) =>
-                                                                DropdownMenuItem(
-                                                                  value: value,
-                                                                  child: Text(
-                                                                      value,
-                                                                      style: const TextStyle(
-                                                                          fontSize:
-                                                                              13)),
-                                                                ))
-                                                            .toList(),
-                                                        onChanged: (value) {
-                                                          setState(() {
-                                                            _workExperienceData[
-                                                                        index][
-                                                                    'govtService'] =
-                                                                value;
-                                                          });
-                                                        },
-                                                      ),
-                                                    ),
-                                                  ],
-                                                )
-                                              : _buildInfoFieldInline(
-                                                  'Government Service',
-                                                  work['govtService']),
-                                          if (isEditing) ...[
-                                            const SizedBox(height: 12),
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.end,
-                                              children: [
-                                                TextButton(
-                                                  onPressed: () =>
-                                                      setState(() {
-                                                    if (_isNewWorkExperience) {
-                                                      _workExperienceData
-                                                          .removeAt(index);
-                                                      _collapsedWorkExperienceIndexes =
-                                                          _collapsedWorkExperienceIndexes
-                                                              .where(
-                                                                  (i) => i > 0)
-                                                              .map((i) => i - 1)
-                                                              .toSet();
-                                                    }
-                                                    _editingWorkExperienceIndex =
-                                                        null;
-                                                    _isNewWorkExperience =
-                                                        false;
-                                                  }),
-                                                  child: const Text('Cancel',
-                                                      style: TextStyle(
-                                                          color: Colors.red)),
-                                                ),
-                                                const SizedBox(width: 8),
-                                                ElevatedButton.icon(
-                                                  onPressed: () =>
-                                                      _saveWorkExperience(
-                                                          index),
-                                                  icon: const Icon(Icons.save,
-                                                      size: 16),
-                                                  label: const Text('Save'),
-                                                  style:
-                                                      ElevatedButton.styleFrom(
-                                                    backgroundColor:
-                                                        const Color(0xFF2C5F4F),
-                                                    foregroundColor:
-                                                        Colors.white,
-                                                    padding:
-                                                        const EdgeInsets.symmetric(
-                                                            horizontal: 12,
-                                                            vertical: 6),
-                                                    textStyle: const TextStyle(
-                                                        fontSize: 13),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ],
+                                          _buildInfoFieldInline(
+                                              'Government Service',
+                                              work['govtService']),
                                         ],
                                       ),
                                     ),
@@ -912,6 +1001,8 @@ class _WorkExperienceWidgetState extends State<WorkExperienceWidget> {
       ),
     );
   }
+
+  // ─── Field display helpers (UNCHANGED) ────────────────────────────────────
 
   Widget _buildInfoFieldInline(String label, dynamic value) {
     String displayValue = 'N/A';
@@ -938,99 +1029,7 @@ class _WorkExperienceWidgetState extends State<WorkExperienceWidget> {
     );
   }
 
-  Widget _buildEditableFieldInline(
-      String label, String? value, Function(String) onChanged) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label,
-            style: TextStyle(
-                fontSize: 10,
-                color: Colors.grey[600],
-                fontWeight: FontWeight.w500)),
-        const SizedBox(height: 4),
-        TextFormField(
-          initialValue: value ?? '',
-          onChanged: onChanged,
-          style: const TextStyle(
-              fontSize: 13,
-              color: Colors.black87,
-              fontWeight: FontWeight.bold),
-          decoration: InputDecoration(
-            border: UnderlineInputBorder(
-                borderSide: BorderSide(color: const Color(0xFF2C5F4F))),
-            enabledBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: Colors.grey[300]!)),
-            focusedBorder: const UnderlineInputBorder(
-                borderSide: BorderSide(color: Color(0xFF2C5F4F), width: 2)),
-            contentPadding: const EdgeInsets.symmetric(vertical: 4),
-            isDense: true,
-          ),
-        ),
-      ],
-    );
-  }
 
-  Widget _buildDateFieldInline(
-      String label, String? value, Function(String) onChanged) {
-    final controller = TextEditingController(text: value ?? '');
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label,
-            style: TextStyle(
-                fontSize: 10,
-                color: Colors.grey[600],
-                fontWeight: FontWeight.w500)),
-        GestureDetector(
-          onTap: () async {
-            DateTime? initialDate;
-            if (value != null && value.isNotEmpty) {
-              try {
-                initialDate = DateTime.tryParse(value);
-              } catch (e) {}
-            }
-            final DateTime? pickedDate = await showDatePicker(
-              context: context,
-              initialDate: initialDate ?? DateTime.now(),
-              firstDate: DateTime(1900),
-              lastDate: DateTime(2100),
-              builder: (context, child) => Theme(
-                data: Theme.of(context).copyWith(
-                    colorScheme: const ColorScheme.light(
-                        primary: Color(0xFF2C5F4F),
-                        onPrimary: Colors.white,
-                        onSurface: Colors.black)),
-                child: child!,
-              ),
-            );
-            if (pickedDate != null) {
-              final formatted =
-                  '${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}';
-              controller.text = formatted;
-              onChanged(formatted);
-            }
-          },
-          child: AbsorbPointer(
-            child: TextFormField(
-              controller: controller,
-              readOnly: true,
-              style: const TextStyle(
-                  fontSize: 13,
-                  color: Colors.black87,
-                  fontWeight: FontWeight.bold),
-              decoration: const InputDecoration(
-                suffixIcon: Icon(Icons.calendar_today,
-                    size: 20, color: Color(0xFF2C5F4F)),
-                contentPadding: EdgeInsets.symmetric(vertical: 4),
-                isDense: true,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
 
   @override
   Widget build(BuildContext context) {

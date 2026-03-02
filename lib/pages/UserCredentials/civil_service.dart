@@ -23,7 +23,6 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
   int? _editingCivilServiceIndex;
   Set<int> _collapsedCivilServiceIndexes = <int>{};
   List<Map<String, dynamic>> _civilServiceEligibilityListData = [];
-  bool _isNewCivil = false;
 
   @override
   void initState() {
@@ -33,33 +32,26 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
 
   Future<void> _fetchCivilServiceEligibilityData() async {
     print('\n📜 [UserDetailsPage] FETCHING CIVIL SERVICE ELIGIBILITY');
-
     final employeeId = widget.employeeId;
     if (employeeId.isEmpty) {
       print('❌ No employee ID, skipping civil service eligibility fetch');
       return;
     }
-
     try {
       final response = await _userService.getCivilServiceEligibilityDetails(
         widget.token,
         employeeId.toString(),
       );
-
       if (response['success']) {
         final List<dynamic> eligibilityList =
             response['data']['eligibilityList'] ?? [];
-
         setState(() {
           _civilServiceEligibilityListData = eligibilityList
               .map((item) => Map<String, dynamic>.from(item))
               .toList();
           _parseCivilServiceEligibilityData();
         });
-
-        print(
-          '✅ Loaded ${_civilServiceEligibilityListData.length} civil service eligibility records',
-        );
+        print('✅ Loaded ${_civilServiceEligibilityListData.length} civil service eligibility records');
       }
     } catch (e) {
       print('💥 Exception: $e');
@@ -75,21 +67,19 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
         'examPlace': eligibility['examPlace'] ?? '',
         'examDate': eligibility['examDate'] ?? '',
         'licenseNo': eligibility['licenseNo'] ?? '',
-        // 'validity': eligibility['validity'] ?? '',
       };
     }).toList();
     _collapsedCivilServiceIndexes = List<int>.generate(
       _civilServiceData.length,
       (index) => index,
     ).toSet();
-    print(
-      '📜 Parsed ${_civilServiceData.length} civil service eligibility records',
-    );
+    print('📜 Parsed ${_civilServiceData.length} civil service eligibility records');
   }
+
+  // ─── Save / Delete ─────────────────────────────────────────────────────────
 
   Future<void> _saveCivilServiceEligibility(int index) async {
     final eligibility = _civilServiceData[index];
-
     if (eligibility['serviceEligibility']?.toString().trim().isEmpty ?? true) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -99,40 +89,27 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
       );
       return;
     }
-
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => const Center(child: CircularProgressIndicator(color: Colors.white)),
     );
-
     try {
       final employeeId = widget.employeeId;
-
       final eligibilityData = {
         'serviceEligibility': eligibility['serviceEligibility'] ?? '',
         'rating': eligibility['rating'] ?? '',
         'examPlace': eligibility['examPlace'] ?? '',
         'examDate': eligibility['examDate'] ?? '',
         'licenseNo': eligibility['licenseNo'] ?? '',
-        // 'validity': eligibility['validity'] ?? '',
       };
-
       final response =
           eligibility.containsKey('id') && eligibility['id'] != null
           ? await _userService.updateCivilServiceEligibility(
-              widget.token,
-              eligibility['id'].toString(),
-              eligibilityData,
-            )
+              widget.token, eligibility['id'].toString(), eligibilityData)
           : await _userService.addCivilServiceEligibility(
-              widget.token,
-              employeeId.toString(),
-              eligibilityData,
-            );
-
+              widget.token, employeeId.toString(), eligibilityData);
       if (mounted) Navigator.pop(context);
-
       if (response['success']) {
         await _fetchCivilServiceEligibilityData();
         if (mounted) {
@@ -151,10 +128,7 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
       if (mounted) {
         Navigator.of(context, rootNavigator: true).pop();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to save: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Failed to save: $e'), backgroundColor: Colors.red),
         );
       }
     }
@@ -164,13 +138,13 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
         title: const Text('Delete Civil Service Eligibility'),
-        content: const Text(
-          'Are you sure you want to delete this civil service eligibility record?',
-        ),
+        content: const Text('Are you sure you want to delete this civil service eligibility record?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
+            style: TextButton.styleFrom(foregroundColor: Colors.black),
             child: const Text('Cancel'),
           ),
           TextButton(
@@ -181,34 +155,23 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
         ],
       ),
     );
-
     if (confirmed != true) return;
-
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
+      builder: (context) => const Center(child: CircularProgressIndicator(color: Colors.white)),
     );
-
     try {
       final eligibility = _civilServiceData[index];
-
       if (eligibility.containsKey('id') && eligibility['id'] != null) {
         final response = await _userService.deleteCivilServiceEligibility(
-          widget.token,
-          eligibility['id'].toString(),
-        );
-
+          widget.token, eligibility['id'].toString());
         if (mounted) Navigator.pop(context);
-
         if (response['success']) {
           await _fetchCivilServiceEligibilityData();
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Civil service eligibility deleted'),
-                backgroundColor: Colors.green,
-              ),
+              const SnackBar(content: Text('Civil service eligibility deleted'), backgroundColor: Colors.green),
             );
           }
         } else {
@@ -218,76 +181,287 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
         if (mounted) Navigator.pop(context);
         setState(() {
           _civilServiceData.removeAt(index);
-          if (_editingCivilServiceIndex == index) {
-            _editingCivilServiceIndex = null;
-          }
+          if (_editingCivilServiceIndex == index) _editingCivilServiceIndex = null;
         });
       }
     } catch (e) {
       if (mounted) {
         Navigator.of(context, rootNavigator: true).pop();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to delete: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Failed to delete: $e'), backgroundColor: Colors.red),
         );
       }
     }
   }
 
- void _showAddCivilServiceDialog() {
-    String selectedEligibility = 'CSE';
-    final ratingController = TextEditingController();
-    final examDateController = TextEditingController();
-    final examPlaceController = TextEditingController();
-    final licenseNoController = TextEditingController();
+  // ─── Shared helpers ────────────────────────────────────────────────────────
 
-    final eligibilityItems = [
-      {'value': 'CSE', 'label': 'Career Service Eligibility'},
-      {'value': 'RA1080', 'label': 'RA 1080 (Board/Bar) Under Special Laws'},
-      {'value': 'CES', 'label': 'Career Executive Service'},
-      {'value': 'CSEE', 'label': 'Career Service Executive Examination'},
-      {'value': 'BE', 'label': 'Barangay Eligibility'},
-      {'value': 'DL', 'label': 'Driver\'s License'},
-      {'value': 'OTHERS', 'label': 'Others'},
-    ];
+  static const List<Map<String, String>> _eligibilityItems = [
+    {'value': 'CSE',    'label': 'Career Service Eligibility'},
+    {'value': 'RA1080', 'label': 'RA 1080 (Board/Bar) Under Special Laws'},
+    {'value': 'CES',    'label': 'Career Executive Service'},
+    {'value': 'CSEE',   'label': 'Career Service Executive Examination'},
+    {'value': 'BE',     'label': 'Barangay Eligibility'},
+    {'value': 'DL',     'label': "Driver's License"},
+    {'value': 'OTHERS', 'label': 'Others'},
+  ];
 
-    InputDecoration fieldDecoration(String label) => InputDecoration(
-          labelText: label,
-          labelStyle: const TextStyle(fontSize: 13, color: Colors.black),
-          enabledBorder: const OutlineInputBorder(
-            borderSide: BorderSide(color: Color(0xFF2C5F4F), width: 1.5),
+  String _eligibilityLabel(String? val) {
+    for (final item in _eligibilityItems) {
+      if (item['value'] == val) return item['label']!;
+    }
+    return val ?? 'N/A';
+  }
+
+  InputDecoration _fieldDecoration(String label, {bool isDate = false}) =>
+      InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(fontSize: 14, color: Colors.grey),
+        floatingLabelStyle: const TextStyle(fontSize: 16, color: Color(0xFF2C5F4F)),
+        filled: true,
+        fillColor: const Color(0xFFF5F5F5),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide.none),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide.none),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6),
+          borderSide: const BorderSide(color: Color(0xFF2C5F4F), width: 1.5),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        isDense: true,
+        suffixIcon: isDate
+            ? const Icon(Icons.calendar_today, size: 18, color: Color(0xFF2C5F4F))
+            : null,
+      );
+
+  Widget _dialogHeader(String title) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: const BoxDecoration(
+        color: Color(0xFF2C5F4F),
+        borderRadius: BorderRadius.only(topLeft: Radius.circular(12), topRight: Radius.circular(12)),
+      ),
+      child: Row(
+        children: [
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(title,
+                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white)),
           ),
-          focusedBorder: const OutlineInputBorder(
-            borderSide: BorderSide(color: Color(0xFF2C5F4F), width: 2.0),
-          ),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        );
+        ],
+      ),
+    );
+  }
 
-    Future<String?> pickDate(BuildContext ctx, String current) async {
-      DateTime? initial;
-      if (current.isNotEmpty) initial = DateTime.tryParse(current);
-      final picked = await showDatePicker(
-        context: ctx,
-        initialDate: initial ?? DateTime.now(),
-        firstDate: DateTime(1900),
-        lastDate: DateTime(2100),
-        builder: (ctx, child) => Theme(
-          data: Theme.of(ctx).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF2C5F4F),
-              onPrimary: Colors.white,
-              onSurface: Colors.black,
+  Widget _dialogActions(BuildContext ctx, VoidCallback onSave, {String saveLabel = 'Save'}) {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton(
+            onPressed: onSave,
+            style: OutlinedButton.styleFrom(
+              backgroundColor: const Color(0xFF2C5F4F),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [Icon(Icons.save, size: 16), SizedBox(width: 6), Text('Save')],
             ),
           ),
-          child: child!,
         ),
-      );
-      if (picked == null) return null;
-      return '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
-    }
+        const SizedBox(width: 12),
+        Expanded(
+          child: ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.grey[200],
+              foregroundColor: Colors.black87,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              elevation: 0,
+            ),
+            child: const Text('Cancel'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<String?> _pickDate(BuildContext ctx, String current) async {
+    DateTime? initial;
+    if (current.isNotEmpty) initial = DateTime.tryParse(current);
+    final picked = await showDatePicker(
+      context: ctx,
+      initialDate: initial ?? DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime(2100),
+      builder: (ctx, child) => Theme(
+        data: Theme.of(ctx).copyWith(
+          colorScheme: const ColorScheme.light(
+            primary: Color(0xFF2C5F4F),
+            onPrimary: Colors.white,
+            onSurface: Colors.black,
+          ),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked == null) return null;
+    return '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+  }
+
+  // ─── Eligibility Type Bottom Sheet ────────────────────────────────────────
+
+  Future<void> _showEligibilityBottomSheet({
+    required BuildContext ctx,
+    required String currentValue,
+    required void Function(String) onSelected,
+  }) async {
+    await showModalBottomSheet(
+      context: ctx,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      // Cap at 60% screen height so the list scrolls when needed
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(ctx).size.height * 0.6,
+      ),
+      builder: (sheetCtx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle
+              Container(
+                margin: const EdgeInsets.only(top: 10, bottom: 6),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              // Title
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Select Eligibility Type',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF2C5F4F),
+                    ),
+                  ),
+                ),
+              ),
+              const Divider(height: 1),
+
+              // Scrollable options list
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: _eligibilityItems.length,
+                  itemBuilder: (_, index) {
+                    final item = _eligibilityItems[index];
+                    final isSelected = item['value'] == currentValue;
+                    return InkWell(
+                      onTap: () {
+                        onSelected(item['value']!);
+                        Navigator.of(sheetCtx).pop();
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                        color: isSelected
+                            ? const Color(0xFF2C5F4F).withOpacity(0.08)
+                            : Colors.white,
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                item['label']!,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: isSelected ? const Color(0xFF2C5F4F) : Colors.black87,
+                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                                ),
+                              ),
+                            ),
+                            if (isSelected)
+                              const Icon(Icons.check, size: 18, color: Color(0xFF2C5F4F)),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildEligibilitySelector({
+    required String selectedValue,
+    required BuildContext ctx,
+    required void Function(String) onChanged,
+  }) {
+    final label = _eligibilityLabel(selectedValue);
+    return GestureDetector(
+      onTap: () => _showEligibilityBottomSheet(
+        ctx: ctx,
+        currentValue: selectedValue,
+        onSelected: onChanged,
+      ),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF5F5F5),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: selectedValue.isEmpty
+                  ? const Text('Eligibility Type', style: TextStyle(fontSize: 14, color: Colors.grey))
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'Eligibility Type',
+                          style: TextStyle(fontSize: 11, color: Color(0xFF2C5F4F), fontWeight: FontWeight.w500),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(label, style: const TextStyle(fontSize: 14, color: Colors.black87)),
+                      ],
+                    ),
+            ),
+            const Icon(Icons.arrow_drop_down, size: 22, color: Colors.grey),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ─── Add Civil Service Dialog ─────────────────────────────────────────────
+
+  void _showAddCivilServiceDialog() {
+    String selectedEligibility = 'CSE';
+    final ratingController    = TextEditingController();
+    final examDateController  = TextEditingController();
+    final examPlaceController = TextEditingController();
+    final licenseNoController = TextEditingController();
 
     showDialog(
       context: context,
@@ -298,161 +472,79 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
               backgroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               insetPadding: EdgeInsets.symmetric(
-                horizontal: MediaQuery.of(ctx).size.width * 0.025, // 2.5% each side = 95% width
+                horizontal: MediaQuery.of(ctx).size.width * 0.025,
                 vertical: 24,
               ),
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // ── Title ──
-                    const Text(
-                      'Add Civil Service Eligibility',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF2C5F4F),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _dialogHeader('Add Civil Service Eligibility'),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildEligibilitySelector(
+                            selectedValue: selectedEligibility,
+                            ctx: ctx,
+                            onChanged: (v) => setDialogState(() => selectedEligibility = v),
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: ratingController,
+                            cursorColor: const Color(0xFF2C5F4F),
+                            decoration: _fieldDecoration('Rating'),
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: examDateController,
+                            readOnly: true,
+                            cursorColor: const Color(0xFF2C5F4F),
+                            decoration: _fieldDecoration('Date of Exam', isDate: true),
+                            onTap: () async {
+                              final d = await _pickDate(ctx, examDateController.text);
+                              if (d != null) setDialogState(() => examDateController.text = d);
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: examPlaceController,
+                            cursorColor: const Color(0xFF2C5F4F),
+                            decoration: _fieldDecoration('Place of Exam'),
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: licenseNoController,
+                            cursorColor: const Color(0xFF2C5F4F),
+                            decoration: _fieldDecoration('License Number'),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 16),
-
-                    // ── Scrollable content ──
-                    Flexible(
-                      child: SingleChildScrollView(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // Eligibility Type dropdown
-                            Theme(
-                              data: Theme.of(ctx).copyWith(
-                                popupMenuTheme: PopupMenuThemeData(
-                                  color: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(14),
-                                    side: BorderSide(color: Colors.grey.shade200),
-                                  ),
-                                  elevation: 4,
-                                ),
-                              ),
-                              child: DropdownButtonFormField<String>(
-                                value: selectedEligibility,
-                                isExpanded: true,
-                                dropdownColor: Colors.white,
-                                borderRadius: BorderRadius.circular(14),
-                                decoration: fieldDecoration('Eligibility Type'),
-                                items: eligibilityItems
-                                    .map((item) => DropdownMenuItem(
-                                          value: item['value'],
-                                          child: Text(
-                                            item['label']!,
-                                            style: const TextStyle(fontSize: 13),
-                                          ),
-                                        ))
-                                    .toList(),
-                                onChanged: (v) =>
-                                    setDialogState(() => selectedEligibility = v!),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-
-                            // Rating
-                            TextField(
-                              controller: ratingController,
-                              cursorColor: const Color(0xFF2C5F4F),
-                              decoration: fieldDecoration('Rating'),
-                            ),
-                            const SizedBox(height: 12),
-
-                            // Date of Exam
-                            TextField(
-                              controller: examDateController,
-                              readOnly: true,
-                              cursorColor: const Color(0xFF2C5F4F),
-                              decoration: fieldDecoration('Date of Exam').copyWith(
-                                suffixIcon: const Icon(
-                                  Icons.calendar_today,
-                                  size: 18,
-                                  color: Color(0xFF2C5F4F),
-                                ),
-                              ),
-                              onTap: () async {
-                                final d = await pickDate(ctx, examDateController.text);
-                                if (d != null) {
-                                  setDialogState(() => examDateController.text = d);
-                                }
-                              },
-                            ),
-                            const SizedBox(height: 12),
-
-                            // Place of Exam
-                            TextField(
-                              controller: examPlaceController,
-                              cursorColor: const Color(0xFF2C5F4F),
-                              decoration: fieldDecoration('Place of Exam'),
-                            ),
-                            const SizedBox(height: 12),
-
-                            // License Number
-                            TextField(
-                              controller: licenseNoController,
-                              cursorColor: const Color(0xFF2C5F4F),
-                              decoration: fieldDecoration('License Number'),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // ── Action Buttons ──
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton(
-                          onPressed: () => Navigator.of(ctx).pop(),
-                          child: const Text(
-                            'Cancel',
-                            style: TextStyle(color: Colors.red),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2C5F4F),
-                            foregroundColor: Colors.white,
-                          ),
-                          onPressed: () {
-                            final newEntry = {
-                              'serviceEligibility': selectedEligibility,
-                              'rating': ratingController.text.trim(),
-                              'examDate': examDateController.text,
-                              'examPlace': examPlaceController.text.trim(),
-                              'licenseNo': licenseNoController.text.trim(),
-                            };
-
-                            Navigator.of(ctx).pop();
-
-                            setState(() {
-                              _civilServiceData.insert(0, newEntry);
-                              _collapsedCivilServiceIndexes =
-                                  _collapsedCivilServiceIndexes
-                                      .map((i) => i + 1)
-                                      .toSet();
-                              _editingCivilServiceIndex = null;
-                              _isNewCivil = false;
-                            });
-
-                            _saveCivilServiceEligibility(0);
-                          },
-                          child: const Text('Add'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: _dialogActions(ctx, () {
+                      final newEntry = {
+                        'serviceEligibility': selectedEligibility,
+                        'rating':    ratingController.text.trim(),
+                        'examDate':  examDateController.text,
+                        'examPlace': examPlaceController.text.trim(),
+                        'licenseNo': licenseNoController.text.trim(),
+                      };
+                      Navigator.of(ctx).pop();
+                      setState(() {
+                        _civilServiceData.insert(0, newEntry);
+                        _collapsedCivilServiceIndexes =
+                            _collapsedCivilServiceIndexes.map((i) => i + 1).toSet();
+                        _editingCivilServiceIndex = null;
+                      });
+                      _saveCivilServiceEligibility(0);
+                    }, saveLabel: 'Add'),
+                  ),
+                ],
               ),
             );
           },
@@ -461,12 +553,110 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
     );
   }
 
+  // ─── Edit Civil Service Dialog ────────────────────────────────────────────
+
+  void _showEditCivilServiceDialog(int index) {
+    final service = _civilServiceData[index];
+    String selectedEligibility =
+        _eligibilityItems.any((e) => e['value'] == service['serviceEligibility'])
+            ? service['serviceEligibility']
+            : 'CSE';
+    final ratingController    = TextEditingController(text: service['rating']    ?? '');
+    final examDateController  = TextEditingController(text: service['examDate']  ?? '');
+    final examPlaceController = TextEditingController(text: service['examPlace'] ?? '');
+    final licenseNoController = TextEditingController(text: service['licenseNo'] ?? '');
+
+    showDialog(
+      context: context,
+      builder: (BuildContext ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return Dialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              insetPadding: EdgeInsets.symmetric(
+                horizontal: MediaQuery.of(ctx).size.width * 0.025,
+                vertical: 24,
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _dialogHeader('Edit Civil Service Eligibility'),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildEligibilitySelector(
+                            selectedValue: selectedEligibility,
+                            ctx: ctx,
+                            onChanged: (v) => setDialogState(() => selectedEligibility = v),
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: ratingController,
+                            cursorColor: const Color(0xFF2C5F4F),
+                            decoration: _fieldDecoration('Rating'),
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: examDateController,
+                            readOnly: true,
+                            cursorColor: const Color(0xFF2C5F4F),
+                            decoration: _fieldDecoration('Date of Exam', isDate: true),
+                            onTap: () async {
+                              final d = await _pickDate(ctx, examDateController.text);
+                              if (d != null) setDialogState(() => examDateController.text = d);
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: examPlaceController,
+                            cursorColor: const Color(0xFF2C5F4F),
+                            decoration: _fieldDecoration('Place of Exam'),
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: licenseNoController,
+                            cursorColor: const Color(0xFF2C5F4F),
+                            decoration: _fieldDecoration('License Number'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: _dialogActions(ctx, () {
+                      setState(() {
+                        _civilServiceData[index]['serviceEligibility'] = selectedEligibility;
+                        _civilServiceData[index]['rating']    = ratingController.text.trim();
+                        _civilServiceData[index]['examDate']  = examDateController.text;
+                        _civilServiceData[index]['examPlace'] = examPlaceController.text.trim();
+                        _civilServiceData[index]['licenseNo'] = licenseNoController.text.trim();
+                      });
+                      Navigator.of(ctx).pop();
+                      _saveCivilServiceEligibility(index);
+                    }),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // ─── Card ──────────────────────────────────────────────────────────────────
+
   Widget _buildCivilServiceCard() {
     return Container(
       padding: EdgeInsets.zero,
       child: Column(
         children: [
-          // Header with Add button
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: const BoxDecoration(
@@ -481,25 +671,15 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
               children: [
                 const Text(
                   'CIVIL SERVICE ELIGIBILITY',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
-                  ),
+                  style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 0.5),
                 ),
                 GestureDetector(
                   onTap: () => _showAddCivilServiceDialog(),
-                  child: const Icon(
-                    Icons.add_circle,
-                    size: 20,
-                    color: Colors.white,
-                  ),
+                  child: const Icon(Icons.add_circle, size: 20, color: Colors.white),
                 ),
               ],
             ),
           ),
-          // Content
           if (_isCivilServiceExpanded)
             Container(
               padding: const EdgeInsets.all(7.0),
@@ -516,10 +696,7 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
                               child: Text(
                                 'No civil service records found.\nTap + to add.',
                                 textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: Colors.grey[600],
-                                  fontSize: 14,
-                                ),
+                                style: TextStyle(color: Colors.grey[600], fontSize: 14),
                               ),
                             ),
                           ),
@@ -528,379 +705,108 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
                           ..._civilServiceData.asMap().entries.map((entry) {
                             int index = entry.key;
                             Map<String, dynamic> service = entry.value;
-                            bool isEditing = _editingCivilServiceIndex == index;
-                            bool isCollapsed = _collapsedCivilServiceIndexes
-                                .contains(index);
-
-                            String eligibilityLabel(String? val) {
-                              const map = {
-                                'CSE': 'Career Service Eligibility',
-                                'RA1080':
-                                    'RA 1080 (Board/Bar) Under Special Laws',
-                                'CES': 'Career Executive Service',
-                                'CSEE': 'Career Service Executive Examination',
-                                'BE': 'Barangay Eligibility',
-                                'DL': 'Driver\'s License',
-                                'OTHERS': 'Others',
-                              };
-                              return map[val] ?? val ?? 'N/A';
-                            }
-
+                            bool isCollapsed = _collapsedCivilServiceIndexes.contains(index);
                             return Container(
                               margin: const EdgeInsets.only(bottom: 8),
                               padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
+                              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8)),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
+                                    crossAxisAlignment: CrossAxisAlignment.center,
                                     children: [
                                       Expanded(
-                                        child: isEditing
-                                            ? Theme(
-                                                data: Theme.of(context).copyWith(
-                                                  popupMenuTheme: PopupMenuThemeData(
-                                                    color: Colors.white,
-                                                     position: PopupMenuPosition.under,
-                                                    shape: RoundedRectangleBorder(
-                                                      borderRadius: BorderRadius.circular(14),
-                                                      side: BorderSide(color: Colors.grey.shade200),
-                                                    ),
-                                                    elevation: 6,
-                                                  ),
-                                                ),
-                                                child: DropdownButtonFormField<String>(
-                                                value:
-                                                    service['serviceEligibility'],
-                                                isExpanded: true,
-                                                dropdownColor: Colors.white,
-                                                borderRadius: BorderRadius.circular(14),
-                                                decoration:
-                                                    const InputDecoration(
-                                                      labelText:
-                                                          'Eligibility Type',
-                                                      labelStyle: TextStyle(
-                                                        fontSize: 12,
-                                                      ),
-                                                      contentPadding:
-                                                          EdgeInsets.symmetric(
-                                                            horizontal: 8,
-                                                            vertical: 4,
-                                                          ),
-                                                      border:
-                                                          OutlineInputBorder(),
-                                                    ),
-                                                items:
-                                                    [
-                                                      {
-                                                        'value': 'CSE',
-                                                        'label':
-                                                            'Career Service Eligibility',
-                                                      },
-                                                      {
-                                                        'value': 'RA1080',
-                                                        'label':
-                                                            'RA 1080 (Board/Bar) Under Special Laws',
-                                                      },
-                                                      {
-                                                        'value': 'CES',
-                                                        'label':
-                                                            'Career Executive Service',
-                                                      },
-                                                      {
-                                                        'value': 'CSEE',
-                                                        'label':
-                                                            'Career Service Executive Examination',
-                                                      },
-                                                      {
-                                                        'value': 'BE',
-                                                        'label':
-                                                            'Barangay Eligibility',
-                                                      },
-                                                      {
-                                                        'value': 'DL',
-                                                        'label':
-                                                            'Driver\'s License',
-                                                      },
-                                                      {
-                                                        'value': 'OTHERS',
-                                                        'label': 'Others',
-                                                      },
-                                                    ].map((item) {
-                                                      return DropdownMenuItem(
-                                                        value: item['value'],
-                                                        child: Text(
-                                                          item['label']!,
-                                                          style:
-                                                              const TextStyle(
-                                                                fontSize: 12,
-                                                              ),
-                                                        ),
-                                                      );
-                                                    }).toList(),
-                                                onChanged: (value) {
-                                                  setState(() {
-                                                    _civilServiceData[index]['serviceEligibility'] =
-                                                        value!;
-                                                  });
-                                                },
-                                              ),
-                                              )
-                                            : Text(
-                                                eligibilityLabel(
-                                                  service['serviceEligibility'],
-                                                ),
-                                                style: const TextStyle(
-                                                  fontSize: 15,
-                                                  color: Colors.black,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
+                                        child: GestureDetector(
+                                          onTap: () => setState(() {
+                                            if (isCollapsed) {
+                                              _collapsedCivilServiceIndexes.remove(index);
+                                            } else {
+                                              _collapsedCivilServiceIndexes.add(index);
+                                            }
+                                          }),
+                                          child: Text(
+                                            _eligibilityLabel(service['serviceEligibility']),
+                                            style: const TextStyle(fontSize: 15, color: Colors.black, fontWeight: FontWeight.bold),
+                                          ),
+                                        ),
                                       ),
-                                      // Collapse/expand arrow
-                                      if (!isEditing)
-                                        GestureDetector(
-                                          onTap: () {
-                                            if (!isEditing) {
-                                              setState(() {
-                                                if (isCollapsed) {
-                                                  _collapsedCivilServiceIndexes
-                                                      .remove(index);
-                                                } else {
-                                                  _collapsedCivilServiceIndexes
-                                                      .add(index);
-                                                }
-                                              });
-                                            }
-                                          },
-                                          child: Icon(
-                                            isCollapsed
-                                                ? Icons.expand_more
-                                                : Icons.expand_less,
-                                            size: 20,
-                                            color: Colors.black,
-                                          ),
+                                      GestureDetector(
+                                        onTap: () => setState(() {
+                                          if (isCollapsed) {
+                                            _collapsedCivilServiceIndexes.remove(index);
+                                          } else {
+                                            _collapsedCivilServiceIndexes.add(index);
+                                          }
+                                        }),
+                                        child: Icon(
+                                          isCollapsed ? Icons.expand_more : Icons.expand_less,
+                                          size: 20, color: Colors.black,
                                         ),
+                                      ),
                                       const SizedBox(width: 4),
-
-                                      // 3-dot menu
-                                      if (!isEditing)
-                                        PopupMenuButton<String>(
-                                          color: Colors.white,
-                                          position: PopupMenuPosition.under,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              14,
-                                            ),
-                                            side: BorderSide(
-                                              color: Colors.grey.shade200,
-                                            ),
-                                          ),
-                                          icon: Container(
-                                            padding: const EdgeInsets.all(6),
-                                            child: const Icon(
-                                              Icons.more_horiz,
-                                              size: 18,
-                                              color: Colors.black87,
-                                            ),
-                                          ),
-                                          padding: EdgeInsets.zero,
-                                          onSelected: (value) {
-                                            if (value == 'edit') {
-                                              setState(() {
-                                                _collapsedCivilServiceIndexes
-                                                    .remove(index);
-                                                _editingCivilServiceIndex =
-                                                    index;
-                                                _isNewCivil = false;
-                                              });
-                                            } else if (value == 'delete') {
-                                              _deleteCivilServiceEligibility(
-                                                index,
-                                              );
-                                            }
-                                          },
-                                          itemBuilder: (context) => [
-                                            PopupMenuItem<String>(
-                                              value: 'edit',
-                                              height: 30,
-                                              child: Row(
-                                                children: const [
-                                                  Icon(
-                                                    Icons.edit,
-                                                    size: 15,
-                                                    color: Colors.black87,
-                                                  ),
-                                                  SizedBox(width: 8),
-                                                  Text(
-                                                    'Edit',
-                                                    style: TextStyle(
-                                                      fontSize: 12,
-                                                      fontWeight:
-                                                          FontWeight.w500,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            const PopupMenuDivider(height: 8),
-                                            PopupMenuItem<String>(
-                                              value: 'delete',
-                                              height: 30,
-                                              child: Row(
-                                                children: [
-                                                  Icon(
-                                                    Icons.delete,
-                                                    size: 15,
-                                                    color: Colors.red.shade600,
-                                                  ),
-                                                  const SizedBox(width: 8),
-                                                  Text(
-                                                    'Delete',
-                                                    style: TextStyle(
-                                                      fontSize: 12,
-                                                      fontWeight:
-                                                          FontWeight.w500,
-                                                      color:
-                                                          Colors.red.shade600,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ],
+                                      PopupMenuButton<String>(
+                                        color: Colors.white,
+                                        position: PopupMenuPosition.under,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(14),
+                                          side: BorderSide(color: Colors.grey.shade200),
                                         ),
+                                        icon: Container(
+                                          padding: const EdgeInsets.all(6),
+                                          child: const Icon(Icons.more_horiz, size: 18, color: Colors.black87),
+                                        ),
+                                        padding: EdgeInsets.zero,
+                                        onSelected: (value) {
+                                          if (value == 'edit') {
+                                            _showEditCivilServiceDialog(index);
+                                          } else if (value == 'delete') {
+                                            _deleteCivilServiceEligibility(index);
+                                          }
+                                        },
+                                        itemBuilder: (context) => [
+                                          PopupMenuItem<String>(
+                                            value: 'edit',
+                                            height: 30,
+                                            child: Row(
+                                              children: const [
+                                                Icon(Icons.edit, size: 15, color: Colors.black87),
+                                                SizedBox(width: 8),
+                                                Text('Edit', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+                                              ],
+                                            ),
+                                          ),
+                                          const PopupMenuDivider(height: 8),
+                                          PopupMenuItem<String>(
+                                            value: 'delete',
+                                            height: 30,
+                                            child: Row(
+                                              children: [
+                                                Icon(Icons.delete, size: 15, color: Colors.red.shade600),
+                                                const SizedBox(width: 8),
+                                                Text('Delete',
+                                                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.red.shade600)),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ],
                                   ),
-
                                   if (!isCollapsed) ...[
                                     const SizedBox(height: 12),
                                     Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12.0,
-                                      ),
+                                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
                                       child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          isEditing
-                                              ? _buildEditableFieldInline(
-                                                  'Rating',
-                                                  service['rating'],
-                                                  (value) {
-                                                    service['rating'] = value;
-                                                  },
-                                                )
-                                              : _buildInfoFieldInline(
-                                                  'Rating',
-                                                  service['rating'],
-                                                ),
+                                          _buildInfoFieldInline('Rating',         service['rating']),
                                           const SizedBox(height: 10),
-                                          isEditing
-                                              ? _buildDateFieldInline(
-                                                  'Date of Exam',
-                                                  service['examDate'],
-                                                  (value) {
-                                                    service['examDate'] = value;
-                                                  },
-                                                )
-                                              : _buildInfoFieldInline(
-                                                  'Date of Exam',
-                                                  service['examDate'],
-                                                ),
+                                          _buildInfoFieldInline('Date of Exam',   service['examDate']),
                                           const SizedBox(height: 10),
-                                          isEditing
-                                              ? _buildEditableFieldInline(
-                                                  'Place of Exam',
-                                                  service['examPlace'],
-                                                  (value) {
-                                                    service['examPlace'] =
-                                                        value;
-                                                  },
-                                                )
-                                              : _buildInfoFieldInline(
-                                                  'Place of Exam',
-                                                  service['examPlace'],
-                                                ),
+                                          _buildInfoFieldInline('Place of Exam',  service['examPlace']),
                                           const SizedBox(height: 10),
-                                          isEditing
-                                              ? _buildEditableFieldInline(
-                                                  'License Number',
-                                                  service['licenseNo'],
-                                                  (value) {
-                                                    service['licenseNo'] =
-                                                        value;
-                                                  },
-                                                )
-                                              : _buildInfoFieldInline(
-                                                  'License Number',
-                                                  service['licenseNo'],
-                                                ),
-                                          if (isEditing) ...[
-                                            const SizedBox(height: 12),
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.end,
-                                              children: [
-                                                TextButton(
-                                                  onPressed: () => setState(() {
-                                                    if (_isNewCivil) {
-                                                      _civilServiceData.removeAt(
-                                                        index,
-                                                      );
-                                                      _collapsedCivilServiceIndexes =
-                                                          _collapsedCivilServiceIndexes
-                                                              .where(
-                                                                (i) => i > 0,
-                                                              )
-                                                              .map((i) => i - 1)
-                                                              .toSet();
-                                                    }
-                                                    _editingCivilServiceIndex =
-                                                        null;
-                                                    _isNewCivil = false;
-                                                  }),
-                                                  child: const Text(
-                                                    'Cancel',
-                                                    style: TextStyle(
-                                                      color: Colors.red,
-                                                    ),
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 8),
-                                                ElevatedButton.icon(
-                                                  onPressed: () =>
-                                                      _saveCivilServiceEligibility(
-                                                        index,
-                                                      ),
-                                                  icon: const Icon(
-                                                    Icons.save,
-                                                    size: 16,
-                                                  ),
-                                                  label: const Text('Save'),
-                                                  style: ElevatedButton.styleFrom(
-                                                    backgroundColor:
-                                                        const Color(0xFF2C5F4F),
-                                                    foregroundColor:
-                                                        Colors.white,
-                                                    padding:
-                                                        const EdgeInsets.symmetric(
-                                                          horizontal: 12,
-                                                          vertical: 6,
-                                                        ),
-                                                    textStyle: const TextStyle(
-                                                      fontSize: 13,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ],
+                                          _buildInfoFieldInline('License Number', service['licenseNo']),
                                         ],
                                       ),
                                     ),
@@ -918,149 +824,19 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
     );
   }
 
+  // ─── Field display helpers ─────────────────────────────────────────────────
+
   Widget _buildInfoFieldInline(String label, dynamic value) {
     String displayValue = 'N/A';
-    if (value != null &&
-        value.toString().isNotEmpty &&
-        value.toString() != 'null') {
+    if (value != null && value.toString().isNotEmpty && value.toString() != 'null') {
       displayValue = value.toString();
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 15,
-            color: Colors.grey[600],
-            fontWeight: FontWeight.w500,
-          ),
-        ),
+        Text(label, style: TextStyle(fontSize: 15, color: Colors.grey[600], fontWeight: FontWeight.w500)),
         const SizedBox(height: 1),
-        Text(
-          displayValue,
-          style: const TextStyle(
-            fontSize: 15,
-            color: Colors.black87,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildEditableFieldInline(
-    String label,
-    String? value,
-    Function(String) onChanged,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 10,
-            color: Colors.grey[600],
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 4),
-        TextFormField(
-          initialValue: value ?? '',
-          onChanged: onChanged,
-          style: const TextStyle(
-            fontSize: 13,
-            color: Colors.black87,
-            fontWeight: FontWeight.bold,
-          ),
-          decoration: InputDecoration(
-            border: UnderlineInputBorder(
-              borderSide: BorderSide(color: const Color(0xFF2C5F4F)),
-            ),
-            enabledBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.grey[300]!),
-            ),
-            focusedBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: Color(0xFF2C5F4F), width: 2),
-            ),
-            contentPadding: const EdgeInsets.symmetric(vertical: 4),
-            isDense: true,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDateFieldInline(
-    String label,
-    String? value,
-    Function(String) onChanged,
-  ) {
-    final controller = TextEditingController(text: value ?? '');
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 10,
-            color: Colors.grey[600],
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        GestureDetector(
-          onTap: () async {
-            DateTime? initialDate;
-            if (value != null && value.isNotEmpty) {
-              try {
-                initialDate = DateTime.tryParse(value);
-              } catch (e) {}
-            }
-            final DateTime? pickedDate = await showDatePicker(
-              context: context,
-              initialDate: initialDate ?? DateTime.now(),
-              firstDate: DateTime(1900),
-              lastDate: DateTime(2100),
-              builder: (context, child) => Theme(
-                data: Theme.of(context).copyWith(
-                  colorScheme: const ColorScheme.light(
-                    primary: Color(0xFF2C5F4F),
-                    onPrimary: Colors.white,
-                    onSurface: Colors.black,
-                  ),
-                ),
-                child: child!,
-              ),
-            );
-            if (pickedDate != null) {
-              final formatted =
-                  '${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}';
-              controller.text = formatted;
-              onChanged(formatted);
-            }
-          },
-          child: AbsorbPointer(
-            child: TextFormField(
-              controller: controller,
-              readOnly: true,
-              style: const TextStyle(
-                fontSize: 13,
-                color: Colors.black87,
-                fontWeight: FontWeight.bold,
-              ),
-              decoration: const InputDecoration(
-                suffixIcon: Icon(
-                  Icons.calendar_today,
-                  size: 20,
-                  color: Color(0xFF2C5F4F),
-                ),
-                contentPadding: EdgeInsets.symmetric(vertical: 4),
-                isDense: true,
-              ),
-            ),
-          ),
-        ),
+        Text(displayValue, style: const TextStyle(fontSize: 15, color: Colors.black87, fontWeight: FontWeight.bold)),
       ],
     );
   }

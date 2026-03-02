@@ -23,7 +23,7 @@ class _EducationalBackgroundWidgetState
   List<Map<String, dynamic>> _educationData = [];
   int? _editingEducationIndex;
   Set<int> _collapsedEducationIndexes = <int>{};
-   bool _isNewEduc = false;
+  // bool _isNewEduc = false;
   final bool _isEducationalBackgroundExpanded = true;
 
   @override
@@ -105,10 +105,11 @@ class _EducationalBackgroundWidgetState
     print('📚 Parsed ${_educationData.length} education records');
   }
 
+  // ─── Save / Delete UNCHANGED ───────────────────────────────────────────────
+
   Future<void> _saveEducation(int index) async {
     final education = _educationData[index];
 
-    // Validate school name
     if (education['schoolName']?.toString().trim().isEmpty ?? true) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -122,13 +123,13 @@ class _EducationalBackgroundWidgetState
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
+      builder: (context) =>
+          const Center(child: CircularProgressIndicator(color: Colors.white)),
     );
 
     try {
       final employeeId = widget.employeeId;
 
-      // Convert level name to code
       String getLevelCode(String? levelName) {
         switch (levelName?.toUpperCase()) {
           case 'ELEMENTARY':
@@ -203,6 +204,7 @@ class _EducationalBackgroundWidgetState
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
         title: const Text('Delete Education'),
         content: const Text(
           'Are you sure you want to delete this education record?',
@@ -210,6 +212,7 @@ class _EducationalBackgroundWidgetState
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
+            style: TextButton.styleFrom(foregroundColor: Colors.black),
             child: const Text('Cancel'),
           ),
           TextButton(
@@ -227,7 +230,8 @@ class _EducationalBackgroundWidgetState
       // ignore: use_build_context_synchronously
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
+      builder: (context) =>
+          const Center(child: CircularProgressIndicator(color: Colors.white)),
     );
 
     try {
@@ -273,6 +277,707 @@ class _EducationalBackgroundWidgetState
     }
   }
 
+  // ─── Shared helpers ────────────────────────────────────────────────────────
+
+  /// Shared field decoration — filled grey style.
+  InputDecoration _fieldDecoration(String label, {bool isDate = false}) =>
+      InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(fontSize: 14, color: Colors.grey),
+        floatingLabelStyle: const TextStyle(fontSize: 16, color: Color(0xFF2C5F4F)),
+        filled: true,
+        fillColor: const Color(0xFFF5F5F5),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6),
+          borderSide: const BorderSide(color: Color(0xFF2C5F4F), width: 1.5),
+        ),
+        disabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6),
+          borderSide: BorderSide.none,
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        isDense: true,
+        suffixIcon: isDate
+            ? const Icon(Icons.calendar_today, size: 18, color: Color(0xFF2C5F4F))
+            : null,
+      );
+
+  /// Dark green header for dialogs.
+  Widget _dialogHeader(String title) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: const BoxDecoration(
+        color: Color(0xFF2C5F4F),
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(12),
+          topRight: Radius.circular(12),
+        ),
+      ),
+      child: Row(
+        children: [
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Shared helper: dialog action buttons ─────────────────────────────────
+  Widget _dialogActions(BuildContext ctx, VoidCallback onSave, {String saveLabel = 'Save'}) {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton(
+            onPressed: onSave,
+            style: OutlinedButton.styleFrom(
+              backgroundColor: const Color(0xFF2C5F4F),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.save, size: 16),
+                SizedBox(width: 6),
+                Text('Save'),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.grey[200],
+              foregroundColor: Colors.black87,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              elevation: 0,
+            ),
+            child: const Text('Cancel'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Date picker helper shared between Add and Edit dialogs.
+  Future<String?> _pickDate(BuildContext ctx, String current) async {
+    DateTime? initial;
+    if (current.isNotEmpty) initial = DateTime.tryParse(current);
+    final picked = await showDatePicker(
+      context: ctx,
+      initialDate: initial ?? DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime(2100),
+      builder: (ctx, child) => Theme(
+        data: Theme.of(ctx).copyWith(
+          colorScheme: const ColorScheme.light(
+            primary: Color(0xFF2C5F4F),
+            onPrimary: Colors.white,
+            onSurface: Colors.black,
+          ),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked == null) return null;
+    return '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+  }
+
+  // ─── NEW: Education Level Popup Bottom Sheet ──────────────────────────────
+  /// Shows a bottom sheet popup for selecting education level.
+  /// Matches the text field style (filled grey, same border radius).
+  Future<void> _showLevelBottomSheet({
+    required BuildContext ctx,
+    required String currentLevel,
+    required List<String> levels,
+    required void Function(String) onSelected,
+  }) async {
+    await showModalBottomSheet(
+      context: ctx,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (sheetCtx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Bottom sheet handle
+              Container(
+                margin: const EdgeInsets.only(top: 10, bottom: 6),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              // Title
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Select Education Level',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF2C5F4F),
+                    ),
+                  ),
+                ),
+              ),
+              const Divider(height: 1),
+              // Level options
+              ...levels.map((level) {
+                final isSelected = level == currentLevel;
+                return InkWell(
+                  onTap: () {
+                    onSelected(level);
+                    Navigator.of(sheetCtx).pop();
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 14),
+                    color: isSelected
+                        ? const Color(0xFF2C5F4F).withOpacity(0.08)
+                        : Colors.white,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            level,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: isSelected
+                                  ? const Color(0xFF2C5F4F)
+                                  : Colors.black87,
+                              fontWeight: isSelected
+                                  ? FontWeight.w600
+                                  : FontWeight.normal,
+                            ),
+                          ),
+                        ),
+                        if (isSelected)
+                          const Icon(
+                            Icons.check,
+                            size: 18,
+                            color: Color(0xFF2C5F4F),
+                          ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  /// Builds the education level selector button that mimics the text field style
+  /// but opens a bottom sheet popup on tap.
+  Widget _buildLevelSelector({
+    required String selectedLevel,
+    required List<String> levels,
+    required BuildContext ctx,
+    required void Function(String) onChanged,
+  }) {
+    return GestureDetector(
+      onTap: () => _showLevelBottomSheet(
+        ctx: ctx,
+        currentLevel: selectedLevel,
+        levels: levels,
+        onSelected: onChanged,
+      ),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF5F5F5),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: selectedLevel.isEmpty
+                  ? const Text(
+                      'Education Level',
+                      style: TextStyle(fontSize: 14, color: Colors.grey),
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'Education Level',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFF2C5F4F),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          selectedLevel,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
+            const Icon(
+              Icons.arrow_drop_down,
+              size: 22,
+              color: Colors.grey,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ─── Add Education Dialog ─────────────────────────────────────────────────
+
+  void _showAddEducationDialog() {
+    String selectedLevel = 'ELEMENTARY';
+    final schoolController = TextEditingController();
+    final degreeController = TextEditingController();
+    final attendedFromController = TextEditingController();
+    final attendedToController = TextEditingController();
+    final highestLevelController = TextEditingController();
+    final yearGraduatedController = TextEditingController();
+    final academicHonorsController = TextEditingController();
+    bool onGoing = false;
+
+    final levels = [
+      'ELEMENTARY',
+      'SECONDARY',
+      'VOCATIONAL/TRADE COURSE',
+      'COLLEGE',
+      'GRADUATE STUDIES',
+    ];
+
+    showDialog(
+      context: context,
+      builder: (BuildContext ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return Dialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              insetPadding: EdgeInsets.symmetric(
+                horizontal: MediaQuery.of(ctx).size.width * 0.025,
+                // vertical: 24,
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _dialogHeader('Add Education'),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // ── Education Level popup button ──
+                          _buildLevelSelector(
+                            selectedLevel: selectedLevel,
+                            levels: levels,
+                            ctx: ctx,
+                            onChanged: (v) =>
+                                setDialogState(() => selectedLevel = v),
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: schoolController,
+                            cursorColor: const Color(0xFF2C5F4F),
+                            decoration: _fieldDecoration('School Name *'),
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: degreeController,
+                            cursorColor: const Color(0xFF2C5F4F),
+                            decoration: _fieldDecoration('Degree / Course'),
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: attendedFromController,
+                            readOnly: true,
+                            cursorColor: const Color(0xFF2C5F4F),
+                            decoration:
+                                _fieldDecoration('Attended From', isDate: true),
+                            onTap: () async {
+                              final d = await _pickDate(
+                                  ctx, attendedFromController.text);
+                              if (d != null) {
+                                setDialogState(
+                                    () => attendedFromController.text = d);
+                              }
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: attendedToController,
+                            readOnly: true,
+                            enabled: !onGoing,
+                            cursorColor: const Color(0xFF2C5F4F),
+                            decoration:
+                                _fieldDecoration('Attended To', isDate: true),
+                            onTap: () async {
+                              final d = await _pickDate(
+                                  ctx, attendedToController.text);
+                              if (d != null) {
+                                setDialogState(
+                                    () => attendedToController.text = d);
+                              }
+                            },
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Checkbox(
+                                value: onGoing,
+                                activeColor: const Color(0xFF2C5F4F),
+                                onChanged: (v) {
+                                  setDialogState(() {
+                                    onGoing = v!;
+                                    if (onGoing) attendedToController.clear();
+                                  });
+                                },
+                              ),
+                              const Text('On-going',
+                                  style: TextStyle(fontSize: 13)),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: highestLevelController,
+                            cursorColor: const Color(0xFF2C5F4F),
+                            decoration:
+                                _fieldDecoration('Highest Level Earned'),
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: yearGraduatedController,
+                            cursorColor: const Color(0xFF2C5F4F),
+                            keyboardType: TextInputType.number,
+                            decoration: _fieldDecoration('Year Graduated'),
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: academicHonorsController,
+                            cursorColor: const Color(0xFF2C5F4F),
+                            decoration: _fieldDecoration('Academic Honors'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // ── Buttons ──
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                    child: _dialogActions(ctx, () {
+                      if (schoolController.text.trim().isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Please enter school name'),
+                            backgroundColor: Colors.orange,
+                          ),
+                        );
+                        return;
+                      }
+
+                      final newEntry = {
+                        'level': selectedLevel,
+                        'schoolName': schoolController.text.trim(),
+                        'degreeCourse': degreeController.text.trim(),
+                        'attendedFrom': attendedFromController.text,
+                        'attendedTo': attendedToController.text,
+                        'highestLevel': highestLevelController.text.trim(),
+                        'yearGraduated': yearGraduatedController.text.trim(),
+                        'academicHonors': academicHonorsController.text.trim(),
+                        'onGoing': onGoing,
+                      };
+
+                      Navigator.of(ctx).pop();
+
+                      setState(() {
+                        _educationData.insert(0, newEntry);
+                        _collapsedEducationIndexes = _collapsedEducationIndexes
+                            .map((i) => i + 1)
+                            .toSet();
+                        _editingEducationIndex = null;
+                        // _isNewEduc = false;
+                      });
+
+                      _saveEducation(0);
+                    }, saveLabel: 'Add'),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // ─── Edit Education Dialog ────────────────────────────────────────────────
+  void _showEditEducationDialog(int index) {
+    final education = _educationData[index];
+
+    String selectedLevel =
+        (education['level']?.toString().isNotEmpty ?? false)
+            ? education['level']
+            : 'ELEMENTARY';
+
+    final schoolController =
+        TextEditingController(text: education['schoolName'] ?? '');
+    final degreeController =
+        TextEditingController(text: education['degreeCourse'] ?? '');
+    final attendedFromController =
+        TextEditingController(text: education['attendedFrom'] ?? '');
+    final attendedToController =
+        TextEditingController(text: education['attendedTo'] ?? '');
+    final highestLevelController =
+        TextEditingController(text: education['highestLevel'] ?? '');
+    final yearGraduatedController =
+        TextEditingController(text: education['yearGraduated'] ?? '');
+    final academicHonorsController =
+        TextEditingController(text: education['academicHonors'] ?? '');
+    bool onGoing = education['onGoing'] ?? false;
+
+    final levels = [
+      'ELEMENTARY',
+      'SECONDARY',
+      'VOCATIONAL/TRADE COURSE',
+      'COLLEGE',
+      'GRADUATE STUDIES',
+    ];
+
+    if (!levels.contains(selectedLevel)) selectedLevel = 'ELEMENTARY';
+
+    showDialog(
+      context: context,
+      builder: (BuildContext ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return Dialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              insetPadding: EdgeInsets.symmetric(
+                horizontal: MediaQuery.of(ctx).size.width * 0.025,
+                vertical: 24,
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _dialogHeader('Edit Education'),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // ── Education Level popup button ──
+                          _buildLevelSelector(
+                            selectedLevel: selectedLevel,
+                            levels: levels,
+                            ctx: ctx,
+                            onChanged: (v) =>
+                                setDialogState(() => selectedLevel = v),
+                          ),
+                          const SizedBox(height: 12),
+
+                          // School Name
+                          TextField(
+                            controller: schoolController,
+                            cursorColor: const Color(0xFF2C5F4F),
+                            decoration: _fieldDecoration('School Name *'),
+                          ),
+                          const SizedBox(height: 12),
+
+                          // Degree / Course
+                          TextField(
+                            controller: degreeController,
+                            cursorColor: const Color(0xFF2C5F4F),
+                            decoration: _fieldDecoration('Degree / Course'),
+                          ),
+                          const SizedBox(height: 12),
+
+                          // Attended From
+                          TextField(
+                            controller: attendedFromController,
+                            readOnly: true,
+                            cursorColor: const Color(0xFF2C5F4F),
+                            decoration:
+                                _fieldDecoration('Attended From', isDate: true),
+                            onTap: () async {
+                              final d = await _pickDate(
+                                  ctx, attendedFromController.text);
+                              if (d != null) {
+                                setDialogState(
+                                    () => attendedFromController.text = d);
+                              }
+                            },
+                          ),
+                          const SizedBox(height: 12),
+
+                          // Attended To
+                          TextField(
+                            controller: attendedToController,
+                            readOnly: true,
+                            enabled: !onGoing,
+                            cursorColor: const Color(0xFF2C5F4F),
+                            decoration:
+                                _fieldDecoration('Attended To', isDate: true),
+                            onTap: () async {
+                              final d = await _pickDate(
+                                  ctx, attendedToController.text);
+                              if (d != null) {
+                                setDialogState(
+                                    () => attendedToController.text = d);
+                              }
+                            },
+                          ),
+                          const SizedBox(height: 4),
+
+                          // On-going checkbox
+                          Row(
+                            children: [
+                              Checkbox(
+                                value: onGoing,
+                                activeColor: const Color(0xFF2C5F4F),
+                                onChanged: (v) {
+                                  setDialogState(() {
+                                    onGoing = v!;
+                                    if (onGoing) attendedToController.clear();
+                                  });
+                                },
+                              ),
+                              const Text('On-going',
+                                  style: TextStyle(fontSize: 13)),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+
+                          // Highest Level Earned
+                          TextField(
+                            controller: highestLevelController,
+                            cursorColor: const Color(0xFF2C5F4F),
+                            decoration:
+                                _fieldDecoration('Highest Level Earned'),
+                          ),
+                          const SizedBox(height: 12),
+
+                          // Year Graduated
+                          TextField(
+                            controller: yearGraduatedController,
+                            cursorColor: const Color(0xFF2C5F4F),
+                            keyboardType: TextInputType.number,
+                            decoration: _fieldDecoration('Year Graduated'),
+                          ),
+                          const SizedBox(height: 12),
+
+                          // Academic Honors
+                          TextField(
+                            controller: academicHonorsController,
+                            cursorColor: const Color(0xFF2C5F4F),
+                            decoration: _fieldDecoration('Academic Honors'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // ── Buttons ──
+                  Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: _dialogActions(ctx, () {
+                      if (schoolController.text.trim().isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Please enter school name'),
+                            backgroundColor: Colors.orange,
+                          ),
+                        );
+                        return;
+                      }
+
+                      // Write updated values back to _educationData
+                      setState(() {
+                        _educationData[index]['level'] = selectedLevel;
+                        _educationData[index]['schoolName'] =
+                            schoolController.text.trim();
+                        _educationData[index]['degreeCourse'] =
+                            degreeController.text.trim();
+                        _educationData[index]['attendedFrom'] =
+                            attendedFromController.text;
+                        _educationData[index]['attendedTo'] =
+                            attendedToController.text;
+                        _educationData[index]['highestLevel'] =
+                            highestLevelController.text.trim();
+                        _educationData[index]['yearGraduated'] =
+                            yearGraduatedController.text.trim();
+                        _educationData[index]['academicHonors'] =
+                            academicHonorsController.text.trim();
+                        _educationData[index]['onGoing'] = onGoing;
+                      });
+
+                      Navigator.of(ctx).pop();
+                      _saveEducation(index);
+                    }),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // ─── Card ──────────────────────────────────────────────────────────────────
+
   Widget _buildEducationalBackgroundCard() {
     return Container(
       padding: EdgeInsets.zero,
@@ -300,7 +1005,6 @@ class _EducationalBackgroundWidgetState
                     letterSpacing: 0.5,
                   ),
                 ),
-                // Add button in the header
                 GestureDetector(
                   onTap: () => _showAddEducationDialog(),
                   child: const Icon(
@@ -341,9 +1045,8 @@ class _EducationalBackgroundWidgetState
                           ..._educationData.asMap().entries.map((entry) {
                             int index = entry.key;
                             Map<String, dynamic> education = entry.value;
-                            bool isEditing = _editingEducationIndex == index;
-                            bool isCollapsed = _collapsedEducationIndexes
-                                .contains(index);
+                            bool isCollapsed =
+                                _collapsedEducationIndexes.contains(index);
 
                             return Container(
                               margin: const EdgeInsets.only(bottom: 8),
@@ -355,409 +1058,202 @@ class _EducationalBackgroundWidgetState
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // Title row: tapping title toggles collapse, 3-dot menu on right
+                                  // Title row — collapse toggle + 3-dot menu
                                   Row(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.center,
                                     children: [
-                                      // Tappable title area — toggles collapse/expand
+                                      // Tappable title area
                                       Expanded(
                                         child: GestureDetector(
                                           onTap: () {
-                                            if (!isEditing) {
-                                              setState(() {
-                                                if (isCollapsed) {
-                                                  _collapsedEducationIndexes
-                                                      .remove(index);
-                                                } else {
-                                                  _collapsedEducationIndexes
-                                                      .add(index);
-                                                }
-                                              });
-                                            }
-                                          },
-                                          child: isEditing
-                                              ? DropdownButtonFormField<String>(
-                                                  initialValue:
-                                                      education['level'],
-                                                  decoration:
-                                                      const InputDecoration(
-                                                        labelText:
-                                                            'Education Level',
-                                                        labelStyle: TextStyle(
-                                                          fontSize: 12,
-                                                        ),
-                                                        contentPadding:
-                                                            EdgeInsets.symmetric(
-                                                              horizontal: 8,
-                                                              vertical: 4,
-                                                            ),
-                                                        border:
-                                                            OutlineInputBorder(),
-                                                      ),
-                                                  items:
-                                                      [
-                                                        'ELEMENTARY',
-                                                        'SECONDARY',
-                                                        'VOCATIONAL/TRADE COURSE',
-                                                        'COLLEGE',
-                                                        'GRADUATE STUDIES',
-                                                      ].map((level) {
-                                                        return DropdownMenuItem(
-                                                          value: level,
-                                                          child: Text(
-                                                            level,
-                                                            style:
-                                                                const TextStyle(
-                                                                  fontSize: 12,
-                                                                ),
-                                                          ),
-                                                        );
-                                                      }).toList(),
-                                                  onChanged: (value) {
-                                                    setState(() {
-                                                      _educationData[index]['level'] =
-                                                          value!;
-                                                    });
-                                                  },
-                                                )
-                                              : Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(
-                                                      education['level'] ??
-                                                          'N/A',
-                                                      style: const TextStyle(
-                                                        fontSize: 15,
-                                                        color: Colors.black,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                    if (isCollapsed)
-                                                      Text(
-                                                        education['schoolName'] ??
-                                                            'N/A',
-                                                        style: TextStyle(
-                                                          fontSize: 11,
-                                                          color:
-                                                              Colors.grey[600],
-                                                        ),
-                                                      ),
-                                                  ],
-                                                ),
-                                        ),
-                                      ),
-                                      // Collapse/expand arrow
-                                      if (!isEditing)
-                                        GestureDetector(
-                                          onTap: () {
-                                            if (!isEditing) {
-                                              setState(() {
-                                                if (isCollapsed) {
-                                                  _collapsedEducationIndexes
-                                                      .remove(index);
-                                                } else {
-                                                  _collapsedEducationIndexes
-                                                      .add(index);
-                                                }
-                                              });
-                                            }
-                                          },
-                                          child: Icon(
-                                            isCollapsed
-                                                ? Icons.expand_more
-                                                : Icons.expand_less,
-                                            size: 20,
-                                            color: Colors.black,
-                                          ),
-                                        ),
-                                      const SizedBox(width: 4),
-
-                                      // 3-dot menu button — always visible on the right
-                                      if (!isEditing)
-                                        PopupMenuButton<String>(
-                                          color: Colors.white,
-                                          position: PopupMenuPosition.under,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              14,
-                                            ),
-                                            side: BorderSide(
-                                              color: Colors.grey.shade200,
-                                            ),
-                                          ),
-                                          icon: Container(
-                                            padding: const EdgeInsets.all(6),
-                                            child: const Icon(
-                                              Icons.more_horiz,
-                                              size: 18,
-                                              color: Colors.black87,
-                                            ),
-                                          ),
-                                          padding: EdgeInsets.zero,
-                                          onSelected: (value) {
-                                            if (value == 'edit') {
-                                              setState(() {
-                                                // Expand the card and enter edit mode
+                                            setState(() {
+                                              if (isCollapsed) {
                                                 _collapsedEducationIndexes
                                                     .remove(index);
-                                                _editingEducationIndex = index;
-                                                _isNewEduc = false;
-                                              });
-                                            } else if (value == 'delete') {
-                                              _deleteEducation(index);
-                                            }
+                                              } else {
+                                                _collapsedEducationIndexes
+                                                    .add(index);
+                                              }
+                                            });
                                           },
-                                          itemBuilder: (context) => [
-                                            PopupMenuItem<String>(
-                                              value: 'edit',
-                                              height: 30,
-                                              child: Row(
-                                                children: const [
-                                                  Icon(
-                                                    Icons.edit,
-                                                    size: 15,
-                                                    color: Colors.black87,
-                                                  ),
-                                                  SizedBox(width: 8),
-                                                  Text(
-                                                    'Edit',
-                                                    style: TextStyle(
-                                                      fontSize: 12,
-                                                      fontWeight:
-                                                          FontWeight.w500,
-                                                    ),
-                                                  ),
-                                                ],
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                education['level'] ?? 'N/A',
+                                                style: const TextStyle(
+                                                  fontSize: 15,
+                                                  color: Colors.black,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
                                               ),
-                                            ),
-                                            const PopupMenuDivider(height: 8),
-                                            PopupMenuItem<String>(
-                                              value: 'delete',
-                                              height: 30,
-                                              child: Row(
-                                                children: [
-                                                  Icon(
-                                                    Icons.delete,
-                                                    size: 15,
-                                                    color: Colors.red.shade600,
+                                              if (isCollapsed)
+                                                Text(
+                                                  education['schoolName'] ??
+                                                      'N/A',
+                                                  style: TextStyle(
+                                                    fontSize: 11,
+                                                    color: Colors.grey[600],
                                                   ),
-                                                  const SizedBox(width: 8),
-                                                  Text(
-                                                    'Delete',
-                                                    style: TextStyle(
-                                                      fontSize: 12,
-                                                      fontWeight:
-                                                          FontWeight.w500,
-                                                      color:
-                                                          Colors.red.shade600,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ],
+                                                ),
+                                            ],
+                                          ),
                                         ),
-                                    ],
-                                  ),
-
-                                  // Collapsible content
-                                  if (!isCollapsed) ...[
-                                    const SizedBox(height: 12),
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12.0,
                                       ),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          // School Name
-                                          isEditing
-                                              ? _buildEditableFieldInline(
-                                                  'School Name',
-                                                  education['schoolName'],
-                                                  (value) {
-                                                    _educationData[index]['schoolName'] =
-                                                        value;
-                                                  },
-                                                )
-                                              : _buildInfoFieldInline(
-                                                  'School Name',
-                                                  education['schoolName'],
-                                                ),
-                                          const SizedBox(height: 12),
+                                      // Collapse / expand arrow
+                                      GestureDetector(
+                                        onTap: () {
+                                          setState(() {
+                                            if (isCollapsed) {
+                                              _collapsedEducationIndexes
+                                                  .remove(index);
+                                            } else {
+                                              _collapsedEducationIndexes
+                                                  .add(index);
+                                            }
+                                          });
+                                        },
+                                        child: Icon(
+                                          isCollapsed
+                                              ? Icons.expand_more
+                                              : Icons.expand_less,
+                                          size: 20,
+                                          color: Colors.black,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
 
-                                          // Degree/Course
-                                          isEditing
-                                              ? _buildEditableFieldInline(
-                                                  'Degree/Course',
-                                                  education['degreeCourse'],
-                                                  (value) {
-                                                    _educationData[index]['degreeCourse'] =
-                                                        value;
-                                                  },
-                                                )
-                                              : _buildInfoFieldInline(
-                                                  'Degree/Course',
-                                                  education['degreeCourse'],
-                                                ),
-                                          const SizedBox(height: 12),
-
-                                          // Period Attended - From/To
-                                          Row(
-                                            children: [
-                                              Expanded(
-                                                child: isEditing
-                                                    ? _buildDateFieldInline(
-                                                        'From',
-                                                        education['attendedFrom'],
-                                                        (value) {
-                                                          _educationData[index]['attendedFrom'] =
-                                                              value;
-                                                        },
-                                                      )
-                                                    : _buildInfoFieldInline(
-                                                        'From',
-                                                        education['attendedFrom'],
-                                                      ),
-                                              ),
-                                              const SizedBox(width: 12),
-                                              Expanded(
-                                                child: isEditing
-                                                    ? _buildDateFieldInline(
-                                                        'To',
-                                                        education['attendedTo'],
-                                                        (value) {
-                                                          _educationData[index]['attendedTo'] =
-                                                              value;
-                                                        },
-                                                      )
-                                                    : _buildInfoFieldInline(
-                                                        'To',
-                                                        education['attendedTo'],
-                                                      ),
-                                              ),
-                                            ],
+                                      // 3-dot menu
+                                      PopupMenuButton<String>(
+                                        color: Colors.white,
+                                        position: PopupMenuPosition.under,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(14),
+                                          side: BorderSide(
+                                              color: Colors.grey.shade200),
+                                        ),
+                                        icon: Container(
+                                          padding: const EdgeInsets.all(6),
+                                          child: const Icon(
+                                            Icons.more_horiz,
+                                            size: 18,
+                                            color: Colors.black87,
                                           ),
-                                          const SizedBox(height: 12),
-
-                                          // Highest Level/Units & Year Graduated
-                                          Row(
-                                            children: [
-                                              Expanded(
-                                                child: isEditing
-                                                    ? _buildEditableFieldInline(
-                                                        'Highest Level/Units',
-                                                        education['highestLevel'],
-                                                        (value) {
-                                                          _educationData[index]['highestLevel'] =
-                                                              value;
-                                                        },
-                                                      )
-                                                    : _buildInfoFieldInline(
-                                                        'Highest Level/Units',
-                                                        education['highestLevel'],
-                                                      ),
-                                              ),
-                                              const SizedBox(width: 12),
-                                              Expanded(
-                                                child: isEditing
-                                                    ? _buildEditableFieldInline(
-                                                        'Year Graduated',
-                                                        education['yearGraduated'],
-                                                        (value) {
-                                                          _educationData[index]['yearGraduated'] =
-                                                              value;
-                                                        },
-                                                      )
-                                                    : _buildInfoFieldInline(
-                                                        'Year Graduated',
-                                                        education['yearGraduated'],
-                                                      ),
-                                              ),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 12),
-
-                                          // Academic Honors
-                                          isEditing
-                                              ? _buildEditableFieldInline(
-                                                  'Academic Honors',
-                                                  education['academicHonors'],
-                                                  (value) {
-                                                    _educationData[index]['academicHonors'] =
-                                                        value;
-                                                  },
-                                                )
-                                              : _buildInfoFieldInline(
-                                                  'Academic Honors',
-                                                  education['academicHonors'],
-                                                ),
-                                          if (isEditing) ...[
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.end,
-                                              children: [
-                                                TextButton(
-                                                  onPressed: () => setState(() {
-                                                    if (_isNewEduc) {
-                                                      _educationData.removeAt(
-                                                        index,
-                                                      );
-                                                      // Shift all collapsed indexes back down by 1 to compensate
-                                                      _collapsedEducationIndexes =
-                                                          _collapsedEducationIndexes
-                                                              .where(
-                                                                (i) => i > 0,
-                                                              )
-                                                              .map((i) => i - 1)
-                                                              .toSet();
-                                                    }
-                                                    _editingEducationIndex =
-                                                        null;
-                                                    _isNewEduc = false;
-                                                  }),
-                                                  child: const Text(
-                                                    'Cancel',
-                                                    style: TextStyle(
-                                                      color: Colors.red,
-                                                    ),
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 8),
-                                                ElevatedButton.icon(
-                                                  onPressed: () =>
-                                                      _saveEducation(index),
-                                                  icon: const Icon(
-                                                    Icons.save,
-                                                    size: 16,
-                                                  ),
-                                                  label: const Text('Save'),
-                                                  style: ElevatedButton.styleFrom(
-                                                    backgroundColor:
-                                                        const Color(0xFF2C5F4F),
-                                                    foregroundColor:
-                                                        Colors.white,
-                                                    padding:
-                                                        const EdgeInsets.symmetric(
-                                                          horizontal: 12,
-                                                          vertical: 6,
-                                                        ),
-                                                    textStyle: const TextStyle(
-                                                      fontSize: 13,
-                                                    ),
+                                        ),
+                                        padding: EdgeInsets.zero,
+                                        onSelected: (value) {
+                                          if (value == 'edit') {
+                                            _showEditEducationDialog(index);
+                                          } else if (value == 'delete') {
+                                            _deleteEducation(index);
+                                          }
+                                        },
+                                        itemBuilder: (context) => [
+                                          PopupMenuItem<String>(
+                                            value: 'edit',
+                                            height: 30,
+                                            child: Row(
+                                              children: const [
+                                                Icon(Icons.edit,
+                                                    size: 15,
+                                                    color: Colors.black87),
+                                                SizedBox(width: 8),
+                                                Text(
+                                                  'Edit',
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w500,
                                                   ),
                                                 ),
                                               ],
                                             ),
-                                          ],
+                                          ),
+                                          const PopupMenuDivider(height: 8),
+                                          PopupMenuItem<String>(
+                                            value: 'delete',
+                                            height: 30,
+                                            child: Row(
+                                              children: [
+                                                Icon(Icons.delete,
+                                                    size: 15,
+                                                    color: Colors.red.shade600),
+                                                const SizedBox(width: 8),
+                                                Text(
+                                                  'Delete',
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w500,
+                                                    color: Colors.red.shade600,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+
+                                  // Collapsible display-only fields
+                                  if (!isCollapsed) ...[
+                                    const SizedBox(height: 12),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 12.0),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          _buildInfoFieldInline(
+                                              'School Name',
+                                              education['schoolName']),
+                                          const SizedBox(height: 12),
+                                          _buildInfoFieldInline(
+                                              'Degree/Course',
+                                              education['degreeCourse']),
+                                          const SizedBox(height: 12),
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: _buildInfoFieldInline(
+                                                    'From',
+                                                    education['attendedFrom']),
+                                              ),
+                                              const SizedBox(width: 12),
+                                              Expanded(
+                                                child: _buildInfoFieldInline(
+                                                    'To',
+                                                    education['attendedTo']),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 12),
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: _buildInfoFieldInline(
+                                                    'Highest Level/Units',
+                                                    education['highestLevel']),
+                                              ),
+                                              const SizedBox(width: 12),
+                                              Expanded(
+                                                child: _buildInfoFieldInline(
+                                                    'Year Graduated',
+                                                    education['yearGraduated']),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 12),
+                                          _buildInfoFieldInline(
+                                              'Academic Honors',
+                                              education['academicHonors']),
                                         ],
                                       ),
                                     ),
-                                  ], // End of collapsible content
+                                  ],
                                 ],
                               ),
                             );
@@ -771,268 +1267,7 @@ class _EducationalBackgroundWidgetState
     );
   }
 
-void _showAddEducationDialog() {
-    String selectedLevel = 'ELEMENTARY';
-    final schoolController = TextEditingController();
-    final degreeController = TextEditingController();
-    final attendedFromController = TextEditingController();
-    final attendedToController = TextEditingController();
-    final highestLevelController = TextEditingController();
-    final yearGraduatedController = TextEditingController();
-    final academicHonorsController = TextEditingController();
-    bool onGoing = false;
-
-    final levels = [
-      'ELEMENTARY',
-      'SECONDARY',
-      'VOCATIONAL/TRADE COURSE',
-      'COLLEGE',
-      'GRADUATE STUDIES',
-    ];
-
-    InputDecoration fieldDecoration(String label) => InputDecoration(
-          labelText: label,
-          labelStyle: const TextStyle(fontSize: 13, color: Colors.black),
-          enabledBorder: OutlineInputBorder(
-            borderSide: const BorderSide(color: Color(0xFF2C5F4F), width: 1.5),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderSide: const BorderSide(color: Color(0xFF2C5F4F), width: 2.0),
-          ),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        );
-
-    Future<String?> pickDate(BuildContext ctx, String current) async {
-      DateTime? initial;
-      if (current.isNotEmpty) initial = DateTime.tryParse(current);
-      final picked = await showDatePicker(
-        context: ctx,
-        initialDate: initial ?? DateTime.now(),
-        firstDate: DateTime(1900),
-        lastDate: DateTime(2100),
-        builder: (ctx, child) => Theme(
-          data: Theme.of(ctx).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF2C5F4F),
-              onPrimary: Colors.white,
-              onSurface: Colors.black,
-            ),
-          ),
-          child: child!,
-        ),
-      );
-      if (picked == null) return null;
-      return '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
-    }
-
-    showDialog(
-      context: context,
-      builder: (BuildContext ctx) {
-        return StatefulBuilder(
-          builder: (ctx, setDialogState) {
-            return Dialog(
-              backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              insetPadding: EdgeInsets.symmetric(
-                horizontal: MediaQuery.of(ctx).size.width * 0.025, // 10% each side = 90% width
-                vertical: 24,
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // ── Title ──
-                    const Text(
-                      'Add Education',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF2C5F4F),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // ── Scrollable content ──
-                    Flexible(
-                      child: SingleChildScrollView(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // Education Level dropdown
-                            DropdownButtonFormField<String>(
-                              value: selectedLevel,
-                              decoration: fieldDecoration('Education Level'),
-                              items: levels
-                                  .map((l) => DropdownMenuItem(
-                                        value: l,
-                                        child: Text(l, style: const TextStyle(fontSize: 13)),
-                                      ))
-                                  .toList(),
-                              onChanged: (v) => setDialogState(() => selectedLevel = v!),
-                            ),
-                            const SizedBox(height: 12),
-
-                            // School Name
-                            TextField(
-                              controller: schoolController,
-                              cursorColor: const Color(0xFF2C5F4F),
-                              decoration: fieldDecoration('School Name *'),
-                            ),
-                            const SizedBox(height: 12),
-
-                            // Degree / Course
-                            TextField(
-                              controller: degreeController,
-                              cursorColor: const Color(0xFF2C5F4F),
-                              decoration: fieldDecoration('Degree / Course'),
-                            ),
-                            const SizedBox(height: 12),
-
-                            // Attended From
-                            TextField(
-                              controller: attendedFromController,
-                              readOnly: true,
-                              cursorColor: const Color(0xFF2C5F4F),
-                              decoration: fieldDecoration('Attended From').copyWith(
-                                suffixIcon: const Icon(Icons.calendar_today, size: 18, color: Color(0xFF2C5F4F)),
-                              ),
-                              onTap: () async {
-                                final d = await pickDate(ctx, attendedFromController.text);
-                                if (d != null) setDialogState(() => attendedFromController.text = d);
-                              },
-                            ),
-                            const SizedBox(height: 12),
-
-                            // Attended To
-                            TextField(
-                              controller: attendedToController,
-                              readOnly: true,
-                              enabled: !onGoing,
-                              cursorColor: const Color(0xFF2C5F4F),
-                              decoration: fieldDecoration('Attended To').copyWith(
-                                suffixIcon: const Icon(Icons.calendar_today, size: 18, color: Color(0xFF2C5F4F)),
-                              ),
-                              onTap: () async {
-                                final d = await pickDate(ctx, attendedToController.text);
-                                if (d != null) setDialogState(() => attendedToController.text = d);
-                              },
-                            ),
-                            const SizedBox(height: 4),
-
-                            // On-going checkbox
-                            Row(
-                              children: [
-                                Checkbox(
-                                  value: onGoing,
-                                  activeColor: const Color(0xFF2C5F4F),
-                                  onChanged: (v) {
-                                    setDialogState(() {
-                                      onGoing = v!;
-                                      if (onGoing) attendedToController.clear();
-                                    });
-                                  },
-                                ),
-                                const Text('On-going', style: TextStyle(fontSize: 13)),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-
-                            // Highest Level Earned
-                            TextField(
-                              controller: highestLevelController,
-                              cursorColor: const Color(0xFF2C5F4F),
-                              decoration: fieldDecoration('Highest Level Earned'),
-                            ),
-                            const SizedBox(height: 12),
-
-                            // Year Graduated
-                            TextField(
-                              controller: yearGraduatedController,
-                              cursorColor: const Color(0xFF2C5F4F),
-                              keyboardType: TextInputType.number,
-                              decoration: fieldDecoration('Year Graduated'),
-                            ),
-                            const SizedBox(height: 12),
-
-                            // Academic Honors
-                            TextField(
-                              controller: academicHonorsController,
-                              cursorColor: const Color(0xFF2C5F4F),
-                              decoration: fieldDecoration('Academic Honors'),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // ── Action Buttons ──
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton(
-                          onPressed: () => Navigator.of(ctx).pop(),
-                          child: const Text('Cancel', style: TextStyle(color: Colors.red)),
-                        ),
-                        const SizedBox(width: 8),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2C5F4F),
-                            foregroundColor: Colors.white,
-                          ),
-                          onPressed: () {
-                            if (schoolController.text.trim().isEmpty) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Please enter school name'),
-                                  backgroundColor: Colors.orange,
-                                ),
-                              );
-                              return;
-                            }
-
-                            final newEntry = {
-                              'level': selectedLevel,
-                              'schoolName': schoolController.text.trim(),
-                              'degreeCourse': degreeController.text.trim(),
-                              'attendedFrom': attendedFromController.text,
-                              'attendedTo': attendedToController.text,
-                              'highestLevel': highestLevelController.text.trim(),
-                              'yearGraduated': yearGraduatedController.text.trim(),
-                              'academicHonors': academicHonorsController.text.trim(),
-                              'onGoing': onGoing,
-                            };
-
-                            Navigator.of(ctx).pop();
-
-                            setState(() {
-                              _educationData.insert(0, newEntry);
-                              _collapsedEducationIndexes = _collapsedEducationIndexes
-                                  .map((i) => i + 1)
-                                  .toSet();
-                              _editingEducationIndex = null;
-                              _isNewEduc = false;
-                            });
-
-                            _saveEducation(0);
-                          },
-                          child: const Text('Add'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
+  // ─── Field display helpers (UNCHANGED) ────────────────────────────────────
 
   Widget _buildInfoFieldInline(String label, dynamic value) {
     String displayValue = 'N/A';
@@ -1056,126 +1291,9 @@ void _showAddEducationDialog() {
         Text(
           displayValue,
           style: const TextStyle(
-            fontSize: 15,
+            fontSize: 14,
             color: Colors.black87,
             fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildEditableFieldInline(
-    String label,
-    String? value,
-    Function(String) onChanged,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 10,
-            color: Colors.grey[600],
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 4),
-        TextFormField(
-          initialValue: value ?? '',
-          onChanged: onChanged,
-          style: const TextStyle(
-            fontSize: 13,
-            color: Colors.black87,
-            fontWeight: FontWeight.bold,
-          ),
-          decoration: InputDecoration(
-            border: UnderlineInputBorder(
-              borderSide: BorderSide(color: const Color(0xFF2C5F4F)),
-            ),
-            enabledBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.grey[300]!),
-            ),
-            focusedBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: Color(0xFF2C5F4F), width: 2),
-            ),
-            contentPadding: const EdgeInsets.symmetric(vertical: 4),
-            isDense: true,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDateFieldInline(
-    String label,
-    String? value,
-    Function(String) onChanged,
-  ) {
-    final controller = TextEditingController(text: value ?? '');
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 10,
-            color: Colors.grey[600],
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        GestureDetector(
-          onTap: () async {
-            DateTime? initialDate;
-            if (value != null && value.isNotEmpty) {
-              try {
-                initialDate = DateTime.tryParse(value);
-              // ignore: empty_catches
-              } catch (e) {}
-            }
-            final DateTime? pickedDate = await showDatePicker(
-              context: context,
-              initialDate: initialDate ?? DateTime.now(),
-              firstDate: DateTime(1900),
-              lastDate: DateTime(2100),
-              builder: (context, child) => Theme(
-                data: Theme.of(context).copyWith(
-                  colorScheme: const ColorScheme.light(
-                    primary: Color(0xFF2C5F4F),
-                    onPrimary: Colors.white,
-                    onSurface: Colors.black,
-                  ),
-                ),
-                child: child!,
-              ),
-            );
-            if (pickedDate != null) {
-              final formatted =
-                  '${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}';
-              controller.text = formatted;
-              onChanged(formatted);
-            }
-          },
-          child: AbsorbPointer(
-            child: TextFormField(
-              controller: controller,
-              readOnly: true,
-              style: const TextStyle(
-                fontSize: 13,
-                color: Colors.black87,
-                fontWeight: FontWeight.bold,
-              ),
-              decoration: const InputDecoration(
-                suffixIcon: Icon(
-                  Icons.calendar_today,
-                  size: 20,
-                  color: Color(0xFF2C5F4F),
-                ),
-                contentPadding: EdgeInsets.symmetric(vertical: 4),
-                isDense: true,
-              ),
-            ),
           ),
         ),
       ],

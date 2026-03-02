@@ -23,7 +23,7 @@ class _VoluntaryWorkWidgetState extends State<VoluntaryWorkWidget> {
   List<Map<String, dynamic>> _voluntaryWorkData = [];
   int? _editingVoluntaryWorkIndex;
   Set<int> _collapsedVoluntaryWorkIndexes = <int>{};
-   bool _isNewVoluntaryWork = false;
+
 
   @override
   void initState() {
@@ -57,9 +57,7 @@ class _VoluntaryWorkWidgetState extends State<VoluntaryWorkWidget> {
           _parseVoluntaryWorkData();
         });
 
-        print(
-          '✅ Loaded ${_voluntaryWorkListData.length} voluntary work records',
-        );
+        print('✅ Loaded ${_voluntaryWorkListData.length} voluntary work records');
       }
     } catch (e) {
       print('💥 Exception: $e');
@@ -84,10 +82,11 @@ class _VoluntaryWorkWidgetState extends State<VoluntaryWorkWidget> {
     print('🤝 Parsed ${_voluntaryWorkData.length} voluntary work records');
   }
 
+  // ─── Save / Delete UNCHANGED ───────────────────────────────────────────────
+
   Future<void> _saveVoluntaryWork(int index) async {
     final voluntary = _voluntaryWorkData[index];
 
-    // Validate organization
     if (voluntary['organization']?.toString().trim().isEmpty ?? true) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -101,7 +100,8 @@ class _VoluntaryWorkWidgetState extends State<VoluntaryWorkWidget> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
+      builder: (context) =>
+          const Center(child: CircularProgressIndicator(color: Colors.white)),
     );
 
     try {
@@ -160,6 +160,7 @@ class _VoluntaryWorkWidgetState extends State<VoluntaryWorkWidget> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
         title: const Text('Delete Voluntary Work'),
         content: const Text(
           'Are you sure you want to delete this voluntary work record?',
@@ -167,6 +168,7 @@ class _VoluntaryWorkWidgetState extends State<VoluntaryWorkWidget> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
+            style: TextButton.styleFrom(foregroundColor: Colors.black),
             child: const Text('Cancel'),
           ),
           TextButton(
@@ -183,7 +185,8 @@ class _VoluntaryWorkWidgetState extends State<VoluntaryWorkWidget> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
+      builder: (context) =>
+          const Center(child: CircularProgressIndicator(color: Colors.white)),
     );
 
     try {
@@ -230,7 +233,429 @@ class _VoluntaryWorkWidgetState extends State<VoluntaryWorkWidget> {
     }
   }
 
-  //LEARNING AND DEVELOPMENT FUNCTIONS
+  // ─── Shared helpers ────────────────────────────────────────────────────────
+
+  InputDecoration _fieldDecoration(String label, {bool isDate = false}) =>
+      InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(fontSize: 14, color: Colors.grey),
+        floatingLabelStyle: const TextStyle(fontSize: 16, color: Color(0xFF2C5F4F)),
+        filled: true,
+        fillColor: const Color(0xFFF5F5F5),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6),
+          borderSide: const BorderSide(color: Color(0xFF2C5F4F), width: 1.5),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        isDense: true,
+        suffixIcon: isDate
+            ? const Icon(Icons.calendar_today,
+                size: 16, color: Color(0xFF2C5F4F))
+            : null,
+      );
+
+  /// Dark green header for dialogs.
+  Widget _dialogHeader(String title) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: const BoxDecoration(
+        color: Color(0xFF2C5F4F),
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(12),
+          topRight: Radius.circular(12),
+        ),
+      ),
+      child: Row(
+        children: [
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Full-width Save / Cancel buttons.
+  Widget _dialogActions(BuildContext ctx, VoidCallback onSave, {String saveLabel = 'Save'}) {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton(
+            onPressed: onSave,
+            style: OutlinedButton.styleFrom(
+              backgroundColor: const Color(0xFF2C5F4F),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.save, size: 16),
+                SizedBox(width: 6),
+                Text('Save'),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.grey[200],
+              foregroundColor: Colors.black87,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              elevation: 0,
+            ),
+            child: const Text('Cancel'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<String?> _pickDate(BuildContext ctx, String current) async {
+    DateTime? initial;
+    if (current.isNotEmpty) initial = DateTime.tryParse(current);
+    final picked = await showDatePicker(
+      context: ctx,
+      initialDate: initial ?? DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime(2100),
+      builder: (ctx, child) => Theme(
+        data: Theme.of(ctx).copyWith(
+          colorScheme: const ColorScheme.light(
+            primary: Color(0xFF2C5F4F),
+            onPrimary: Colors.white,
+            onSurface: Colors.black,
+          ),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked == null) return null;
+    return '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+  }
+
+  // ─── Add Voluntary Work Dialog (UNCHANGED logic) ──────────────────────────
+
+  void _showAddVoluntaryWorkDialog() {
+    final organizationController = TextEditingController();
+    final hoursController = TextEditingController();
+    final workController = TextEditingController();
+    final dateFromController = TextEditingController();
+    final dateToController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return Dialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              insetPadding: EdgeInsets.symmetric(
+                horizontal: MediaQuery.of(ctx).size.width * 0.025,
+                vertical: 24,
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _dialogHeader('Add Voluntary Work'),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                            TextField(
+                              controller: organizationController,
+                              cursorColor: const Color(0xFF2C5F4F),
+                              decoration:
+                                  _fieldDecoration('Name of Organization *'),
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    controller: dateFromController,
+                                    readOnly: true,
+                                    cursorColor: const Color(0xFF2C5F4F),
+                                    decoration:
+                                        _fieldDecoration('From', isDate: true),
+                                    onTap: () async {
+                                      final d = await _pickDate(
+                                          ctx, dateFromController.text);
+                                      if (d != null) {
+                                        setDialogState(
+                                            () => dateFromController.text = d);
+                                      }
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: TextField(
+                                    controller: dateToController,
+                                    readOnly: true,
+                                    cursorColor: const Color(0xFF2C5F4F),
+                                    decoration:
+                                        _fieldDecoration('To', isDate: true),
+                                    onTap: () async {
+                                      final d = await _pickDate(
+                                          ctx, dateToController.text);
+                                      if (d != null) {
+                                        setDialogState(
+                                            () => dateToController.text = d);
+                                      }
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: hoursController,
+                              cursorColor: const Color(0xFF2C5F4F),
+                              keyboardType: TextInputType.number,
+                              decoration: _fieldDecoration('Number of Hours'),
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: workController,
+                              cursorColor: const Color(0xFF2C5F4F),
+                              decoration:
+                                  _fieldDecoration('Position / Nature of Work'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  Padding(
+                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: _dialogActions(ctx, () {
+                              if (organizationController.text.trim().isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content:
+                                        Text('Please enter organization name'),
+                                    backgroundColor: Colors.orange,
+                                  ),
+                                );
+                                return;
+                              }
+                    
+                              final newEntry = {
+                                'organization':
+                                    organizationController.text.trim(),
+                                'dateFrom': dateFromController.text,
+                                'dateTo': dateToController.text,
+                                'hours': hoursController.text.trim(),
+                                'work': workController.text.trim(),
+                              };
+                    
+                              Navigator.of(ctx).pop();
+                    
+                              setState(() {
+                                _voluntaryWorkData.insert(0, newEntry);
+                                _collapsedVoluntaryWorkIndexes =
+                                    _collapsedVoluntaryWorkIndexes
+                                        .map((i) => i + 1)
+                                        .toSet();
+                                _editingVoluntaryWorkIndex = null;
+                              });
+                    
+                              _saveVoluntaryWork(0);
+                            }, saveLabel: 'Add'),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // ─── NEW: Edit Voluntary Work Dialog ──────────────────────────────────────
+  /// Same UI as Add, pre-filled with existing values.
+  void _showEditVoluntaryWorkDialog(int index) {
+    final voluntary = _voluntaryWorkData[index];
+
+    final organizationController =
+        TextEditingController(text: voluntary['organization'] ?? '');
+    final hoursController =
+        TextEditingController(text: voluntary['hours'] ?? '');
+    final workController =
+        TextEditingController(text: voluntary['work'] ?? '');
+    final dateFromController =
+        TextEditingController(text: voluntary['dateFrom'] ?? '');
+    final dateToController =
+        TextEditingController(text: voluntary['dateTo'] ?? '');
+
+    showDialog(
+      context: context,
+      builder: (BuildContext ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return Dialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              insetPadding: EdgeInsets.symmetric(
+                horizontal: MediaQuery.of(ctx).size.width * 0.025,
+                vertical: 24,
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _dialogHeader('Edit Voluntary Work'),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                            // Name of Organization
+                            TextField(
+                              controller: organizationController,
+                              cursorColor: const Color(0xFF2C5F4F),
+                              decoration:
+                                  _fieldDecoration('Name of Organization *'),
+                            ),
+                            const SizedBox(height: 12),
+
+                            // Date From & Date To side by side
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    controller: dateFromController,
+                                    readOnly: true,
+                                    cursorColor: const Color(0xFF2C5F4F),
+                                    decoration:
+                                        _fieldDecoration('From', isDate: true),
+                                    onTap: () async {
+                                      final d = await _pickDate(
+                                          ctx, dateFromController.text);
+                                      if (d != null) {
+                                        setDialogState(
+                                            () => dateFromController.text = d);
+                                      }
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: TextField(
+                                    controller: dateToController,
+                                    readOnly: true,
+                                    cursorColor: const Color(0xFF2C5F4F),
+                                    decoration:
+                                        _fieldDecoration('To', isDate: true),
+                                    onTap: () async {
+                                      final d = await _pickDate(
+                                          ctx, dateToController.text);
+                                      if (d != null) {
+                                        setDialogState(
+                                            () => dateToController.text = d);
+                                      }
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+
+                            // Number of Hours
+                            TextField(
+                              controller: hoursController,
+                              cursorColor: const Color(0xFF2C5F4F),
+                              keyboardType: TextInputType.number,
+                              decoration: _fieldDecoration('Number of Hours'),
+                            ),
+                            const SizedBox(height: 12),
+
+                            // Position / Nature of Work
+                            TextField(
+                              controller: workController,
+                              cursorColor: const Color(0xFF2C5F4F),
+                              decoration:
+                                  _fieldDecoration('Position / Nature of Work'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: _dialogActions(ctx, () {
+                              if (organizationController.text.trim().isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content:
+                                        Text('Please enter organization name'),
+                                    backgroundColor: Colors.orange,
+                                  ),
+                                );
+                                return;
+                              }
+                    
+                              // Write updated values back to _voluntaryWorkData
+                              setState(() {
+                                _voluntaryWorkData[index]['organization'] =
+                                    organizationController.text.trim();
+                                _voluntaryWorkData[index]['dateFrom'] =
+                                    dateFromController.text;
+                                _voluntaryWorkData[index]['dateTo'] =
+                                    dateToController.text;
+                                _voluntaryWorkData[index]['hours'] =
+                                    hoursController.text.trim();
+                                _voluntaryWorkData[index]['work'] =
+                                    workController.text.trim();
+                              });
+                    
+                              Navigator.of(ctx).pop();
+                              _saveVoluntaryWork(index); // existing save flow
+                            }),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // ─── Card ──────────────────────────────────────────────────────────────────
 
   Widget _buildVoluntaryWorkCard() {
     return Container(
@@ -263,15 +688,13 @@ class _VoluntaryWorkWidgetState extends State<VoluntaryWorkWidget> {
                 ),
                 GestureDetector(
                   onTap: () => _showAddVoluntaryWorkDialog(),
-                  child: const Icon(
-                    Icons.add_circle,
-                    size: 24,
-                    color: Colors.white,
-                  ),
+                  child: const Icon(Icons.add_circle,
+                      size: 24, color: Colors.white),
                 ),
               ],
             ),
           ),
+
           // Content
           if (_isVoluntaryWorkExpanded)
             Container(
@@ -290,9 +713,7 @@ class _VoluntaryWorkWidgetState extends State<VoluntaryWorkWidget> {
                                 'No voluntary work records found.\nTap + to add voluntary work.',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
-                                  color: Colors.grey[600],
-                                  fontSize: 14,
-                                ),
+                                    color: Colors.grey[600], fontSize: 14),
                               ),
                             ),
                           ),
@@ -301,10 +722,8 @@ class _VoluntaryWorkWidgetState extends State<VoluntaryWorkWidget> {
                           ..._voluntaryWorkData.asMap().entries.map((entry) {
                             int index = entry.key;
                             Map<String, dynamic> voluntary = entry.value;
-                            bool isEditing =
-                                _editingVoluntaryWorkIndex == index;
-                            bool isCollapsed = _collapsedVoluntaryWorkIndexes
-                                .contains(index);
+                            bool isCollapsed =
+                                _collapsedVoluntaryWorkIndexes.contains(index);
 
                             return Container(
                               margin: const EdgeInsets.only(bottom: 8),
@@ -316,149 +735,128 @@ class _VoluntaryWorkWidgetState extends State<VoluntaryWorkWidget> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  // ── Title row ──
                                   Row(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.center,
                                     children: [
+                                      // Tappable title — toggles collapse
                                       Expanded(
-                                        child: isEditing
-                                            ? _buildEditableFieldInline(
-                                                'Name of Organization',
-                                                voluntary['organization'],
-                                                (value) {
-                                                  _voluntaryWorkData[index]['organization'] =
-                                                      value;
-                                                },
-                                              )
-                                            : Text(
-                                                voluntary['organization'] ??
-                                                    'N/A',
-                                                style: const TextStyle(
-                                                  fontSize: 15,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.black,
-                                                ),
-                                              ),
+                                        child: GestureDetector(
+                                          onTap: () => setState(() {
+                                            if (isCollapsed) {
+                                              _collapsedVoluntaryWorkIndexes
+                                                  .remove(index);
+                                            } else {
+                                              _collapsedVoluntaryWorkIndexes
+                                                  .add(index);
+                                            }
+                                          }),
+                                          child: Text(
+                                            voluntary['organization'] ?? 'N/A',
+                                            style: const TextStyle(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                        ),
                                       ),
+
                                       // Collapse/expand arrow
-                                      if (!isEditing)
-                                        GestureDetector(
-                                          onTap: () {
-                                            if (!isEditing) {
-                                              setState(() {
-                                                if (isCollapsed) {
-                                                  _collapsedVoluntaryWorkIndexes
-                                                      .remove(index);
-                                                } else {
-                                                  _collapsedVoluntaryWorkIndexes
-                                                      .add(index);
-                                                }
-                                              });
-                                            }
-                                          },
-                                          child: Icon(
-                                            isCollapsed
-                                                ? Icons.expand_more
-                                                : Icons.expand_less,
-                                            size: 20,
-                                            color: Colors.black,
-                                          ),
+                                      GestureDetector(
+                                        onTap: () => setState(() {
+                                          if (isCollapsed) {
+                                            _collapsedVoluntaryWorkIndexes
+                                                .remove(index);
+                                          } else {
+                                            _collapsedVoluntaryWorkIndexes
+                                                .add(index);
+                                          }
+                                        }),
+                                        child: Icon(
+                                          isCollapsed
+                                              ? Icons.expand_more
+                                              : Icons.expand_less,
+                                          size: 20,
+                                          color: Colors.black,
                                         ),
+                                      ),
                                       const SizedBox(width: 4),
-                                      // 3-dot menu or save
-                                      if (!isEditing)
-                                        PopupMenuButton<String>(
-                                          color: Colors.white,
-                                          position: PopupMenuPosition.under,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              14,
-                                            ),
-                                            side: BorderSide(
-                                              color: Colors.grey.shade200,
-                                            ),
-                                          ),
-                                          icon: Container(
-                                            padding: const EdgeInsets.all(6),
-                                            child: const Icon(
-                                              Icons.more_horiz,
-                                              size: 18,
-                                              color: Colors.black87,
-                                            ),
-                                          ),
-                                          padding: EdgeInsets.zero,
-                                          onSelected: (value) {
-                                            if (value == 'edit') {
-                                              setState(() {
-                                                _collapsedVoluntaryWorkIndexes
-                                                    .remove(index);
-                                                _editingVoluntaryWorkIndex =
-                                                    index;
-                                                  _isNewVoluntaryWork = false;
-                                              });
-                                            } else if (value == 'delete') {
-                                              _deleteVoluntaryWork(index);
-                                            }
-                                          },
-                                          itemBuilder: (context) => [
-                                            PopupMenuItem<String>(
-                                              value: 'edit',
-                                              height: 30,
-                                              child: Row(
-                                                children: const [
-                                                  Icon(
-                                                    Icons.edit,
-                                                    size: 15,
-                                                    color: Colors.black87,
-                                                  ),
-                                                  SizedBox(width: 8),
-                                                  Text(
-                                                    'Edit',
-                                                    style: TextStyle(
-                                                      fontSize: 12,
-                                                      fontWeight:
-                                                          FontWeight.w500,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            const PopupMenuDivider(height: 8),
-                                            PopupMenuItem<String>(
-                                              value: 'delete',
-                                              height: 30,
-                                              child: Row(
-                                                children: [
-                                                  Icon(
-                                                    Icons.delete,
-                                                    size: 15,
-                                                    color: Colors.red.shade600,
-                                                  ),
-                                                  const SizedBox(width: 8),
-                                                  Text(
-                                                    'Delete',
-                                                    style: TextStyle(
-                                                      fontSize: 12,
-                                                      fontWeight:
-                                                          FontWeight.w500,
-                                                      color:
-                                                          Colors.red.shade600,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ],
+
+                                      // 3-dot menu — Edit opens dialog
+                                      PopupMenuButton<String>(
+                                        color: Colors.white,
+                                        position: PopupMenuPosition.under,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(14),
+                                          side: BorderSide(
+                                              color: Colors.grey.shade200),
                                         ),
+                                        icon: Container(
+                                          padding: const EdgeInsets.all(6),
+                                          child: const Icon(Icons.more_horiz,
+                                              size: 18, color: Colors.black87),
+                                        ),
+                                        padding: EdgeInsets.zero,
+                                        onSelected: (value) {
+                                          if (value == 'edit') {
+                                            _showEditVoluntaryWorkDialog(
+                                                index); // ← dialog
+                                          } else if (value == 'delete') {
+                                            _deleteVoluntaryWork(index);
+                                          }
+                                        },
+                                        itemBuilder: (context) => [
+                                          PopupMenuItem<String>(
+                                            value: 'edit',
+                                            height: 30,
+                                            child: Row(
+                                              children: const [
+                                                Icon(Icons.edit,
+                                                    size: 15,
+                                                    color: Colors.black87),
+                                                SizedBox(width: 8),
+                                                Text('Edit',
+                                                    style: TextStyle(
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.w500)),
+                                              ],
+                                            ),
+                                          ),
+                                          const PopupMenuDivider(height: 8),
+                                          PopupMenuItem<String>(
+                                            value: 'delete',
+                                            height: 30,
+                                            child: Row(
+                                              children: [
+                                                Icon(Icons.delete,
+                                                    size: 15,
+                                                    color: Colors.red.shade600),
+                                                const SizedBox(width: 8),
+                                                Text('Delete',
+                                                    style: TextStyle(
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.w500,
+                                                        color: Colors
+                                                            .red.shade600)),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ],
                                   ),
 
+                                  // ── Collapsible display-only fields ──
                                   if (!isCollapsed) ...[
                                     const SizedBox(height: 12),
                                     Padding(
                                       padding: const EdgeInsets.symmetric(
-                                        horizontal: 12.0,
-                                      ),
+                                          horizontal: 12.0),
                                       child: Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
@@ -468,125 +866,26 @@ class _VoluntaryWorkWidgetState extends State<VoluntaryWorkWidget> {
                                                 CrossAxisAlignment.start,
                                             children: [
                                               Expanded(
-                                                child: isEditing
-                                                    ? _buildDateFieldInline(
-                                                        'From',
-                                                        voluntary['dateFrom'],
-                                                        (value) {
-                                                          _voluntaryWorkData[index]['dateFrom'] =
-                                                              value;
-                                                        },
-                                                      )
-                                                    : _buildInfoFieldInline(
-                                                        'Date From',
-                                                        voluntary['dateFrom'],
-                                                      ),
+                                                child: _buildInfoFieldInline(
+                                                    'Date From',
+                                                    voluntary['dateFrom']),
                                               ),
                                               const SizedBox(width: 12),
                                               Expanded(
-                                                child: isEditing
-                                                    ? _buildDateFieldInline(
-                                                        'To',
-                                                        voluntary['dateTo'],
-                                                        (value) {
-                                                          _voluntaryWorkData[index]['dateTo'] =
-                                                              value;
-                                                        },
-                                                      )
-                                                    : _buildInfoFieldInline(
-                                                        'Date To',
-                                                        voluntary['dateTo'],
-                                                      ),
+                                                child: _buildInfoFieldInline(
+                                                    'Date To',
+                                                    voluntary['dateTo']),
                                               ),
                                             ],
                                           ),
                                           const SizedBox(height: 12),
-                                          isEditing
-                                              ? _buildEditableFieldInline(
-                                                  'Number of Hours',
-                                                  voluntary['hours'],
-                                                  (value) {
-                                                    _voluntaryWorkData[index]['hours'] =
-                                                        value;
-                                                  },
-                                                )
-                                              : _buildInfoFieldInline(
-                                                  'Number of Hours',
-                                                  voluntary['hours'],
-                                                ),
+                                          _buildInfoFieldInline(
+                                              'Number of Hours',
+                                              voluntary['hours']),
                                           const SizedBox(height: 12),
-                                          isEditing
-                                              ? _buildEditableFieldInline(
-                                                  'Position / Nature of Work',
-                                                  voluntary['work'],
-                                                  (value) {
-                                                    _voluntaryWorkData[index]['work'] =
-                                                        value;
-                                                  },
-                                                )
-                                              : _buildInfoFieldInline(
-                                                  'Position / Nature of Work',
-                                                  voluntary['work'],
-                                                ),
-                                          if (isEditing) ...[
-                                            const SizedBox(height: 12),
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.end,
-                                              children: [
-                                                TextButton(
-                                                  onPressed: () => setState(() {
-                                                   if (_isNewVoluntaryWork) {
-                                                      _voluntaryWorkData.removeAt(
-                                                        index,
-                                                      );
-                                                      // Shift all collapsed indexes back down by 1 to compensate
-                                                      _collapsedVoluntaryWorkIndexes =
-                                                          _collapsedVoluntaryWorkIndexes
-                                                              .where(
-                                                                (i) => i > 0,
-                                                              )
-                                                              .map((i) => i - 1)
-                                                              .toSet();
-                                                    }
-                                                    _editingVoluntaryWorkIndex =
-                                                        null;
-                                                    _isNewVoluntaryWork = false;
-                                                  }),
-                                                  child: const Text(
-                                                    'Cancel',
-                                                    style: TextStyle(
-                                                      color: Colors.red,
-                                                    ),
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 8),
-                                                ElevatedButton.icon(
-                                                  onPressed: () =>
-                                                      _saveVoluntaryWork(index),
-                                                  icon: const Icon(
-                                                    Icons.save,
-                                                    size: 16,
-                                                  ),
-                                                  label: const Text('Save'),
-                                                  style: ElevatedButton.styleFrom(
-                                                    backgroundColor:
-                                                        const Color(0xFF2C5F4F),
-                                                    foregroundColor:
-                                                        Colors.white,
-                                                    padding:
-                                                        const EdgeInsets.symmetric(
-                                                          horizontal: 12,
-                                                          vertical: 6,
-                                                        ),
-                                                    textStyle: const TextStyle(
-                                                      fontSize: 13,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ],
+                                          _buildInfoFieldInline(
+                                              'Position / Nature of Work',
+                                              voluntary['work']),
                                         ],
                                       ),
                                     ),
@@ -604,205 +903,7 @@ class _VoluntaryWorkWidgetState extends State<VoluntaryWorkWidget> {
     );
   }
 
- void _showAddVoluntaryWorkDialog() {
-    final organizationController = TextEditingController();
-    final hoursController = TextEditingController();
-    final workController = TextEditingController();
-    final dateFromController = TextEditingController();
-    final dateToController = TextEditingController();
-
-    InputDecoration fieldDecoration(String label) => InputDecoration(
-          labelText: label,
-          labelStyle: const TextStyle(fontSize: 13, color: Colors.black),
-          enabledBorder: const OutlineInputBorder(
-            borderSide: BorderSide(color: Color(0xFF2C5F4F), width: 1.5),
-          ),
-          focusedBorder: const OutlineInputBorder(
-            borderSide: BorderSide(color: Color(0xFF2C5F4F), width: 2.0),
-          ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        );
-
-    Future<String?> pickDate(BuildContext ctx, String current) async {
-      DateTime? initial;
-      if (current.isNotEmpty) initial = DateTime.tryParse(current);
-      final picked = await showDatePicker(
-        context: ctx,
-        initialDate: initial ?? DateTime.now(),
-        firstDate: DateTime(1900),
-        lastDate: DateTime(2100),
-        builder: (ctx, child) => Theme(
-          data: Theme.of(ctx).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF2C5F4F),
-              onPrimary: Colors.white,
-              onSurface: Colors.black,
-            ),
-          ),
-          child: child!,
-        ),
-      );
-      if (picked == null) return null;
-      return '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
-    }
-
-    showDialog(
-      context: context,
-      builder: (BuildContext ctx) {
-        return StatefulBuilder(
-          builder: (ctx, setDialogState) {
-            return Dialog(
-              backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              insetPadding: EdgeInsets.symmetric(
-                horizontal: MediaQuery.of(ctx).size.width * 0.025, // 2.5% each side = 95% width
-                vertical: 24,
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // ── Title ──
-                    const Text(
-                      'Add Voluntary Work',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF2C5F4F)),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // ── Scrollable content ──
-                    Flexible(
-                      child: SingleChildScrollView(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // Organization
-                            TextField(
-                              controller: organizationController,
-                              cursorColor: const Color(0xFF2C5F4F),
-                              decoration: fieldDecoration('Name of Organization *'),
-                            ),
-                            const SizedBox(height: 12),
-
-                            // Date From & Date To side by side
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: TextField(
-                                    controller: dateFromController,
-                                    readOnly: true,
-                                    cursorColor: const Color(0xFF2C5F4F),
-                                    decoration: fieldDecoration('From').copyWith(
-                                      suffixIcon: const Icon(Icons.calendar_today, size: 16, color: Color(0xFF2C5F4F)),
-                                    ),
-                                    onTap: () async {
-                                      final d = await pickDate(ctx, dateFromController.text);
-                                      if (d != null) setDialogState(() => dateFromController.text = d);
-                                    },
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: TextField(
-                                    controller: dateToController,
-                                    readOnly: true,
-                                    cursorColor: const Color(0xFF2C5F4F),
-                                    decoration: fieldDecoration('To').copyWith(
-                                      suffixIcon: const Icon(Icons.calendar_today, size: 16, color: Color(0xFF2C5F4F)),
-                                    ),
-                                    onTap: () async {
-                                      final d = await pickDate(ctx, dateToController.text);
-                                      if (d != null) setDialogState(() => dateToController.text = d);
-                                    },
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-
-                            // Number of Hours
-                            TextField(
-                              controller: hoursController,
-                              cursorColor: const Color(0xFF2C5F4F),
-                              keyboardType: TextInputType.number,
-                              decoration: fieldDecoration('Number of Hours'),
-                            ),
-                            const SizedBox(height: 12),
-
-                            // Position / Nature of Work
-                            TextField(
-                              controller: workController,
-                              cursorColor: const Color(0xFF2C5F4F),
-                              decoration: fieldDecoration('Position / Nature of Work'),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // ── Action Buttons ──
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton(
-                          onPressed: () => Navigator.of(ctx).pop(),
-                          child: const Text('Cancel', style: TextStyle(color: Colors.red)),
-                        ),
-                        const SizedBox(width: 8),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2C5F4F),
-                            foregroundColor: Colors.white,
-                          ),
-                          onPressed: () {
-                            if (organizationController.text.trim().isEmpty) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Please enter organization name'),
-                                  backgroundColor: Colors.orange,
-                                ),
-                              );
-                              return;
-                            }
-
-                            final newEntry = {
-                              'organization': organizationController.text.trim(),
-                              'dateFrom': dateFromController.text,
-                              'dateTo': dateToController.text,
-                              'hours': hoursController.text.trim(),
-                              'work': workController.text.trim(),
-                            };
-
-                            Navigator.of(ctx).pop();
-
-                            setState(() {
-                              _voluntaryWorkData.insert(0, newEntry);
-                              _collapsedVoluntaryWorkIndexes =
-                                  _collapsedVoluntaryWorkIndexes.map((i) => i + 1).toSet();
-                              _editingVoluntaryWorkIndex = null;
-                              _isNewVoluntaryWork = false;
-                            });
-
-                            _saveVoluntaryWork(0);
-                          },
-                          child: const Text('Add'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  // Learning and Development Section
+  // ─── Field display helpers (UNCHANGED) ────────────────────────────────────
 
   Widget _buildInfoFieldInline(String label, dynamic value) {
     String displayValue = 'N/A';
@@ -814,142 +915,23 @@ class _VoluntaryWorkWidgetState extends State<VoluntaryWorkWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 15,
-            color: Colors.grey[600],
-            fontWeight: FontWeight.w500,
-          ),
-        ),
+        Text(label,
+            style: TextStyle(
+                fontSize: 15,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w500)),
         const SizedBox(height: 1),
-        Text(
-          displayValue,
-          style: const TextStyle(
-            fontSize: 15,
-            color: Colors.black87,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildEditableFieldInline(
-    String label,
-    String? value,
-    Function(String) onChanged,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 10,
-            color: Colors.grey[600],
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 4),
-        TextFormField(
-          initialValue: value ?? '',
-          onChanged: onChanged,
-          style: const TextStyle(
-            fontSize: 13,
-            color: Colors.black87,
-            fontWeight: FontWeight.bold,
-          ),
-          decoration: InputDecoration(
-            border: UnderlineInputBorder(
-              borderSide: BorderSide(color: const Color(0xFF2C5F4F)),
-            ),
-            enabledBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.grey[300]!),
-            ),
-            focusedBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: Color(0xFF2C5F4F), width: 2),
-            ),
-            contentPadding: const EdgeInsets.symmetric(vertical: 4),
-            isDense: true,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDateFieldInline(
-    String label,
-    String? value,
-    Function(String) onChanged,
-  ) {
-    final controller = TextEditingController(text: value ?? '');
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 10,
-            color: Colors.grey[600],
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        GestureDetector(
-          onTap: () async {
-            DateTime? initialDate;
-            if (value != null && value.isNotEmpty) {
-              try {
-                initialDate = DateTime.tryParse(value);
-              } catch (e) {}
-            }
-            final DateTime? pickedDate = await showDatePicker(
-              context: context,
-              initialDate: initialDate ?? DateTime.now(),
-              firstDate: DateTime(1900),
-              lastDate: DateTime(2100),
-              builder: (context, child) => Theme(
-                data: Theme.of(context).copyWith(
-                  colorScheme: const ColorScheme.light(
-                    primary: Color(0xFF2C5F4F),
-                    onPrimary: Colors.white,
-                    onSurface: Colors.black,
-                  ),
-                ),
-                child: child!,
-              ),
-            );
-            if (pickedDate != null) {
-              final formatted =
-                  '${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}';
-              controller.text = formatted;
-              onChanged(formatted);
-            }
-          },
-          child: AbsorbPointer(
-            child: TextFormField(
-              controller: controller,
-              readOnly: true,
-              style: const TextStyle(
-                fontSize: 13,
+        Text(displayValue,
+            style: const TextStyle(
+                fontSize: 15,
                 color: Colors.black87,
-                fontWeight: FontWeight.bold,
-              ),
-              decoration: const InputDecoration(
-                suffixIcon: Icon(
-                  Icons.calendar_today,
-                  size: 20,
-                  color: Color(0xFF2C5F4F),
-                ),
-                contentPadding: EdgeInsets.symmetric(vertical: 4),
-                isDense: true,
-              ),
-            ),
-          ),
-        ),
+                fontWeight: FontWeight.bold)),
       ],
     );
   }
+
+
+ 
 
   @override
   Widget build(BuildContext context) {

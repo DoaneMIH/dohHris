@@ -12,18 +12,19 @@ class LearningDevelopmentWidget extends StatefulWidget {
   });
 
   @override
-  State<LearningDevelopmentWidget> createState() => _LearningDevelopmentWidgetState();
+  State<LearningDevelopmentWidget> createState() =>
+      _LearningDevelopmentWidgetState();
 }
 
-class _LearningDevelopmentWidgetState extends State<LearningDevelopmentWidget> {
-
+class _LearningDevelopmentWidgetState
+    extends State<LearningDevelopmentWidget> {
   final _userService = UserService();
   final bool _isLearningDevelopmentExpanded = true;
   List<Map<String, dynamic>> _learningDevelopmentListData = [];
   List<Map<String, dynamic>> _learningDevelopmentData = [];
   int? _editingLearningDevelopmentIndex;
   Set<int> _collapsedLearningDevIndexes = <int>{};
-  bool _isNewLearningDevelopment = false;
+
 
   @override
   void initState() {
@@ -31,32 +32,29 @@ class _LearningDevelopmentWidgetState extends State<LearningDevelopmentWidget> {
     _fetchLearningDevelopmentData();
   }
 
+  // ─── Fetch / Parse UNCHANGED ───────────────────────────────────────────────
+
   Future<void> _fetchLearningDevelopmentData() async {
     print('\n📚 [UserDetailsPage] FETCHING LEARNING AND DEVELOPMENT DATA');
-
     final employeeId = widget.employeeId;
     if (employeeId.isEmpty) {
       print('❌ No employee ID, skipping learning and development fetch');
       return;
     }
-
     try {
       final response = await _userService.getLearningDevelopmentDetails(
         widget.token,
         employeeId.toString(),
       );
-
       if (response['success']) {
         final List<dynamic> learningList =
             response['data']['learnDevList'] ?? [];
-
         setState(() {
           _learningDevelopmentListData = learningList
               .map((item) => Map<String, dynamic>.from(item))
               .toList();
           _parseLearningDevelopmentData();
         });
-
         print(
           '✅ Loaded ${_learningDevelopmentListData.length} learning and development records',
         );
@@ -73,13 +71,12 @@ class _LearningDevelopmentWidgetState extends State<LearningDevelopmentWidget> {
         'title': learning['title'] ?? '',
         'attendedFrom': learning['attendedFrom'] ?? '',
         'attendedTo': learning['attendedTo'] ?? '',
-        'hours': learning['hours']?.toString() ?? '', // API: hours
-        'ldType': learning['ldType'] ?? '', // API: type  (DB: ld_type)
+        'hours': learning['hours']?.toString() ?? '',
+        'ldType': learning['ldType'] ?? '',
         'conductedBy': learning['conductedBy'] ?? '',
-        'certificate_url': learning['certificate_url'] ?? '', // ⭐ Added
+        'certificate_url': learning['certificate_url'] ?? '',
       };
     }).toList();
-
     _collapsedLearningDevIndexes = List<int>.generate(
       _learningDevelopmentData.length,
       (index) => index,
@@ -89,9 +86,10 @@ class _LearningDevelopmentWidgetState extends State<LearningDevelopmentWidget> {
     );
   }
 
+  // ─── Save / Delete UNCHANGED ───────────────────────────────────────────────
+
   Future<void> _saveLearningDevelopment(int index) async {
     final learning = _learningDevelopmentData[index];
-
     if (learning['title']?.toString().trim().isEmpty ?? true) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -101,17 +99,14 @@ class _LearningDevelopmentWidgetState extends State<LearningDevelopmentWidget> {
       );
       return;
     }
-
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
+      builder: (context) =>
+          const Center(child: CircularProgressIndicator(color: Colors.white)),
     );
-
     try {
       final employeeId = widget.employeeId;
-
-      // ⭐ Map widget field names → API field names expected by the backend
       final learningData = {
         'title': learning['title'] ?? '',
         'attendedFrom': learning['attendedFrom'] ?? '',
@@ -121,7 +116,6 @@ class _LearningDevelopmentWidgetState extends State<LearningDevelopmentWidget> {
         'conductedBy': learning['conductedBy'] ?? '',
         'certificate_url': learning['certificate_url'] ?? '',
       };
-
       final response = learning.containsKey('id') && learning['id'] != null
           ? await _userService.updateLearningDevelopment(
               widget.token,
@@ -133,18 +127,15 @@ class _LearningDevelopmentWidgetState extends State<LearningDevelopmentWidget> {
               employeeId.toString(),
               learningData,
             );
-
       if (mounted) Navigator.pop(context);
-
       if (response['success']) {
         await _fetchLearningDevelopmentData();
         if (mounted) {
           setState(() => _editingLearningDevelopmentIndex = null);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text(
-                'Learning and development record saved successfully',
-              ),
+              content:
+                  Text('Learning and development record saved successfully'),
               backgroundColor: Colors.green,
             ),
           );
@@ -169,6 +160,7 @@ class _LearningDevelopmentWidgetState extends State<LearningDevelopmentWidget> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
         title: const Text('Delete Learning and Development Record'),
         content: const Text(
           'Are you sure you want to delete this learning and development record?',
@@ -176,6 +168,7 @@ class _LearningDevelopmentWidgetState extends State<LearningDevelopmentWidget> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
+            style: TextButton.styleFrom(foregroundColor: Colors.black),
             child: const Text('Cancel'),
           ),
           TextButton(
@@ -187,23 +180,20 @@ class _LearningDevelopmentWidgetState extends State<LearningDevelopmentWidget> {
       ),
     );
     if (confirmed != true) return;
-
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
+      builder: (context) =>
+          const Center(child: CircularProgressIndicator(color: Colors.white)),
     );
-
     try {
       final learning = _learningDevelopmentData[index];
-
       if (learning.containsKey('id') && learning['id'] != null) {
         final response = await _userService.deleteLearningDevelopment(
           widget.token,
           learning['id'].toString(),
         );
         if (mounted) Navigator.pop(context);
-
         if (response['success']) {
           await _fetchLearningDevelopmentData();
           if (mounted) {
@@ -238,283 +228,139 @@ class _LearningDevelopmentWidgetState extends State<LearningDevelopmentWidget> {
     }
   }
 
+  // ─── Shared dialog helpers ─────────────────────────────────────────────────
 
-Widget _buildLearningDevelopmentCard() {
-  return Container(
-    padding: EdgeInsets.zero,
-    child: Column(
-      children: [
-        // Header with Add button
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: const BoxDecoration(
-            color: Color(0xFF2C5F4F),
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(8),
-              topRight: Radius.circular(8),
+  InputDecoration _fieldDecoration(String label, {bool isDate = false}) =>
+      InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(fontSize: 14, color: Colors.grey),
+        floatingLabelStyle:
+            const TextStyle(fontSize: 16, color: Color(0xFF2C5F4F)),
+        filled: true,
+        fillColor: const Color(0xFFF5F5F5),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6),
+          borderSide: const BorderSide(color: Color(0xFF2C5F4F), width: 1.5),
+        ),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        isDense: true,
+        suffixIcon: isDate
+            ? const Icon(Icons.calendar_today,
+                size: 16, color: Color(0xFF2C5F4F))
+            : null,
+      );
+
+  /// Dark green header banner for dialogs.
+  Widget _dialogHeader(String title) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: const BoxDecoration(
+        color: Color(0xFF2C5F4F),
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(12),
+          topRight: Radius.circular(12),
+        ),
+      ),
+      child: Row(
+        children: [
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
             ),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Expanded(
-                child: Text(
-                  'LEARNING AND DEVELOPMENT (L&D) INTERVENTIONS/TRAINING PROGRAMS ATTENDED',
-                  style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+        ],
+      ),
+    );
+  }
+
+  /// Full-width Cancel / Save button row.
+  Widget _dialogActions(BuildContext ctx, VoidCallback onSave, {String saveLabel = 'Save'}) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Row(
+        children: [
+          Expanded(
+            child: OutlinedButton(
+              onPressed: onSave,
+              style: OutlinedButton.styleFrom(
+                backgroundColor: const Color(0xFF2C5F4F),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              GestureDetector(
-                onTap: () => _showAddLearningDevelopmentDialog(),
-                child: const Icon(Icons.add_circle, size: 24, color: Colors.white),
-              ),
-            ],
-          ),
-        ),
-        if (_isLearningDevelopmentExpanded)
-          Container(
-            padding: const EdgeInsets.all(5),
-            width: double.infinity,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: _learningDevelopmentData.isEmpty
-                    ? [
-                        Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(20.0),
-                            child: Text(
-                              'No training records found.\nTap + to add.',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(color: Colors.grey[600], fontSize: 14),
-                            ),
-                          ),
-                        ),
-                      ]
-                    : [
-                        ..._learningDevelopmentData.asMap().entries.map((entry) {
-                          final int index = entry.key;
-                          final Map<String, dynamic> training = entry.value;
-                          final bool isEditing = _editingLearningDevelopmentIndex == index;
-                          bool isCollapsed = _collapsedLearningDevIndexes.contains(index);
-
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 8),
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8)),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    Expanded(
-                                      child: isEditing
-                                          ? _buildEditableFieldInline('Training Programs', training['title'], (value) { _learningDevelopmentData[index]['title'] = value; })
-                                          : Text(training['title'] ?? 'N/A', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black)),
-                                    ),
-                                    // Collapse/expand arrow
-                                    if (!isEditing)
-                                    GestureDetector(
-                                      onTap: () {
-                                        if (!isEditing) {
-                                          setState(() {
-                                            if (isCollapsed) {
-                                              _collapsedLearningDevIndexes.remove(index);
-                                            } else {
-                                              _collapsedLearningDevIndexes.add(index);
-                                            }
-                                          });
-                                        }
-                                      },
-                                      child: Icon(isCollapsed ? Icons.expand_more : Icons.expand_less, size: 20, color: Colors.black),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    // 3-dot menu
-                                    if (!isEditing)
-                                  PopupMenuButton<String>(
-                                          color: Colors.white,
-                                          position: PopupMenuPosition.under,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              14,
-                                            ),
-                                            side: BorderSide(
-                                              color: Colors.grey.shade200,
-                                            ),
-                                          ),
-                                          icon: Container(
-                                            padding: const EdgeInsets.all(6),
-                                            child: const Icon(
-                                              Icons.more_horiz,
-                                              size: 18,
-                                              color: Colors.black87,
-                                            ),
-                                          ),
-                                          padding: EdgeInsets.zero,
-                                        onSelected: (value) {
-                                          if (value == 'edit') {
-                                            setState(() {
-                                              _collapsedLearningDevIndexes.remove(index);
-                                              _editingLearningDevelopmentIndex = index;
-                                              _isNewLearningDevelopment = false;
-                                            });
-                                          } else if (value == 'delete') {
-                                            _deleteLearningDevelopment(index);
-                                          }
-                                        },
-                                        itemBuilder: (context) => [
-                                        PopupMenuItem<String>(
-                                              value: 'edit',
-                                              height: 30,
-                                              child: Row(
-                                                children: const [
-                                                  Icon(
-                                                    Icons.edit,
-                                                    size: 15,
-                                                    color: Colors.black87,
-                                                  ),
-                                                  SizedBox(width: 8),
-                                                  Text(
-                                                    'Edit',
-                                                    style: TextStyle(
-                                                      fontSize: 12,
-                                                      fontWeight:
-                                                          FontWeight.w500,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            const PopupMenuDivider(height: 8),
-                                            PopupMenuItem<String>(
-                                              value: 'delete',
-                                              height: 30,
-                                              child: Row(
-                                                children: [
-                                                  Icon(
-                                                    Icons.delete,
-                                                    size: 15,
-                                                    color: Colors.red.shade600,
-                                                  ),
-                                                  const SizedBox(width: 8),
-                                                  Text(
-                                                    'Delete',
-                                                    style: TextStyle(
-                                                      fontSize: 12,
-                                                      fontWeight:
-                                                          FontWeight.w500,
-                                                      color:
-                                                          Colors.red.shade600,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                        ],
-                                      ),
-                                  ],
-                                ),
-
-                                if (!isCollapsed) ...[
-                                  const SizedBox(height: 12),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            Expanded(
-                                              child: isEditing
-                                                  ? _buildDateFieldInline('Date From', training['attendedFrom'], (value) { setState(() { _learningDevelopmentData[index]['attendedFrom'] = value; }); })
-                                                  : _buildInfoFieldInline('Date From', training['attendedFrom']),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Expanded(
-                                              child: isEditing
-                                                  ? _buildDateFieldInline('Date To', training['attendedTo'], (value) { setState(() { _learningDevelopmentData[index]['attendedTo'] = value; }); })
-                                                  : _buildInfoFieldInline('Date To', training['attendedTo']),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Row(
-                                          children: [
-                                            Expanded(
-                                              child: isEditing
-                                                  ? _buildEditableFieldInline('Number of Hours', training['hours'], (value) { setState(() { _learningDevelopmentData[index]['hours'] = value; }); })
-                                                  : _buildInfoFieldInline('Number of Hours', training['hours']),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Expanded(
-                                              child: isEditing
-                                                  ? _buildEditableFieldInline('Type of L&D', training['ldType'], (value) { setState(() { _learningDevelopmentData[index]['ldType'] = value; }); })
-                                                  : _buildInfoFieldInline('Type of L&D', training['ldType']),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 8),
-                                        isEditing
-                                            ? _buildEditableFieldInline('Conducted / Sponsored By', training['conductedBy'], (value) { setState(() { _learningDevelopmentData[index]['conductedBy'] = value; }); })
-                                            : _buildInfoFieldInline('Conducted / Sponsored By', training['conductedBy']),
-                                        if (isEditing) ...[
-                                          const SizedBox(height: 12),
-                                          Row(
-                                            mainAxisAlignment: MainAxisAlignment.end,
-                                            children: [
-                                              TextButton(
-                                                onPressed: () => setState(() {
-                                                  if (_isNewLearningDevelopment) {
-                                                      _learningDevelopmentData.removeAt(
-                                                        index,
-                                                      );
-                                                      // Shift all collapsed indexes back down by 1 to compensate
-                                                      _collapsedLearningDevIndexes =
-                                                          _collapsedLearningDevIndexes
-                                                              .where(
-                                                                (i) => i > 0,
-                                                              )
-                                                              .map((i) => i - 1)
-                                                              .toSet();
-                                                    }
-                                                    _editingLearningDevelopmentIndex =
-                                                        null;
-                                                    _isNewLearningDevelopment = false;
-                                                }),
-                                                child: const Text('Cancel', style: TextStyle(color: Colors.red)),
-                                              ),
-                                              const SizedBox(width: 8),
-                                              ElevatedButton.icon(
-                                                onPressed: () => _saveLearningDevelopment(index),
-                                                icon: const Icon(Icons.save, size: 16),
-                                                label: const Text('Save'),
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor: const Color(0xFF2C5F4F),
-                                                  foregroundColor: Colors.white,
-                                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                                  textStyle: const TextStyle(fontSize: 13),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          );
-                        }).toList(),
-                      ],
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.save, size: 16),
+                  SizedBox(width: 6),
+                  Text('Save'),
+                ],
               ),
             ),
           ),
-      ],
-    ),
-  );
-}
+          const SizedBox(width: 12),
+          Expanded(
+            child: ElevatedButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.grey[200],
+                foregroundColor: Colors.black87,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                elevation: 0,
+              ),
+              child: const Text('Cancel'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<String?> _pickDate(BuildContext ctx, String current) async {
+    DateTime? initial;
+    if (current.isNotEmpty) initial = DateTime.tryParse(current);
+    final picked = await showDatePicker(
+      context: ctx,
+      initialDate: initial ?? DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime(2100),
+      builder: (ctx, child) => Theme(
+        data: Theme.of(ctx).copyWith(
+          colorScheme: const ColorScheme.light(
+            primary: Color(0xFF2C5F4F),
+            onPrimary: Colors.white,
+            onSurface: Colors.black,
+          ),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked == null) return null;
+    return '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+  }
+
+  // ─── Add L&D Dialog (logic UNCHANGED) ─────────────────────────────────────
 
   void _showAddLearningDevelopmentDialog() {
     final titleController = TextEditingController();
@@ -524,40 +370,165 @@ Widget _buildLearningDevelopmentCard() {
     final attendedFromController = TextEditingController();
     final attendedToController = TextEditingController();
 
-    InputDecoration fieldDecoration(String label) => InputDecoration(
-          labelText: label,
-          labelStyle: const TextStyle(fontSize: 13, color: Colors.black),
-          enabledBorder: const OutlineInputBorder(
-            borderSide: BorderSide(color: Color(0xFF2C5F4F), width: 1.5),
-          ),
-          focusedBorder: const OutlineInputBorder(
-            borderSide: BorderSide(color: Color(0xFF2C5F4F), width: 2.0),
-          ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    showDialog(
+      context: context,
+      builder: (BuildContext ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return Dialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              insetPadding: EdgeInsets.symmetric(
+                horizontal: MediaQuery.of(ctx).size.width * 0.025,
+                vertical: 24,
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _dialogHeader('Add Training / L&D'),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                            TextField(
+                              controller: titleController,
+                              cursorColor: const Color(0xFF2C5F4F),
+                              decoration:
+                                  _fieldDecoration('Training Program Title *'),
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    controller: attendedFromController,
+                                    readOnly: true,
+                                    cursorColor: const Color(0xFF2C5F4F),
+                                    decoration: _fieldDecoration('Date From',
+                                        isDate: true),
+                                    onTap: () async {
+                                      final d = await _pickDate(
+                                          ctx, attendedFromController.text);
+                                      if (d != null) {
+                                        setDialogState(() =>
+                                            attendedFromController.text = d);
+                                      }
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: TextField(
+                                    controller: attendedToController,
+                                    readOnly: true,
+                                    cursorColor: const Color(0xFF2C5F4F),
+                                    decoration: _fieldDecoration('Date To',
+                                        isDate: true),
+                                    onTap: () async {
+                                      final d = await _pickDate(
+                                          ctx, attendedToController.text);
+                                      if (d != null) {
+                                        setDialogState(() =>
+                                            attendedToController.text = d);
+                                      }
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    controller: hoursController,
+                                    cursorColor: const Color(0xFF2C5F4F),
+                                    keyboardType: TextInputType.number,
+                                    decoration: _fieldDecoration('No. of Hours'),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: TextField(
+                                    controller: ldTypeController,
+                                    cursorColor: const Color(0xFF2C5F4F),
+                                    decoration: _fieldDecoration('Type of L&D'),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: conductedByController,
+                              cursorColor: const Color(0xFF2C5F4F),
+                              decoration:
+                                  _fieldDecoration('Conducted / Sponsored By'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  _dialogActions(ctx, () {
+                            if (titleController.text.trim().isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                      'Please enter the training program title'),
+                                  backgroundColor: Colors.orange,
+                                ),
+                              );
+                              return;
+                            }
+                            final newEntry = {
+                              'title': titleController.text.trim(),
+                              'attendedFrom': attendedFromController.text,
+                              'attendedTo': attendedToController.text,
+                              'hours': hoursController.text.trim(),
+                              'ldType': ldTypeController.text.trim(),
+                              'conductedBy': conductedByController.text.trim(),
+                              'certificate_url': '',
+                            };
+                            Navigator.of(ctx).pop();
+                            setState(() {
+                              _learningDevelopmentData.insert(0, newEntry);
+                              _collapsedLearningDevIndexes =
+                                  _collapsedLearningDevIndexes
+                                      .map((i) => i + 1)
+                                      .toSet();
+                              _editingLearningDevelopmentIndex = null;
+                            });
+                            _saveLearningDevelopment(0);
+                          }, saveLabel: 'Add'),
+                ],
+              ),
+            );
+          },
         );
+      },
+    );
+  }
 
-    Future<String?> pickDate(BuildContext ctx, String current) async {
-      DateTime? initial;
-      if (current.isNotEmpty) initial = DateTime.tryParse(current);
-      final picked = await showDatePicker(
-        context: ctx,
-        initialDate: initial ?? DateTime.now(),
-        firstDate: DateTime(1900),
-        lastDate: DateTime(2100),
-        builder: (ctx, child) => Theme(
-          data: Theme.of(ctx).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF2C5F4F),
-              onPrimary: Colors.white,
-              onSurface: Colors.black,
-            ),
-          ),
-          child: child!,
-        ),
-      );
-      if (picked == null) return null;
-      return '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
-    }
+  // ─── NEW: Edit L&D Dialog ──────────────────────────────────────────────────
+  /// Same UI as Add, pre-filled with the existing record's values.
+  void _showEditLearningDevelopmentDialog(int index) {
+    final training = _learningDevelopmentData[index];
+
+    final titleController =
+        TextEditingController(text: training['title'] ?? '');
+    final hoursController =
+        TextEditingController(text: training['hours'] ?? '');
+    final ldTypeController =
+        TextEditingController(text: training['ldType'] ?? '');
+    final conductedByController =
+        TextEditingController(text: training['conductedBy'] ?? '');
+    final attendedFromController =
+        TextEditingController(text: training['attendedFrom'] ?? '');
+    final attendedToController =
+        TextEditingController(text: training['attendedTo'] ?? '');
 
     showDialog(
       context: context,
@@ -566,35 +537,29 @@ Widget _buildLearningDevelopmentCard() {
           builder: (ctx, setDialogState) {
             return Dialog(
               backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
               insetPadding: EdgeInsets.symmetric(
-                horizontal: MediaQuery.of(ctx).size.width * 0.025, // 2.5% each side = 95% width
+                horizontal: MediaQuery.of(ctx).size.width * 0.025,
                 vertical: 24,
               ),
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // ── Title ──
-                    const Text(
-                      'Add Training / L&D',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF2C5F4F)),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // ── Scrollable content ──
-                    Flexible(
-                      child: SingleChildScrollView(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // Title
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _dialogHeader('Edit Training / L&D'),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                            // Training Program Title
                             TextField(
                               controller: titleController,
                               cursorColor: const Color(0xFF2C5F4F),
-                              decoration: fieldDecoration('Training Program Title *'),
+                              decoration:
+                                  _fieldDecoration('Training Program Title *'),
                             ),
                             const SizedBox(height: 12),
 
@@ -606,12 +571,15 @@ Widget _buildLearningDevelopmentCard() {
                                     controller: attendedFromController,
                                     readOnly: true,
                                     cursorColor: const Color(0xFF2C5F4F),
-                                    decoration: fieldDecoration('Date From').copyWith(
-                                      suffixIcon: const Icon(Icons.calendar_today, size: 16, color: Color(0xFF2C5F4F)),
-                                    ),
+                                    decoration: _fieldDecoration('Date From',
+                                        isDate: true),
                                     onTap: () async {
-                                      final d = await pickDate(ctx, attendedFromController.text);
-                                      if (d != null) setDialogState(() => attendedFromController.text = d);
+                                      final d = await _pickDate(
+                                          ctx, attendedFromController.text);
+                                      if (d != null) {
+                                        setDialogState(() =>
+                                            attendedFromController.text = d);
+                                      }
                                     },
                                   ),
                                 ),
@@ -621,12 +589,15 @@ Widget _buildLearningDevelopmentCard() {
                                     controller: attendedToController,
                                     readOnly: true,
                                     cursorColor: const Color(0xFF2C5F4F),
-                                    decoration: fieldDecoration('Date To').copyWith(
-                                      suffixIcon: const Icon(Icons.calendar_today, size: 16, color: Color(0xFF2C5F4F)),
-                                    ),
+                                    decoration: _fieldDecoration('Date To',
+                                        isDate: true),
                                     onTap: () async {
-                                      final d = await pickDate(ctx, attendedToController.text);
-                                      if (d != null) setDialogState(() => attendedToController.text = d);
+                                      final d = await _pickDate(
+                                          ctx, attendedToController.text);
+                                      if (d != null) {
+                                        setDialogState(() =>
+                                            attendedToController.text = d);
+                                      }
                                     },
                                   ),
                                 ),
@@ -634,7 +605,7 @@ Widget _buildLearningDevelopmentCard() {
                             ),
                             const SizedBox(height: 12),
 
-                            // Hours & Type side by side
+                            // No. of Hours & Type of L&D side by side
                             Row(
                               children: [
                                 Expanded(
@@ -642,7 +613,7 @@ Widget _buildLearningDevelopmentCard() {
                                     controller: hoursController,
                                     cursorColor: const Color(0xFF2C5F4F),
                                     keyboardType: TextInputType.number,
-                                    decoration: fieldDecoration('No. of Hours'),
+                                    decoration: _fieldDecoration('No. of Hours'),
                                   ),
                                 ),
                                 const SizedBox(width: 8),
@@ -650,79 +621,56 @@ Widget _buildLearningDevelopmentCard() {
                                   child: TextField(
                                     controller: ldTypeController,
                                     cursorColor: const Color(0xFF2C5F4F),
-                                    decoration: fieldDecoration('Type of L&D'),
+                                    decoration: _fieldDecoration('Type of L&D'),
                                   ),
                                 ),
                               ],
                             ),
                             const SizedBox(height: 12),
 
-                            // Conducted By
+                            // Conducted / Sponsored By
                             TextField(
                               controller: conductedByController,
                               cursorColor: const Color(0xFF2C5F4F),
-                              decoration: fieldDecoration('Conducted / Sponsored By'),
+                              decoration:
+                                  _fieldDecoration('Conducted / Sponsored By'),
                             ),
                           ],
                         ),
                       ),
                     ),
-
-                    const SizedBox(height: 20),
-
-                    // ── Action Buttons ──
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton(
-                          onPressed: () => Navigator.of(ctx).pop(),
-                          child: const Text('Cancel', style: TextStyle(color: Colors.red)),
-                        ),
-                        const SizedBox(width: 8),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2C5F4F),
-                            foregroundColor: Colors.white,
-                          ),
-                          onPressed: () {
+                  _dialogActions(ctx, () {
                             if (titleController.text.trim().isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('Please enter the training program title'),
+                                  content: Text(
+                                      'Please enter the training program title'),
                                   backgroundColor: Colors.orange,
                                 ),
                               );
                               return;
                             }
 
-                            final newEntry = {
-                              'title': titleController.text.trim(),
-                              'attendedFrom': attendedFromController.text,
-                              'attendedTo': attendedToController.text,
-                              'hours': hoursController.text.trim(),
-                              'ldType': ldTypeController.text.trim(),
-                              'conductedBy': conductedByController.text.trim(),
-                              'certificate_url': '',
-                            };
-
-                            Navigator.of(ctx).pop();
-
+                            // Write updated values back to _learningDevelopmentData
                             setState(() {
-                              _learningDevelopmentData.insert(0, newEntry);
-                              _collapsedLearningDevIndexes =
-                                  _collapsedLearningDevIndexes.map((i) => i + 1).toSet();
-                              _editingLearningDevelopmentIndex = null;
-                              _isNewLearningDevelopment = false;
+                              _learningDevelopmentData[index]['title'] =
+                                  titleController.text.trim();
+                              _learningDevelopmentData[index]['attendedFrom'] =
+                                  attendedFromController.text;
+                              _learningDevelopmentData[index]['attendedTo'] =
+                                  attendedToController.text;
+                              _learningDevelopmentData[index]['hours'] =
+                                  hoursController.text.trim();
+                              _learningDevelopmentData[index]['ldType'] =
+                                  ldTypeController.text.trim();
+                              _learningDevelopmentData[index]['conductedBy'] =
+                                  conductedByController.text.trim();
                             });
 
-                            _saveLearningDevelopment(0);
-                          },
-                          child: const Text('Add'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                            Navigator.of(ctx).pop();
+                            _saveLearningDevelopment(index); // existing save flow
+                          }),
+                ],
               ),
             );
           },
@@ -731,94 +679,296 @@ Widget _buildLearningDevelopmentCard() {
     );
   }
 
+  // ─── Card ──────────────────────────────────────────────────────────────────
+
+  Widget _buildLearningDevelopmentCard() {
+    return Container(
+      padding: EdgeInsets.zero,
+      child: Column(
+        children: [
+          // Header with Add button
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: const BoxDecoration(
+              color: Color(0xFF2C5F4F),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(8),
+                topRight: Radius.circular(8),
+
+
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Expanded(
+                  child: Text(
+                    'LEARNING AND DEVELOPMENT (L&D) INTERVENTIONS/TRAINING PROGRAMS ATTENDED',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => _showAddLearningDevelopmentDialog(),
+                  child: const Icon(Icons.add_circle,
+                      size: 24, color: Colors.white),
+                ),
+              ],
+            ),
+          ),
+
+          if (_isLearningDevelopmentExpanded)
+            Container(
+              padding: const EdgeInsets.all(5),
+              width: double.infinity,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: _learningDevelopmentData.isEmpty
+                      ? [
+                          Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(20.0),
+                              child: Text(
+                                'No training records found.\nTap + to add.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                    color: Colors.grey[600], fontSize: 14),
+                              ),
+                            ),
+                          ),
+                        ]
+                      : [
+                          ..._learningDevelopmentData.asMap().entries.map(
+                            (entry) {
+                              final int index = entry.key;
+                              final Map<String, dynamic> training = entry.value;
+                              bool isCollapsed =
+                                  _collapsedLearningDevIndexes.contains(index);
+
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(8)),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // ── Title row ──
+                                    Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        // Tappable title — toggles collapse
+                                        Expanded(
+                                          child: GestureDetector(
+                                            onTap: () => setState(() {
+                                              if (isCollapsed) {
+                                                _collapsedLearningDevIndexes
+                                                    .remove(index);
+                                              } else {
+                                                _collapsedLearningDevIndexes
+                                                    .add(index);
+                                              }
+                                            }),
+                                            child: Text(
+                                              training['title'] ?? 'N/A',
+                                              style: const TextStyle(
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.black),
+                                            ),
+                                          ),
+                                        ),
+
+                                        // Collapse/expand arrow
+                                        GestureDetector(
+                                          onTap: () => setState(() {
+                                            if (isCollapsed) {
+                                              _collapsedLearningDevIndexes
+                                                  .remove(index);
+                                            } else {
+                                              _collapsedLearningDevIndexes
+                                                  .add(index);
+                                            }
+                                          }),
+                                          child: Icon(
+                                            isCollapsed
+                                                ? Icons.expand_more
+                                                : Icons.expand_less,
+                                            size: 20,
+                                            color: Colors.black,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+
+                                        // 3-dot menu — Edit opens popup dialog
+                                        PopupMenuButton<String>(
+                                          color: Colors.white,
+                                          position: PopupMenuPosition.under,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(14),
+                                            side: BorderSide(
+                                                color: Colors.grey.shade200),
+                                          ),
+                                          icon: Container(
+                                            padding: const EdgeInsets.all(6),
+                                            child: const Icon(Icons.more_horiz,
+                                                size: 18,
+                                                color: Colors.black87),
+                                          ),
+                                          padding: EdgeInsets.zero,
+                                          onSelected: (value) {
+                                            if (value == 'edit') {
+                                              _showEditLearningDevelopmentDialog(
+                                                  index); // ← opens dialog
+                                            } else if (value == 'delete') {
+                                              _deleteLearningDevelopment(index);
+                                            }
+                                          },
+                                          itemBuilder: (context) => [
+                                            PopupMenuItem<String>(
+                                              value: 'edit',
+                                              height: 30,
+                                              child: Row(
+                                                children: const [
+                                                  Icon(Icons.edit,
+                                                      size: 15,
+                                                      color: Colors.black87),
+                                                  SizedBox(width: 8),
+                                                  Text('Edit',
+                                                      style: TextStyle(
+                                                          fontSize: 12,
+                                                          fontWeight:
+                                                              FontWeight.w500)),
+                                                ],
+                                              ),
+                                            ),
+                                            const PopupMenuDivider(height: 8),
+                                            PopupMenuItem<String>(
+                                              value: 'delete',
+                                              height: 30,
+                                              child: Row(
+                                                children: [
+                                                  Icon(Icons.delete,
+                                                      size: 15,
+                                                      color:
+                                                          Colors.red.shade600),
+                                                  const SizedBox(width: 8),
+                                                  Text('Delete',
+                                                      style: TextStyle(
+                                                          fontSize: 12,
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          color: Colors
+                                                              .red.shade600)),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+
+                                    // ── Collapsible display-only fields ──
+                                    if (!isCollapsed) ...[
+                                      const SizedBox(height: 12),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 12.0),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Expanded(
+                                                  child: _buildInfoFieldInline(
+                                                      'Date From',
+                                                      training['attendedFrom']),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Expanded(
+                                                  child: _buildInfoFieldInline(
+                                                      'Date To',
+                                                      training['attendedTo']),
+                                                ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Row(
+                                              children: [
+                                                Expanded(
+                                                  child: _buildInfoFieldInline(
+                                                      'Number of Hours',
+                                                      training['hours']),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Expanded(
+                                                  child: _buildInfoFieldInline(
+                                                      'Type of L&D',
+                                                      training['ldType']),
+                                                ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 8),
+                                            _buildInfoFieldInline(
+                                                'Conducted / Sponsored By',
+                                                training['conductedBy']),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              );
+                            },
+                          ).toList(),
+                        ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // ─── Field display helpers (UNCHANGED) ────────────────────────────────────
+
   Widget _buildInfoFieldInline(String label, dynamic value) {
     String displayValue = 'N/A';
-    if (value != null && value.toString().isNotEmpty && value.toString() != 'null') {
+    if (value != null &&
+        value.toString().isNotEmpty &&
+        value.toString() != 'null') {
       displayValue = value.toString();
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(fontSize: 15, color: Colors.grey[600], fontWeight: FontWeight.w500)),
+        Text(label,
+            style: TextStyle(
+                fontSize: 15,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w500)),
         const SizedBox(height: 1),
-        Text(displayValue, style: const TextStyle(fontSize: 15, color: Colors.black87, fontWeight: FontWeight.bold)),
+        Text(displayValue,
+            style: const TextStyle(
+                fontSize: 15,
+                color: Colors.black87,
+                fontWeight: FontWeight.bold)),
       ],
     );
   }
 
-  Widget _buildEditableFieldInline(String label, String? value, Function(String) onChanged) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: TextStyle(fontSize: 10, color: Colors.grey[600], fontWeight: FontWeight.w500)),
-        const SizedBox(height: 4),
-        TextFormField(
-          initialValue: value ?? '',
-          onChanged: onChanged,
-          style: const TextStyle(fontSize: 13, color: Colors.black87, fontWeight: FontWeight.bold),
-          decoration: InputDecoration(
-            border: UnderlineInputBorder(borderSide: BorderSide(color: const Color(0xFF2C5F4F))),
-            enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey[300]!)),
-            focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF2C5F4F), width: 2)),
-            contentPadding: const EdgeInsets.symmetric(vertical: 4),
-            isDense: true,
-          ),
-        ),
-      ],
-    );
-  }
 
- 
-  Widget _buildDateFieldInline(String label, String? value, Function(String) onChanged) {
-    final controller = TextEditingController(text: value ?? '');
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: TextStyle(fontSize: 10, color: Colors.grey[600], fontWeight: FontWeight.w500)),
-        GestureDetector(
-          onTap: () async {
-            DateTime? initialDate;
-            if (value != null && value.isNotEmpty) {
-              try {
-                initialDate = DateTime.tryParse(value);
-              } catch (e) {}
-            }
-            final DateTime? pickedDate = await showDatePicker(
-              context: context,
-              initialDate: initialDate ?? DateTime.now(),
-              firstDate: DateTime(1900),
-              lastDate: DateTime(2100),
-              builder: (context, child) => Theme(
-                data: Theme.of(context).copyWith(colorScheme: const ColorScheme.light(primary: Color(0xFF2C5F4F), onPrimary: Colors.white, onSurface: Colors.black)),
-                child: child!,
-              ),
-            );
-            if (pickedDate != null) {
-              final formatted = '${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}';
-              controller.text = formatted;
-              onChanged(formatted);
-            }
-          },
-          child: AbsorbPointer(
-            child: TextFormField(
-              controller: controller,
-              readOnly: true,
-              style: const TextStyle(fontSize: 13, color: Colors.black87, fontWeight: FontWeight.bold),
-              decoration: const InputDecoration(
-                suffixIcon: Icon(Icons.calendar_today, size: 20, color: Color(0xFF2C5F4F)),
-                contentPadding: EdgeInsets.symmetric(vertical: 4),
-                isDense: true,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-  
   @override
   Widget build(BuildContext context) {
     return _buildLearningDevelopmentCard();
   }
-
 }

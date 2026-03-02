@@ -42,15 +42,11 @@ class _DtrWidgetState extends State<DtrWidget> {
     });
 
     try {
-      // Build the DTR URL
       final dtrUrl = '${widget.baseUrl}${ApiConfig.dtrEndpoint}/${widget.userId}';
-      
       print('📅 [DTR] Fetching from: $dtrUrl');
 
-      // Get current token
       final token = TokenManager().token ?? widget.token;
 
-      // Fetch DTR data with authentication
       final response = await http.get(
         Uri.parse(dtrUrl),
         headers: {
@@ -63,16 +59,15 @@ class _DtrWidgetState extends State<DtrWidget> {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        
+
         if (data['message'] == 'Successful' && data['dtrList'] != null) {
           setState(() {
             _dtrRecords = List<Map<String, dynamic>>.from(data['dtrList']);
-            // Sort records by date (latest first)
             _dtrRecords.sort((a, b) {
               try {
                 DateTime dateA = DateTime.parse(a['date']);
                 DateTime dateB = DateTime.parse(b['date']);
-                return dateB.compareTo(dateA); // Descending order
+                return dateB.compareTo(dateA);
               } catch (e) {
                 return 0;
               }
@@ -105,14 +100,12 @@ class _DtrWidgetState extends State<DtrWidget> {
   }
 
   void _extractAvailableYearsAndMonths() {
-    // Generate years from 2025 to current year
     int currentYear = DateTime.now().year;
     _availableYears = [];
     for (int year = currentYear; year >= 2025; year--) {
       _availableYears.add(year);
     }
 
-    // Extract months from records and sort descending
     Set<int> months = {};
     for (var record in _dtrRecords) {
       try {
@@ -123,16 +116,12 @@ class _DtrWidgetState extends State<DtrWidget> {
       }
     }
 
-// Descending
-    
-    // Set default filter to latest month and year if not already set
     if (_selectedMonth == null && _selectedYear == null && _dtrRecords.isNotEmpty) {
       _setDefaultFilter();
     }
   }
 
   void _setDefaultFilter() {
-    // Find the latest date in records
     if (_dtrRecords.isNotEmpty) {
       try {
         DateTime latestDate = DateTime.parse(_dtrRecords.first['date']);
@@ -161,124 +150,324 @@ class _DtrWidgetState extends State<DtrWidget> {
     }
   }
 
+  // ─── Bottom Sheet helpers (Education Level style) ──────────────────────────
+
+  Future<void> _showOptionsBottomSheet({
+    required BuildContext ctx,
+    required String title,
+    required List<String> options,
+    required String? currentValue,
+    required void Function(String) onSelected,
+  }) async {
+    await showModalBottomSheet(
+      context: ctx,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      // Allow the sheet to grow up to 60% of screen height
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(ctx).size.height * 0.6,
+      ),
+      builder: (sheetCtx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle
+              Container(
+                margin: const EdgeInsets.only(top: 10, bottom: 6),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              // Title
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF2C5F4F),
+                    ),
+                  ),
+                ),
+              ),
+              const Divider(height: 1),
+
+              // Scrollable options list
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: options.length,
+                  itemBuilder: (_, index) {
+                    final option = options[index];
+                    final isSelected = option == currentValue;
+                    return InkWell(
+                      onTap: () {
+                        onSelected(option);
+                        Navigator.of(sheetCtx).pop();
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 14),
+                        color: isSelected
+                            ? const Color(0xFF2C5F4F).withOpacity(0.08)
+                            : Colors.white,
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                option,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: isSelected
+                                      ? const Color(0xFF2C5F4F)
+                                      : Colors.black87,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w600
+                                      : FontWeight.normal,
+                                ),
+                              ),
+                            ),
+                            if (isSelected)
+                              const Icon(Icons.check,
+                                  size: 18, color: Color(0xFF2C5F4F)),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  /// Builds a selector button matching the Education Level field style.
+  Widget _buildSelector({
+    required String label,
+    required String? selectedValue,
+    required BuildContext ctx,
+    required List<String> options,
+    required void Function(String) onChanged,
+  }) {
+    return GestureDetector(
+      onTap: () => _showOptionsBottomSheet(
+        ctx: ctx,
+        title: 'Select $label',
+        options: options,
+        currentValue: selectedValue,
+        onSelected: onChanged,
+      ),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF5F5F5),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: selectedValue == null || selectedValue.isEmpty
+                  ? Text(
+                      label,
+                      style: const TextStyle(fontSize: 14, color: Colors.grey),
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          label,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFF2C5F4F),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          selectedValue,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
+            const Icon(Icons.arrow_drop_down, size: 22, color: Colors.grey),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ─── Filter Dialog ─────────────────────────────────────────────────────────
+
   void _showFilterDialog() {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         int? tempMonth = _selectedMonth;
         int? tempYear = _selectedYear;
 
         return StatefulBuilder(
-          builder: (context, setDialogState) {
-            
-            return AlertDialog(
+          builder: (dialogContext, setDialogState) {
+            final yearOptions =
+                _availableYears.map((y) => y.toString()).toList();
+            final monthOptions = List.generate(12, (i) => _getMonthName(i + 1));
+
+            return Dialog(
               backgroundColor: Colors.white,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12)),
+              insetPadding: EdgeInsets.symmetric(
+                horizontal: MediaQuery.of(dialogContext).size.width * 0.1,
+                vertical: 24,
               ),
-              title: const Text(
-                'Filter DTR Records',
-                style: TextStyle(
-                  color: Color(0xFF00674F),
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              content: Column(
+              clipBehavior: Clip.antiAlias,
+              child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Year Dropdown
-                  DropdownButtonFormField<int>(
-                    value: tempYear,
-                    decoration: InputDecoration(
-                      labelText: 'Year',
-                      border: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.grey.shade400),
+                  // ── Header ──
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 14),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF2C5F4F),
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(12),
+                        topRight: Radius.circular(12),
                       ),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.grey.shade400),
-                      ),
-                      focusedBorder: const OutlineInputBorder(
-                        borderSide: BorderSide(color: Color(0xFF00674F), width: 2),
-                      ),
-                      labelStyle: const TextStyle(color: Color(0xFF00674F)),
-                      prefixIcon: const Icon(Icons.calendar_today, color: Color(0xFF00674F)),
                     ),
-                    hint: const Text('Select Year'),
-                    items: _availableYears.map((year) {
-                      return DropdownMenuItem<int>(
-                        value: year,
-                        child: Text(year.toString()),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setDialogState(() {
-                        tempYear = value;
-                      });
-                    },
+                    child: Row(
+                      children: const [
+                        SizedBox(width: 8),
+                        Text(
+                          'Filter DTR Records',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 16),
-                  // Month Dropdown
-                  DropdownButtonFormField<int>(
-                    value: tempMonth,
-                    decoration: InputDecoration(
-                      labelText: 'Month',
-                      border: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.grey.shade400),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.grey.shade400),
-                      ),
-                      focusedBorder: const OutlineInputBorder(
-                        borderSide: BorderSide(color: Color(0xFF00674F), width: 2),
-                      ),
-                      labelStyle: const TextStyle(color: Color(0xFF00674F)),
-                      prefixIcon: const Icon(Icons.date_range, color: Color(0xFF00674F)),
+
+                  // ── Body ──
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Year selector
+                        _buildSelector(
+                          label: 'Year',
+                          selectedValue: tempYear?.toString(),
+                          ctx: dialogContext,
+                          options: yearOptions,
+                          onChanged: (v) => setDialogState(
+                              () => tempYear = int.tryParse(v)),
+                        ),
+                        const SizedBox(height: 12),
+
+                        // Month selector
+                        _buildSelector(
+                          label: 'Month',
+                          selectedValue: tempMonth != null
+                              ? _getMonthName(tempMonth!)
+                              : null,
+                          ctx: dialogContext,
+                          options: monthOptions,
+                          onChanged: (v) => setDialogState(() =>
+                              tempMonth = monthOptions.indexOf(v) + 1),
+                        ),
+                      ],
                     ),
-                    hint: const Text('Select Month'),
-                    items: List.generate(12, (index) {
-                      int month = 12 - index; // Start from December (12) down to January (1)
-                      return DropdownMenuItem<int>(
-                        value: month,
-                        child: Text(_getMonthName(month)),
-                      );
-                    }),
-                    onChanged: (value) {
-                      setDialogState(() {
-                        tempMonth = value;
-                      });
-                    },
+                  ),
+
+                  const SizedBox(height: 4),
+
+                  // ── Actions ──
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () {
+                              setState(() {
+                                _selectedMonth = tempMonth;
+                                _selectedYear = tempYear;
+                                _applyFilters();
+                              });
+                              Navigator.of(dialogContext).pop();
+                            },
+                            style: OutlinedButton.styleFrom(
+                              backgroundColor: const Color(0xFF2C5F4F),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.check, size: 16),
+                                SizedBox(width: 6),
+                                Text('Apply'),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () =>
+                                Navigator.of(dialogContext).pop(),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.grey[200],
+                              foregroundColor: Colors.black87,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: const Text('Cancel'),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('Cancel', style: TextStyle(color: Colors.black)),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      _selectedMonth = tempMonth;
-                      _selectedYear = tempYear;
-                      _applyFilters();
-                    });
-                    Navigator.of(context).pop();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF00674F),
-                    foregroundColor: Colors.white,
-                  ),
-                  child: const Text('Apply'),
-                ),
-              ],
             );
           },
         );
       },
     );
   }
+
+  // ─── Helpers ───────────────────────────────────────────────────────────────
 
   String _getMonthName(int month) {
     const months = [
@@ -292,54 +481,39 @@ class _DtrWidgetState extends State<DtrWidget> {
     if (timeValue == null || timeValue.toString().isEmpty || timeValue == 0) {
       return '--:--';
     }
-    
     try {
       String timeStr = timeValue.toString();
-      // Expected format: "2025-08-01T07:44:49" or "07:44:49"
-      
-      // Extract time part if it's a full datetime
       if (timeStr.contains('T')) {
         timeStr = timeStr.split('T')[1];
       }
-      
-      // Parse hours, minutes, seconds
       List<String> parts = timeStr.split(':');
       if (parts.length >= 2) {
         int hours = int.parse(parts[0]);
         int minutes = int.parse(parts[1]);
-        
-        // Convert to 12-hour format
-        // String period = hours >= 12;
         int displayHours = hours % 12;
         if (displayHours == 0) displayHours = 12;
-        
         return '${displayHours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}';
       }
     } catch (e) {
       print('Error formatting time: $e');
     }
-    
     return timeValue.toString();
   }
 
   String _formatMinutes(dynamic minutes) {
-    if (minutes == null || minutes == 0) {
-      return '0';
-    }
+    if (minutes == null || minutes == 0) return '0';
     return minutes.toString();
   }
 
   String _formatDateWithDay(String? dateStr) {
-    if (dateStr == null || dateStr.isEmpty) {
-      return 'N/A';
-    }
-    
+    if (dateStr == null || dateStr.isEmpty) return 'N/A';
     try {
       DateTime date = DateTime.parse(dateStr);
-      List<String> days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+      List<String> days = [
+        'Monday', 'Tuesday', 'Wednesday', 'Thursday',
+        'Friday', 'Saturday', 'Sunday'
+      ];
       String dayOfWeek = days[date.weekday - 1];
-      
-      // Format: 2026-01-06 (Monday)
       return '$dateStr ($dayOfWeek)';
     } catch (e) {
       print('Error formatting date: $e');
@@ -347,12 +521,14 @@ class _DtrWidgetState extends State<DtrWidget> {
     }
   }
 
+  // ─── Build ─────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const Padding(
         padding: EdgeInsets.all(20.0),
-        child: Center(child: CircularProgressIndicator()),
+        child: Center(child: CircularProgressIndicator(color: Colors.white)),
       );
     }
 
@@ -364,11 +540,9 @@ class _DtrWidgetState extends State<DtrWidget> {
           children: [
             const Icon(Icons.error_outline, size: 48, color: Colors.red),
             const SizedBox(height: 16),
-            Text(
-              _error!,
-              style: const TextStyle(color: Colors.red),
-              textAlign: TextAlign.center,
-            ),
+            Text(_error!,
+                style: const TextStyle(color: Colors.red),
+                textAlign: TextAlign.center),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _fetchDtrRecords,
@@ -387,12 +561,8 @@ class _DtrWidgetState extends State<DtrWidget> {
       return const Padding(
         padding: EdgeInsets.all(20.0),
         child: Center(
-          child: Text(
-            'No DTR records available',
-            style: TextStyle(fontSize: 16, 
-            // color: Colors.grey
-            ),
-          ),
+          child: Text('No DTR records available',
+              style: TextStyle(fontSize: 16)),
         ),
       );
     }
@@ -402,99 +572,97 @@ class _DtrWidgetState extends State<DtrWidget> {
       child: Column(
         children: [
           Container(
-            margin: EdgeInsets.zero,
-            child: Column(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            decoration: const BoxDecoration(
+              color: Color(0xFF2C5F4F),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(8),
+                topRight: Radius.circular(8),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Header section with filter and refresh buttons
-                Container(
-                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF2C5F4F),
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(8),
-                      topRight: Radius.circular(8),
-                    ),
+                const Text(
+                  'DAILY TIME RECORD',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'DAILY TIME RECORD',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.5,
+                ),
+                Row(
+                  children: [
+                    Stack(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.filter_list,
+                              color: Colors.white, size: 20),
+                          onPressed: _showFilterDialog,
+                          tooltip: 'Filter by Month/Year',
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
                         ),
-                      ),
-                      Row(
-                        children: [
-                          // Filter button
-                          Stack(
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.filter_list, color: Colors.white, size: 20),
-                                onPressed: _showFilterDialog,
-                                tooltip: 'Filter by Month/Year',
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(),
+                        if (_selectedMonth != null || _selectedYear != null)
+                          Positioned(
+                            right: 0,
+                            top: 0,
+                            child: Container(
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(
+                                minWidth: 5,
+                                minHeight: 8,
                               ),
-                              // Badge to show active filters
-                              if (_selectedMonth != null || _selectedYear != null)
-                                Positioned(
-                                  right: 0,
-                                  top: 0,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(2),
-                                    constraints: const BoxConstraints(
-                                      minWidth: 5,
-                                      minHeight: 8,
-                                    ),
-                                  ),
-                                ),
-                            ],
+                            ),
                           ),
-                          const SizedBox(width: 12),
-                          // Refresh button
-                          IconButton(
-                            icon: const Icon(Icons.refresh, color: Colors.white, size: 20),
+
+                        Container(
+                          padding: const EdgeInsets.only(left: 40),
+                          child: IconButton(
+                            icon: const Icon(
+                              Icons.refresh,
+                              color: Colors.white,
+                              size: 20,
+                            ),
                             onPressed: _fetchDtrRecords,
                             tooltip: 'Refresh',
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(),
                           ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                
-                
-                // DTR records list
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: _filteredRecords.isEmpty
-                      ? const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(20.0),
-                            child: Text(
-                              'No records found for selected filters',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Color.fromARGB(255, 255, 255, 255),
-                              ),
-                            ),
-                          ),
-                        )
-                      : Column(
-                          children: List.generate(_filteredRecords.length, (index) {
-                            final record = _filteredRecords[index];
-                            return _buildDtrCard(record);
-                          }),
                         ),
+                      ],
+                    ),
+
+                    
+                  ],
                 ),
               ],
             ),
+          ),
+
+          // DTR records list
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: _filteredRecords.isEmpty
+                ? const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(20.0),
+                      child: Text(
+                        'No records found for selected filters',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Color.fromARGB(255, 255, 255, 255),
+                        ),
+                      ),
+                    ),
+                  )
+                : Column(
+                    children: List.generate(_filteredRecords.length, (index) {
+                      final record = _filteredRecords[index];
+                      return _buildDtrCard(record);
+                    }),
+                  ),
           ),
         ],
       ),
@@ -503,7 +671,6 @@ class _DtrWidgetState extends State<DtrWidget> {
 
   Widget _buildDtrCard(Map<String, dynamic> record) {
     return Card(
-      
       elevation: 0,
       color: Colors.white,
       child: Padding(
@@ -511,13 +678,12 @@ class _DtrWidgetState extends State<DtrWidget> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header with date
             Row(
-              
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.calendar_today, size: 20, color: Color(0xFF00674F)),
+                    const Icon(Icons.calendar_today,
+                        size: 20, color: Color(0xFF00674F)),
                     const SizedBox(width: 5),
                     Text(
                       _formatDateWithDay(record['date']),
@@ -532,43 +698,33 @@ class _DtrWidgetState extends State<DtrWidget> {
               ],
             ),
             const SizedBox(height: 10),
-            
-            // Time entries
-            _buildTimeSection('Morning', 
+            _buildTimeSection(
+              'Morning',
               'In: ${_formatTime(record['amIn'])}',
               'Out: ${_formatTime(record['amOut'])}',
             ),
-           
-            _buildTimeSection('Afternoon', 
+            _buildTimeSection(
+              'Afternoon',
               'In: ${_formatTime(record['pmIn'])}',
               'Out: ${_formatTime(record['pmOut'])}',
             ),
-            
             const SizedBox(height: 12),
-            
-            // Hours summary
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildHoursInfo(
-                  'Undertime',
-                  _formatMinutes(record['undertime']),
-                  const Color.fromARGB(255, 126, 126, 126),
-                ),
-                _buildHoursInfo(
-                  'OT Hours',
-                  _formatMinutes(record['utHours']),
-                  const Color.fromARGB(255, 126, 126, 126),
-                ),
-                _buildHoursInfo(
-                  'OT Minutes',
-                  _formatMinutes(record['utMinutes']),
-                  const Color.fromARGB(255, 126, 126, 126),
-                ),
+                _buildHoursInfo('Undertime',
+                    _formatMinutes(record['undertime']),
+                    const Color.fromARGB(255, 126, 126, 126)),
+                _buildHoursInfo('OT Hours',
+                    _formatMinutes(record['utHours']),
+                    const Color.fromARGB(255, 126, 126, 126)),
+                _buildHoursInfo('OT Minutes',
+                    _formatMinutes(record['utMinutes']),
+                    const Color.fromARGB(255, 126, 126, 126)),
               ],
             ),
             const SizedBox(height: 20),
-             const Divider(height: 20),
+            const Divider(height: 20),
           ],
         ),
       ),
@@ -578,39 +734,22 @@ class _DtrWidgetState extends State<DtrWidget> {
   Widget _buildTimeSection(String title, String timeIn, String timeOut) {
     return Container(
       padding: const EdgeInsets.all(5),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        
-      ),
+      decoration: const BoxDecoration(color: Colors.white),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Colors.black87,
-            ),
-          ),
+          Text(title,
+              style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87)),
           Row(
             children: [
-              Text(
-                timeIn,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey.shade700,
-                ),
-              ),
+              Text(timeIn,
+                  style: TextStyle(fontSize: 13, color: Colors.grey.shade700)),
               const SizedBox(width: 12),
-              Text(
-                timeOut,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey.shade700,
-                ),
-              ),
+              Text(timeOut,
+                  style: TextStyle(fontSize: 13, color: Colors.grey.shade700)),
             ],
           ),
         ],
@@ -621,22 +760,12 @@ class _DtrWidgetState extends State<DtrWidget> {
   Widget _buildHoursInfo(String label, String value, Color color) {
     return Column(
       children: [
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        ),
+        Text(value,
+            style: TextStyle(
+                fontSize: 20, fontWeight: FontWeight.bold, color: color)),
         const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey.shade600,
-          ),
-        ),
+        Text(label,
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
       ],
     );
   }
