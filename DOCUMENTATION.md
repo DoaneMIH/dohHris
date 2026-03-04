@@ -1,693 +1,696 @@
 # HRIS Mobile Application - Complete Documentation
 
+**Version**: 1.0 | **Last Updated**: March 2, 2026 | **Status**: Production Ready
+
+## Quick Navigation
+
+- **New to the project?** Start with [5-Minute Quick Start](#5-minute-quick-start)
+- **Want to understand architecture?** See [Architecture & Design](#architecture--design)
+- **Need to add features?** Check [Development Workflow](#development-workflow)
+- **Ready to deploy?** Go to [Building & Deployment](#building--deployment)
+- **Encountering issues?** Visit [Troubleshooting Guide](#troubleshooting-guide)
+
+---
+
 ## Table of Contents
+
 1. [Project Overview](#project-overview)
-2. [Technology Stack](#technology-stack)
-3. [Project Structure](#project-structure)
-4. [Features](#features)
-5. [Architecture](#architecture)
-6. [Core Services](#core-services)
-7. [Pages & Screens](#pages--screens)
-8. [API Configuration](#api-configuration)
-9. [Dependencies](#dependencies)
+2. [5-Minute Quick Start](#5-minute-quick-start)
+3. [Technology Stack](#technology-stack)
+4. [Project Structure](#project-structure)
+5. [Features Overview](#features-overview)
+6. [Architecture & Design](#architecture--design)
+7. [Core Services](#core-services)
+8. [Pages & Screens](#pages--screens)
+9. [API Integration](#api-integration)
 10. [Setup & Installation](#setup--installation)
-11. [Development Guide](#development-guide)
+11. [Development Workflow](#development-workflow)
 12. [Building & Deployment](#building--deployment)
-13. [Troubleshooting](#troubleshooting)
+13. [Testing & Quality](#testing--quality)
+14. [Troubleshooting Guide](#troubleshooting-guide)
+15. [FAQ & Best Practices](#faq--best-practices)
+16. [Additional Resources](#additional-resources)
 
 ---
 
 ## Project Overview
 
-**HRIS Mobile Application** is a Flutter-based Human Resources Information System (HRIS) mobile application designed for Android and iOS platforms. The application enables employees to:
+### What is HRIS Mobile Application?
 
-- **Authenticate** securely with their credentials
-- **View** personal profiles and employment details
-- **Manage** Daily Time Records (DTR)
-- **Update** personal and professional information
-- **Track** employee background information (family, education, work experience, etc.)
+**HRIS Mobile Application** is a professionally-designed Flutter-based Human Resources Information System (HRIS) mobile client enabling secure employee access to HR data and profile management across Android, iOS, Web, Windows, macOS, and Linux platforms.
 
-### Key Objectives
-- Provide seamless employee access to HR data
-- Facilitate remote profile management
-- Support secure token-based authentication
-- Enable real-time data synchronization with backend
+### Core Capabilities
 
-### Target Users
-- Employees in organizations using the HRIS backend system
-- HR administrators managing employee information
-- Any authorized personnel accessing their profiles
+| Capability | Description |
+|------------|-------------|
+| **Authentication** | Secure email/password login with JWT token-based session management |
+| **Profile Management** | View and update personal, professional, and employment information |
+| **Daily Time Records** | Track attendance, time-in/time-out records with monthly filtering |
+| **Background Information** | Comprehensive employee records including family, education, work history |
+| **Photo Management** | Upload, update, and view profile photographs with authentication |
+| **Responsive Design** | Works seamlessly on phones, tablets, web, and desktop platforms |
+
+### Key Benefits
+
+- ✅ **Seamless Authentication**: Secure login with automatic 4-minute token refresh
+- ✅ **Complete Profile Control**: Employees manage their own HR information
+- ✅ **Cross-Platform**: Single codebase runs on 6+ platforms
+- ✅ **Offline Capable**: Cached data accessible without internet
+- ✅ **Enterprise Secure**: Bearer token authentication with secure storage
+- ✅ **Real-time Sync**: Automatic data synchronization with backend
+
+### Intended Users
+
+- **Employees**: Access and manage personal HR information
+- **HR Administrators**: Monitor employee data and system status
+- **Authorized Personnel**: View relevant profile information based on permissions
+
+---
+
+## 5-Minute Quick Start
+
+### Prerequisites Check
+
+```bash
+# Verify Flutter & Dart installed
+flutter --version    # Requires 3.10.7+
+dart --version        # Requires 3.10.7+
+
+# View available devices
+flutter devices
+```
+
+### Setup Steps
+
+```bash
+# 1. Clone the repository
+git clone <repository-url>
+cd mobile_application
+
+# 2. Get all dependencies
+flutter pub get
+
+# 3. Verify setup
+flutter doctor
+```
+
+### Configure Backend
+
+Edit `lib/config/api_config.dart`:
+
+```dart
+static const String baseUrl = 'http://your-backend-url.com:8082';
+```
+
+### Run the Application
+
+```bash
+# On default device
+flutter run
+
+# Specify device
+flutter run -d <device_id>
+
+# With verbose output
+flutter run -v
+```
+
+✅ **Done!** App should open to the Login screen. Use your credentials to log in.
 
 ---
 
 ## Technology Stack
 
-### Framework & Language
-- **Framework**: Flutter 3.x
-- **Language**: Dart 3.10.7+
-- **Target Platforms**: Android (API 21+), iOS (12.0+), Web, Windows, macOS, Linux
+### Core Framework
 
-### Key Dependencies
+| Component | Version | Purpose |
+|-----------|---------|---------|
+| **Flutter** | 3.10.7+ | Cross-platform mobile framework |
+| **Dart** | 3.10.7+ | Programming language |
+| **Material Design** | 3.0 | UI design system |
 
-| Package | Version | Purpose |
-|---------|---------|---------|
-| `flutter` | Latest | Core Flutter framework |
-| `dart` | ^3.10.7 | Dart language SDK |
-| `http` | ^1.1.0 | HTTP client for API calls |
-| `shared_preferences` | ^2.5.4 | Local storage for persistent data |
-| `image_picker` | ^1.2.1 | Select and upload images |
-| `cupertino_icons` | ^1.0.8 | iOS-style icons |
-| `flutter_launcher_icons` | ^0.14.4 | App icon generation |
-| `flutter_lints` | ^6.0.0 | Code quality analysis |
+### Supported Platforms
+
+| Platform | Min Version | Status |
+|----------|-------------|--------|
+| Android | API 21 (5.0) | ✅ Fully Supported |
+| iOS | 12.0+ | ✅ Fully Supported |
+| Web | Modern browsers | ✅ Fully Supported |
+| Windows | 10+ | ✅ Fully Supported |
+| macOS | 10.11+ | ✅ Fully Supported |
+| Linux | Ubuntu 16.04+ | ✅ Fully Supported |
+
+### Core Dependencies
+
+- **`http`** (^1.1.0) - REST API HTTP client
+- **`shared_preferences`** (^2.5.4) - Persistent key-value storage
+- **`image_picker`** (^1.2.1) - Select images from camera/gallery
+- **`cupertino_icons`** (^1.0.8) - iOS-style icons
+- **`flutter_launcher_icons`** (^0.14.4) - App icon generation
+- **`flutter_lints`** (^6.0.0) - Code quality and style rules
+
+### Backend Requirements
+
+- **API Server**: REST API on HTTP (port 8082)
+- **Authentication**: JWT tokens in Bearer format
+- **Data Format**: JSON request/response
+- **CORS**: Enabled for mobile requests
 
 ---
 
 ## Project Structure
 
+### Complete Directory Layout
+
 ```
 mobile_application/
-├── lib/
+│
+├── 📁 lib/                          # Dart source code
 │   ├── main.dart                    # Application entry point
-│   ├── config/
-│   │   └── api_config.dart         # API endpoints configuration
-│   ├── services/
-│   │   ├── auth_service.dart       # Authentication logic
-│   │   ├── user_service.dart       # User profile management
-│   │   ├── token_manager.dart      # Token refresh & management
-│   │   └── authenticated_photo.dart # Photo upload service
-│   ├── pages/
-│   │   ├── login_page.dart         # Login screen
-│   │   ├── homepage.dart           # Home dashboard
-│   │   ├── dtr_page.dart           # Daily Time Record
-│   │   ├── about.dart              # About page
-│   │   ├── navigation.dart         # Bottom navigation
-│   │   └── UserCredentials/        # User detail pages
-│   │       ├── user_details.dart
-│   │       ├── family_background.dart
-│   │       ├── education_background.dart
-│   │       ├── work_experience.dart
-│   │       ├── voluntary_work.dart
-│   │       ├── learning_development.dart
-│   │       ├── civil_service.dart
-│   │       ├── person_reference.dart
-│   │       └── other_information.dart
-│   └── widgets/
-│       ├── routes.dart             # Route definitions
-│       └── splash.dart             # Splash screen
-├── android/                        # Android-specific code
-├── ios/                           # iOS-specific code
-├── web/                           # Web platform code
-├── windows/                       # Windows platform code
-├── macos/                         # macOS platform code
-├── linux/                         # Linux platform code
-├── assets/                        # Images, icons, and static files
+│   │
+│   ├── 📁 config/
+│   │   └── api_config.dart          # Backend URL & API configuration
+│   │
+│   ├── 📁 services/                 # Business logic layer
+│   │   ├── auth_service.dart        # Authentication & login
+│   │   ├── user_service.dart        # User profile management
+│   │   ├── token_manager.dart       # JWT token lifecycle
+│   │   └── authenticated_photo.dart # Photo upload/download
+│   │
+│   ├── 📁 pages/                    # Full-screen UI pages
+│   │   ├── login_page.dart          # Login & authentication
+│   │   ├── homepage.dart            # Dashboard/home screen
+│   │   ├── dtr_page.dart            # Daily time records
+│   │   ├── about.dart               # About page
+│   │   ├── navigation.dart          # Bottom navigation controller
+│   │   │
+│   │   └── 📁 UserCredentials/      # Employee information pages
+│   │       ├── user_details.dart          # Profile overview
+│   │       ├── family_background.dart     # Family members
+│   │       ├── education_background.dart  # Education history
+│   │       ├── work_experience.dart       # Employment history
+│   │       ├── voluntary_work.dart        # Volunteer activities
+│   │       ├── learning_development.dart  # Training & development
+│   │       ├── civil_service.dart         # Civil service info
+│   │       ├── person_reference.dart      # Reference contacts
+│   │       └── other_information.dart     # Additional details
+│   │
+│   └── 📁 widgets/                  # Reusable components
+│       ├── routes.dart              # Named route definitions
+│       └── splash.dart              # Splash/loading screen
+│
+├── 📁 android/                      # Android platform code
+├── 📁 ios/                          # iOS platform code
+├── 📁 web/                          # Web platform code
+├── 📁 windows/                      # Windows platform code
+├── 📁 macos/                        # macOS platform code
+├── 📁 linux/                        # Linux platform code
+│
+├── 📁 assets/                       # Static resources
 │   ├── images/
 │   └── icon/
-├── pubspec.yaml                   # Package dependencies
-├── analysis_options.yaml          # Linting rules
-├── codemagic.yaml                # CI/CD configuration
-└── README.md                      # Project readme
-
+│
+├── 📁 build/                        # Build output (git-ignored)
+├── 📁 test/                         # Unit/widget tests
+│
+├── pubspec.yaml                     # Package dependencies
+├── analysis_options.yaml            # Linting rules
+├── codemagic.yaml                  # CI/CD configuration
+├── README.md                        # Project overview
+└── DOCUMENTATION.md                 # This file
 ```
 
 ---
 
-## Features
+## Features Overview
 
-### 1. **User Authentication**
-- Secure login with email and password
-- JWT token generation and validation
-- Automatic token refresh every 4 minutes (before 5-minute expiration)
-- Session management with persistent token storage
-- Login error handling and validation
+### 1. Secure Authentication
+- Email/password login with backend validation
+- JWT bearer token generation and storage
+- Automatic token refresh every 4 minutes
+- Secure credential storage with SharedPreferences
+- Login error handling and user feedback
 
-**Implemented in**: `auth_service.dart`, `token_manager.dart`
+**Files**: `auth_service.dart`, `token_manager.dart`, `login_page.dart`
 
-### 2. **User Profile Management**
-- View personal and professional information
-- Update profile details (name, contact info, etc.)
-- Photo upload and management
-- Profile data caching for offline access
+### 2. Profile Management
+- View complete personal and professional information
+- Edit and update profile details
+- Cache user data for offline access
+- Profile photo upload and download
+- Comprehensive employee background tracking
 
-**Implemented in**: `user_service.dart`, `authenticated_photo.dart`
+**Files**: `user_service.dart`, `user_details.dart`
 
-### 3. **Daily Time Record (DTR)**
-- View time-in and time-out records
-- Filter DTR by month and year
-- Display attendance history
-- Real-time data synchronization
+### 3. Daily Time Records (DTR)
+- Display time-in and time-out records
+- Filter by month and year
+- View attendance history
+- Real-time data refresh
+- No-data and error state handling
 
-**Implemented in**: `dtr_page.dart`
+**Files**: `dtr_page.dart`
 
-### 4. **Employee Background Information**
-Comprehensive modules for managing:
-- **Family Background**: Add/edit/delete family member information
-- **Education**: Track educational qualifications and institutions
-- **Work Experience**: Maintain professional work history
-- **Voluntary Work**: Document volunteer activities
-- **Learning & Development**: Track training and development activities
-- **Civil Service**: Manage civil service eligibility information
-- **Personal References**: Store reference contact information
-- **Other Information**: Additional employee details
+### 4. Employee Background Management
+Complete CRUD operations for:
+- **Family Background** - Family member information
+- **Education** - Educational qualifications
+- **Work Experience** - Employment history
+- **Voluntary Work** - Volunteer activities
+- **Learning & Development** - Training records
+- **Civil Service** - Civil service eligibility
+- **Personal References** - Reference contacts
+- **Other Information** - Additional details
 
-**Implemented in**: `UserCredentials/` folder
+**Files**: `lib/pages/UserCredentials/` (all background pages)
 
-### 5. **Navigation & UI**
-- Bottom navigation bar for easy screen access
-- Splash screen with 5-second delay
-- Responsive material design
-- Material 3 design system
+### 5. Responsive Navigation
+- Bottom navigation bar with 3 main sections
+- Persistent state management per tab
+- Smart drawer navigation in profile section
+- Material Design 3 responsive layout
 
-**Implemented in**: `navigation.dart`, `splash.dart`
+**Files**: `navigation.dart`, `routes.dart`
 
-### 6. **Security Features**
-- Bearer token authentication in API headers
-- Automatic token refresh mechanism
-- Secure credential storage
-- Session timeout handling
+### 6. Image Processing
+- Upload profile photographs
+- Download and cache profile images
+- Select images from device storage or camera
+- Authenticated image requests with bearer tokens
+
+**Files**: `authenticated_photo.dart`
 
 ---
 
-## Architecture
+## Architecture & Design
 
-### Architecture Pattern: Service-Oriented Architecture
+### Architectural Pattern: Service-Oriented Architecture (SOA)
 
-The application follows a layered architecture pattern:
+The application uses a **layered service-oriented architecture** with clear separation of concerns:
 
 ```
-┌─────────────────────────────────┐
-│         UI Layer (Pages)        │
-│  - login_page.dart              │
-│  - homepage.dart                │
-│  - user_details.dart, etc.      │
-└──────────────┬──────────────────┘
-               │
-┌──────────────▼──────────────────┐
-│     Business Logic Layer        │
-│       (Services)                │
-│  - AuthService                  │
-│  - UserService                  │
-│  - TokenManager                 │
-│  - AuthenticatedPhoto           │
-└──────────────┬──────────────────┘
-               │
-┌──────────────▼──────────────────┐
-│     Data Access Layer           │
-│  - HTTP Client (http package)   │
-│  - SharedPreferences            │
-│  - ImagePicker                  │
-└──────────────┬──────────────────┘
-               │
-┌──────────────▼──────────────────┐
-│      API Configuration          │
-│  - ApiConfig                    │
-│  - Endpoints                    │
-│  - Base URL                     │
-└─────────────────────────────────┘
+┌──────────────────────────────────────────┐
+│    UI Layer (Pages & Widgets)            │
+│  - StatefulWidget pages                  │
+│  - Material Design 3                     │
+│  - User interactions handled             │
+└────────────────────┬─────────────────────┘
+                     │ calls
+┌────────────────────▼─────────────────────┐
+│  Business Logic Layer (Services)         │
+│  - AuthService                           │
+│  - UserService                           │
+│  - TokenManager                          │
+│  - AuthenticatedPhoto                    │
+└────────────────────┬─────────────────────┘
+                     │ HTTP calls
+┌────────────────────▼─────────────────────┐
+│      Data Access Layer                   │
+│  - http package                          │
+│  - SharedPreferences                     │
+│  - ImagePicker                           │
+└────────────────────┬─────────────────────┘
+                     │
+┌────────────────────▼─────────────────────┐
+│   Backend API (port 8082)                │
+└──────────────────────────────────────────┘
 ```
 
-### Data Flow
+### Design Patterns Used
 
-1. **User Input** → UI Layer (Pages)
-2. **Service Call** → Business Logic Layer (Services)
-3. **API Request** → Data Access Layer
-4. **API Response** → Parse & Cache
-5. **Update UI** → Re-render with new data
+#### 1. Singleton Pattern (TokenManager)
+Ensures single global instance managing JWT tokens across the app.
 
-### State Management
+**Benefits:**
+- Single source of truth for token state
+- Automatic refresh applies globally
+- No token conflicts
 
-The application uses:
-- **StatefulWidget**: For pages requiring state updates
-- **Local Variables**: For page-level state
-- **Token Manager Singleton**: For global token state
-- **Caching** in UserService for profile data
+#### 2. State Pattern (StatefulWidget)
+Manages local widget state for pages requiring dynamic updates.
+
+**Used in:**
+- Login page (form, loading, errors)
+- DTR page (filters, sorting)
+- Profile pages (editing)
+- Photo upload
+
+#### 3. Factory Pattern
+All service methods return consistent response format.
+
+**Standard format:**
+```dart
+{'success': true, 'data': {...}}  // Success
+{'success': false, 'error': 'msg'} // Error
+```
+
+#### 4. Observer Pattern
+TokenManager notifies app when token expires.
 
 ---
 
 ## Core Services
 
-### 1. **AuthService** (`auth_service.dart`)
+### AuthService
 
-**Purpose**: Handles user authentication and login operations
+**File**: `lib/services/auth_service.dart`
 
-**Key Methods**:
+**Purpose**: Handle user login and authentication
+
+#### Method: login()
+
 ```dart
 Future<Map<String, dynamic>> login(String email, String password)
 ```
 
-**Features**:
-- Sends POST request to `/auth/login` endpoint
-- Validates credentials
-- Returns authentication token and user data
-- Automatically initializes TokenManager with credentials
-- Comprehensive logging for debugging
+**What it does:**
+1. Sends POST to `/auth/login`
+2. Validates credentials
+3. Returns token and employee data
+4. Initializes TokenManager with credentials
+5. Starts auto-refresh cycle
 
-**Usage**:
+**Returns:**
 ```dart
-final authService = AuthService();
-final result = await authService.login(email, password);
-if (result['success']) {
-  // Login successful
-  var token = result['data']['token'];
-  var user = result['data']['employee'];
+{
+  'success': true,
+  'data': {
+    'token': 'eyJhbGciOiJIUzI1NiIs...',
+    'employee': {
+      'id': 'EMP001',
+      'name': 'John Doe',
+      'email': 'john@example.com'
+    }
+  }
 }
 ```
 
 ---
 
-### 2. **TokenManager** (`token_manager.dart`)
+### TokenManager
 
-**Purpose**: Manages JWT token lifecycle and automatic refresh
+**File**: `lib/services/token_manager.dart`
 
-**Architecture**: Singleton pattern for global access
+**Pattern**: Singleton
 
-**Key Features**:
+**Purpose**: Manage JWT token lifecycle and automatic refresh
+
+#### Key Features
+
 - Stores token after successful login
-- Stores user credentials for silent refresh
-- Automatically refreshes token every 4 minutes
-- Handles token expiration gracefully
-- Notifies app when token is expired
+- Stores credentials for silent refresh
+- Refreshes token automatically every 4 minutes
+- Handles expiration gracefully
+- Notifies app on token failure
 
-**Key Methods**:
-```dart
-void initialize(String token, {required String email, required String password, Function? onTokenExpired})
-Future<bool> refreshToken()
-String? get token
-```
+#### Token Lifecycle
 
-**Flow**:
 ```
-Initial Login
-    ↓
-Token received + Credentials stored
-    ↓
+Login → Token received → Stored
+  ↓
 4-minute timer starts
-    ↓
-Timer triggers → Silent re-login via /auth/login
-    ↓
-New token received → Continue operations
-    ↓
-If refresh fails → Call onTokenExpired callback
-```
-
-**Usage**:
-```dart
-// Access current token
-final token = TokenManager().token;
-
-// Initialize (done automatically by AuthService)
-TokenManager().initialize(token, email: email, password: password);
+  ↓
+[After 4 minutes]
+Silent re-login via /auth/login
+  ↓
+New token received → Timer resets
+  ↓
+[Repeat while app running]
+  ↓
+If refresh fails → onTokenExpired callback
+  ↓
+Force navigate to login
 ```
 
 ---
 
-### 3. **UserService** (`user_service.dart`)
+### UserService
 
-**Purpose**: Manages user profile data and personal information
+**File**: `lib/services/user_service.dart`
 
-**Key Methods**:
+**Purpose**: Manage user profiles and employee background information
 
-#### Get User Details
+#### Profile Methods
+
 ```dart
+// Get user profile
 Future<Map<String, dynamic>> getUserDetails(String token)
-```
-- Fetches user profile from `/adminuser/get-profile`
-- Caches result for offline access
-- Returns user data including name, email, contact info
 
-#### Update Personal Information
-```dart
+// Update profile
 Future<Map<String, dynamic>> updatePersonalInformation(
-  String token,
-  String employeeId,
-  Map<String, dynamic> personalData,
-)
+  String token, String employeeId, Map<String, dynamic> data)
 ```
-- Updates user profile at `/adminuser/update-employee/{id}`
-- Merges new data with existing cached data
-- Filters out null/empty values for clean requests
-- Returns success/failure status
 
-#### Family Background Management
+#### Family Background Methods
+
 ```dart
 Future<Map<String, dynamic>> getAllFamily(String token, String employeeId)
-Future<Map<String, dynamic>> addFamily(String token, String employeeId, Map<String, dynamic> familyData)
-Future<Map<String, dynamic>> updateFamily(String token, String familyId, Map<String, dynamic> familyData)
+Future<Map<String, dynamic>> addFamily(String token, String employeeId, Map data)
+Future<Map<String, dynamic>> updateFamily(String token, String familyId, Map data)
 Future<Map<String, dynamic>> deleteFamily(String token, String familyId)
 ```
 
-#### Education Management
-```dart
-Future<Map<String, dynamic>> getAllEducation(String token, String employeeId)
-Future<Map<String, dynamic>> addEducation(String token, String employeeId, Map<String, dynamic> educationData)
-Future<Map<String, dynamic>> updateEducation(String token, String educationId, Map<String, dynamic> educationData)
-Future<Map<String, dynamic>> deleteEducation(String token, String educationId)
-```
+#### Similar Methods Available For:
+- Education: `getAllEducation()`, `addEducation()`, `updateEducation()`, `deleteEducation()`
+- Work Experience: `getAllWorkExperience()`, `addWorkExperience()`, etc.
+- Voluntary Work: `getAllVoluntaryWork()`, `addVoluntaryWork()`, etc.
+- Learning & Development: `getAllLearningDev()`, `addLearningDev()`, etc.
+- Civil Service: `getAllCivilService()`, `addCivilService()`, etc.
+- Personal References: `getAllPersonReference()`, `addPersonReference()`, etc.
 
-**Similar methods available for**:
-- Work Experience
-- Voluntary Work
-- Learning & Development
-- Civil Service Eligibility
-- Personal References
-- Other Information
+#### Data Caching
 
-**Data Caching**:
-- Caches current user data to minimize API calls
-- Validates cache against current employee ID
-- Allows offline access to previously loaded data
+- Caches user data per employeeId
+- Returns cached data if available
+- Fetches fresh data when needed
+- Enables offline access to previously loaded data
 
 ---
 
-### 4. **AuthenticatedProfilePhoto** (`authenticated_photo.dart`)
+### AuthenticatedPhoto
 
-**Purpose**: Manages profile photo upload and display with authentication
+**File**: `lib/services/authenticated_photo.dart`
 
-**Key Features**:
-- Displays employee profile photos
-- Handles authenticated image requests
-- Photo upload functionality
-- Image picker integration
-- Error handling with fallback UI
+**Purpose**: Handle profile photo upload/download with bearer token authentication
 
-**Key Methods**:
+#### Key Methods
+
 ```dart
-Future<void> _loadImage() // Load image from server
+Future<Map<String, dynamic>> uploadPhoto(
+  String token, String employeeId, File imageFile)
+
+Future<void> _loadImage()   // Load image from server
 Future<void> _pickAndUploadImage(ImageSource source) // Pick and upload
-Future<Map<String, dynamic>> uploadPhoto(String token, String employeeId, File imageFile)
 ```
 
-**Usage**:
-```dart
-AuthenticatedProfilePhoto(
-  photoUrl: photoUrl,
-  baseUrl: baseUrl,
-  userName: userName,
-  token: token,
-  employeeId: employeeId,
-  onPhotoUpdated: () { /* callback */ },
-)
-```
+#### Features
+
+- Display employee profile photos
+- Authenticated image requests (requires bearer token)
+- Photo upload via image picker
+- Fallback avatar with initials
+- Error handling with user messages
+- Circular avatar design
 
 ---
 
 ## Pages & Screens
 
-### 1. **Login Page** (`login_page.dart`)
-
-**Screen Layout**:
-- Email input field with validation
-- Password input field with show/hide toggle
-- Login button
+### Login Page
+- **File**: `lib/pages/login_page.dart`
+- Email and password input fields with validation
+- Show/hide password toggle
 - Loading indicator during authentication
 - Error message display
+- Auto-navigation to home after successful login
 
-**Features**:
-- Form validation (email format, password required)
-- Secure password entry
-- Loading state management
-- Error handling with user-friendly messages
-- Automatic navigation to home after login
+**User Flow**: Enter credentials → Validate → Authenticate → Initialize TokenManager → Navigate home
 
-**Key Logic**:
-1. User enters email and password
-2. Form validation occurs
-3. AuthService.login() called
-4. Token received and TokenManager initialized
-5. User navigated to MainNavigation page
-6. TokenManager starts automatic refresh cycle
+### Home Page (Dashboard)
+- **File**: `lib/pages/homepage.dart`
+- Welcome message with user greeting
+- Feature cards/buttons
+- Quick access links
+- Dashboard statistics
 
----
-
-### 2. **Home Page** (`homepage.dart`)
-
-**Screen Layout**:
-- AppBar with title
-- Welcome message with icon
-- Placeholder content area
-- Card with additional information
-
-**Purpose**: Dashboard and entry point for main app features
-
----
-
-### 3. **Daily Time Record Page** (`dtr_page.dart`)
-
-**Features**:
-- Display time-in/time-out records
-- Filter by month and year
-- Calendar picker for easy selection
-- Sortable records list
+### Daily Time Record (DTR) Page
+- **File**: `lib/pages/dtr_page.dart`
+- Month/Year filters
+- Time-in/Time-out table
+- Filter and search functionality
 - No-data state handling
+- API: `GET /adminuser/api/v1/dtr/{userId}`
 
-**API Endpoints Used**:
-- GET `/adminuser/api/v1/dtr/{userId}` - Fetch DTR records
+### User Details Pages
+- **File**: `lib/pages/UserCredentials/user_details.dart` (hub)
+- Profile overview with photo
+- Edit personal information button
+- Navigation to all background detail pages
+- Displays current information with edit options
 
-**UI Components**:
-- Month/Year selector
-- Records table with time information
-- Loading indicators
-- Error messages
+### Background Information Pages
 
----
+All follow the same pattern: **List → Add → Edit → Delete**
 
-### 4. **User Details Pages** (`UserCredentials/` folder)
+- **Family Background** (`family_background.dart`)
+- **Education** (`education_background.dart`)
+- **Work Experience** (`work_experience.dart`)
+- **Voluntary Work** (`voluntary_work.dart`)
+- **Learning & Development** (`learning_development.dart`)
+- **Civil Service** (`civil_service.dart`)
+- **Personal References** (`person_reference.dart`)
+- **Other Information** (`other_information.dart`)
 
-#### Main User Details (`user_details.dart`)
-- Central profile management hub
-- Navigation to all detail pages
-- Profile photo management
-- Quick access to update forms
+### Navigation Page
+- **File**: `lib/pages/navigation.dart`
+- Bottom navigation with 3 tabs
+- Tab structure:
+  - Home → HomePageContent
+  - Profile → UserDetailsPageContent
+  - About → AboutPage
+- State maintained per tab
+- Smart profile section navigation
 
-#### Family Background (`family_background.dart`)
-- List of family members
-- Add new family member
-- Edit existing records
-- Delete family members
-- Form validation for all fields
-
-#### Education Background (`education_background.dart`)
-- Educational qualifications list
-- Add education history
-- Update education records
-- Delete education entries
-- School/University information management
-
-#### Work Experience (`work_experience.dart`)
-- Employment history
-- Company information
-- Position and tenure tracking
-- Add/edit/delete work records
-
-#### Voluntary Work (`voluntary_work.dart`)
-- Volunteer service history
-- Organization information
-- Activity descriptions
-- Duration tracking
-
-#### Learning & Development (`learning_development.dart`)
-- Training and development records
-- Course information
-- Certificates and completion dates
-- Skill development tracking
-
-#### Civil Service (`civil_service.dart`)
-- Civil service eligibility status
-- Examination information
-- License and certification details
-
-#### Personal References (`person_reference.dart`)
-- Reference contact information
-- Name and organization
-- Contact details
-- Relationship information
-
-#### Other Information (`other_information.dart`)
-- Additional employee details
-- Miscellaneous information
-- Special notes
-
----
-
-### 5. **Navigation Page** (`navigation.dart`)
-
-**Architecture**: MainNavigation StatefulWidget with bottom navigation
-
-**Bottom Navigation Tabs**:
-1. **Home** (icon: home) → HomePageContent
-2. **Profile** (icon: person/menu) → UserDetailsPageContent
-3. **About** (icon: info) → AboutPage
-
-**Smart Navigation**:
-- Profile tab shows "person" icon first tap
-- Clicking again shows menu icon and opens drawer
-- Switching tabs resets profile navigation state
-- Each page maintains separate state
-
----
-
-### 6. **About Page** (`about.dart`)
-
-**Content**:
+### About Page
+- **File**: `lib/pages/about.dart`
 - Application information
 - Version details
 - Features overview
 - Company information
 - Support contact details
+- Material 3 design with scrollable content
 
-**Design**: Material 3 with custom color scheme
-
----
-
-### 7. **Splash Screen** (`splash.dart`)
-
-**Features**:
-- Company logo display
+### Splash Screen
+- **File**: `lib/widgets/splash.dart`
+- Company logo centered
 - 5-second delay before navigation
+- Smooth transition to LoginPage
 - Responsive design
-- Automatic navigation to login page
 
 ---
 
-## API Configuration
+## API Integration
 
-### File: `api_config.dart`
+### Base Configuration
 
-**Base URL Configuration**:
+**File**: `lib/config/api_config.dart`
+
 ```dart
-static const String baseUrl = 'http://192.168.79.55:8082';
-```
-
-**Alternative URLs (commented)**:
-- Local: `http://localhost:8082`
-- Emulator: `http://10.0.2.2:8082`
-
-### API Endpoints
-
-#### Authentication
-```
-POST /auth/login
-```
-Request body:
-```json
-{
-  "email": "user@example.com",
-  "password": "password"
+class ApiConfig {
+  static const String baseUrl = 'http://192.168.79.55:8082';
 }
 ```
 
-#### User Profile
-```
-GET /adminuser/get-profile
-POST /adminuser/update-employee/{employeeId}
-GET /employee/image/{photoId}
-POST /adminuser/update-employee-photo/{employeeId}
+### Authentication Endpoints
+
+#### POST /auth/login
+
+```json
+Request:
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+
+Response (200):
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "employee": {
+    "id": "EMP001",
+    "name": "John Doe",
+    "email": "john@example.com",
+    "department": "HR"
+  }
+}
 ```
 
-#### Family Background
-```
-GET /adminuser/family/get-all-family/{employeeId}
-POST /adminuser/family/add-family/{employeeId}
-POST /adminuser/family/update-family/{familyId}
-DELETE /adminuser/family/delete-family/{familyId}
-```
+### Profile Endpoints
 
-#### Education
-```
-GET /adminuser/education/get-all-education/{employeeId}
-POST /adminuser/education/add-education/{employeeId}
-POST /adminuser/education/update-education/{educationId}
-DELETE /adminuser/education/delete-education/{educationId}
-```
+#### GET /adminuser/get-profile
+Fetch authenticated user's complete profile.
 
-#### Work Experience
-```
-GET /adminuser/work-experience/get-all-work-experience/{employeeId}
-POST /adminuser/work-experience/add-work-experience/{employeeId}
-POST /adminuser/work-experience/update-work-experience/{experienceId}
-DELETE /adminuser/work-experience/delete-work-experience/{experienceId}
-```
+**Headers**: `Authorization: Bearer {token}`
 
-#### Voluntary Work
-```
-GET /adminuser/voluntary-work/get-all-voluntary-work/{employeeId}
-POST /adminuser/voluntary-work/add-voluntary-work/{employeeId}
-POST /adminuser/voluntary-work/update-voluntary-work/{voluntaryId}
-DELETE /adminuser/voluntary-work/delete-voluntary-work/{voluntaryId}
-```
+#### POST /adminuser/update-employee/{employeeId}
+Update employee profile information.
 
-#### Learning & Development
-```
-GET /adminuser/learn-dev/get-all-learn-dev/{employeeId}
-POST /adminuser/learn-dev/add-learn-dev/{employeeId}
-POST /adminuser/learn-dev/update-learn-dev/{learningId}
-DELETE /adminuser/learn-dev/delete-learn-dev/{learningId}
-```
+#### GET /employee/image/{photoId}
+Download employee photo (requires bearer token).
 
-#### Daily Time Record
+#### POST /adminuser/update-employee-photo/{employeeId}
+Upload new profile photo (multipart/form-data).
+
+### Family Background Endpoints
+
+- `GET /adminuser/family/{employeeId}`
+- `POST /adminuser/family/add-family/{employeeId}`
+- `POST /adminuser/family/update-family/{familyId}`
+- `DELETE /adminuser/family/delete-family/{familyId}`
+
+### Education Endpoints
+
+- `GET /adminuser/education/{employeeId}`
+- `POST /adminuser/education/add-education/{employeeId}`
+- `POST /adminuser/education/update-education/{educationId}`
+- `DELETE /adminuser/education/delete-education/{educationId}`
+
+### Work Experience Endpoints
+
+- `GET /adminuser/work-experience/{employeeId}`
+- `POST /adminuser/work-experience/add-work-experience/{employeeId}`
+- `POST /adminuser/work-experience/update-work-experience/{experienceId}`
+- `DELETE /adminuser/work-experience/delete-work-experience/{experienceId}`
+
+### Voluntary Work, Learning & Development, Civil Service, Personal References
+
+All follow same pattern with respective endpoints.
+
+### Daily Time Record
+
 ```
 GET /adminuser/api/v1/dtr/{userId}
 ```
 
-### Authentication Headers
+Response: Array of DTR records with date, time-in, time-out, status.
 
-All authenticated requests require:
-```
-Authorization: Bearer {token}
-Content-Type: application/json
-```
+### Standard Response Format
 
-### Response Format
-
-Standard success response:
+**Success**:
 ```json
 {
   "success": true,
-  "data": { /* response data */ }
+  "data": {...},
+  "statusCode": 200
 }
 ```
 
-Standard error response:
+**Error**:
 ```json
 {
-  "error": "Error message",
+  "error": "Error description",
   "statusCode": 400
 }
 ```
 
----
+### Request Headers (All Authenticated Requests)
 
-## Dependencies
-
-### Runtime Dependencies
-
-| Package | Version | Usage |
-|---------|---------|-------|
-| flutter | Latest | Core framework |
-| cupertino_icons | ^1.0.8 | iOS-style icons |
-| shared_preferences | ^2.5.4 | Local data persistence |
-| http | ^1.1.0 | HTTP requests |
-| image_picker | ^1.2.1 | Image selection |
-| flutter_launcher_icons | ^0.14.4 | App icon generation |
-
-### Development Dependencies
-
-| Package | Version | Usage |
-|---------|---------|-------|
-| flutter_test | Latest | Unit testing framework |
-| flutter_lints | ^6.0.0 | Code quality rules |
-
-### Installation
-
-Update all dependencies:
-```bash
-flutter pub get
+```
+Authorization: Bearer {token}
+Content-Type: application/json
+Accept: application/json
 ```
 
-Upgrade dependencies:
-```bash
-flutter pub upgrade
-```
+### HTTP Status Codes
+
+| Code | Meaning | Action |
+|------|---------|--------|
+| 200 | OK | Success |
+| 201 | Created | Resource created |
+| 400 | Bad Request | Validate form |
+| 401 | Unauthorized | Refresh token or login |
+| 403 | Forbidden | No permission |
+| 404 | Not Found | Show not found message |
+| 500 | Server Error | Show error message |
 
 ---
 
@@ -695,108 +698,93 @@ flutter pub upgrade
 
 ### Prerequisites
 
-- **Flutter**: Version 3.10.7 or higher
-- **Dart**: Version 3.10.7 or higher
-- **Android Studio**: For Android development (API 21+)
-- **Xcode**: For iOS development (iOS 12.0+)
-- **Git**: For version control
+```bash
+flutter --version  # Requires 3.10.7+
+dart --version     # Requires 3.10.7+
+flutter doctor     # Verify all requirements
+```
+
+**System Requirements**:
+- Windows 10+, macOS 10.11+, or Linux Ubuntu 16.04+
+- 2GB RAM minimum
+- 1.5GB free disk space
+- Git for version control
 
 ### Installation Steps
 
-#### 1. Clone the Repository
+#### 1. Clone Repository
+
 ```bash
-git clone <repository-url>
+git clone https://github.com/organization/hris-mobile.git
 cd mobile_application
 ```
 
 #### 2. Install Dependencies
+
 ```bash
 flutter pub get
+flutter pub upgrade  # Optional
 ```
 
-#### 3. Configure API Base URL
+#### 3. Configure Backend URL
 
 Edit `lib/config/api_config.dart`:
+
 ```dart
-static const String baseUrl = 'your_backend_url';
+static const String baseUrl = 'http://your-backend-url.com:8082';
 ```
 
-#### 4. Generate App Icons
+#### 4. Run Application
+
 ```bash
-flutter pub run flutter_launcher_icons
+flutter devices                      # List available devices
+flutter run                          # Default device
+flutter run -d <device_id>           # Specific device
+flutter run --release                # Optimized release build
+flutter run -v                       # Verbose output
 ```
 
-#### 5. Run the Application
+### Emulator Setup
 
 **Android**:
 ```bash
-flutter run -d android
+emulator -list-avds
+emulator @emulator_name
 ```
 
 **iOS**:
 ```bash
-flutter run -d ios
-```
-
-**Web**:
-```bash
-flutter run -d web
-```
-
-**Windows**:
-```bash
-flutter run -d windows
+open /Applications/Xcode.app/Contents/Developer/Applications/Simulator.app
 ```
 
 ---
 
-## Development Guide
+## Development Workflow
 
-### Code Structure Best Practices
+### Code Organization
 
-#### 1. File Organization
-- **Services**: Business logic and API calls
-- **Pages**: Full-screen widgets
-- **Widgets**: Reusable UI components
-- **Config**: Configuration constants
-
-#### 2. Naming Conventions
-- **Classes**: PascalCase (e.g., `UserService`, `LoginPage`)
-- **Methods**: camelCase (e.g., `getUserDetails()`)
-- **Constants**: camelCase (e.g., `refreshInterval`)
-- **Private members**: Prefix with underscore (e.g., `_token`)
-
-#### 3. Error Handling Pattern
-```dart
-try {
-  // API call or operation
-} catch (e) {
-  print('❌ [ServiceName] Error: $e');
-  return {
-    'success': false,
-    'error': 'Error message',
-  };
-}
+```
+lib/
+├── config/          # Constants & configuration
+├── services/        # Business logic
+├── pages/           # Full screens
+├── widgets/         # Reusable components
+└── models/          # Data classes (if needed)
 ```
 
-#### 4. Debugging with Print Statements
-All service methods include descriptive print statements with emoji prefixes:
-- 🚀 Action starting
-- 📧 Data/credentials
-- 📤 Request sent
-- 📥 Response received
-- ✅ Success
-- ❌ Error
-- 💥 Exception
-- ⏰ Timer/scheduling
-- 🔐 Security
-- 👤 User info
+### Naming Conventions
 
-### Adding New Features
+| Element | Style | Example |
+|---------|-------|---------|
+| Classes | PascalCase | `AuthService`, `LoginPage` |
+| Methods | camelCase | `getUserDetails()` |
+| Variables | camelCase | `isLoading`, `userName` |
+| Constants | camelCase | `maxRetries` |
+| Private | _camelCase | `_token`, `_loadData()` |
+| Files | snake_case | `auth_service.dart` |
 
-#### Example: Adding a New Service
+### Creating a New Service
 
-1. Create new file in `lib/services/`:
 ```dart
 // lib/services/new_service.dart
 import 'package:http/http.dart' as http;
@@ -805,13 +793,13 @@ import '../config/api_config.dart';
 import 'token_manager.dart';
 
 class NewService {
-  Future<Map<String, dynamic>> fetchData(String token) async {
-    print('🚀 [NewService] Fetching data...');
+  Future<Map<String, dynamic>> fetchData(String token, String id) async {
+    print('🚀 [NewService] Fetching data for ID: $id');
     
     try {
       final currentToken = TokenManager().token ?? token;
       final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/endpoint'),
+        Uri.parse('${ApiConfig.baseUrl}/api/data/$id'),
         headers: {
           'Authorization': 'Bearer $currentToken',
           'Content-Type': 'application/json',
@@ -822,78 +810,131 @@ class NewService {
         print('✅ [NewService] Success');
         return {'success': true, 'data': jsonDecode(response.body)};
       }
+
+      print('❌ [NewService] Error: ${response.statusCode}');
+      return {'success': false, 'error': 'Failed to fetch data'};
     } catch (e) {
-      print('❌ [NewService] Error: $e');
+      print('💥 [NewService] Exception: $e');
+      return {'success': false, 'error': e.toString()};
     }
-    return {'success': false};
   }
 }
 ```
 
-2. Add endpoint to `lib/config/api_config.dart`:
-```dart
-static const String newEndpoint = '/api/endpoint';
-```
+### Creating a New Page
 
-3. Use in your UI:
-```dart
-final service = NewService();
-final result = await service.fetchData(token);
-```
-
-#### Example: Adding a New Page
-
-1. Create new file in `lib/pages/`:
 ```dart
 // lib/pages/new_page.dart
 import 'package:flutter/material.dart';
+import '../services/new_service.dart';
 
 class NewPage extends StatefulWidget {
   final String token;
-  final String baseUrl;
 
-  const NewPage({
-    Key? key,
-    required this.token,
-    required this.baseUrl,
-  }) : super(key: key);
+  const NewPage({Key? key, required this.token}) : super(key: key);
 
   @override
   State<NewPage> createState() => _NewPageState();
 }
 
 class _NewPageState extends State<NewPage> {
+  late NewService _service;
+  bool _isLoading = false;
+  String? _error;
+  dynamic _data;
+
+  @override
+  void initState() {
+    super.initState();
+    _service = NewService();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    final result = await _service.fetchData(widget.token, 'id');
+
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+        if (result['success']) {
+          _data = result['data'];
+        } else {
+          _error = result['error'];
+        }
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('New Page')),
-      body: Center(child: const Text('Page Content')),
+      body: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Error: $_error'),
+            ElevatedButton(
+              onPressed: _loadData,
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      child: Text(_data.toString()),
     );
   }
 }
 ```
 
-2. Add route in `lib/widgets/routes.dart` (if needed):
-```dart
-static const String newPage = "/new_page";
+### Debugging & Logging
 
-static final routes = <String, WidgetBuilder>{
-  // ... existing routes
-  newPage: (context) => const NewPage(token: '', baseUrl: ''),
-};
-```
+**Print Emoji Standards**:
+- 🚀 Action starting
+- 📤 Request sent
+- 📥 Response received
+- ✅ Success
+- ❌ Error
+- 💥 Exception
+- ⏰ Timer/scheduling
+- 🔐 Security
 
-### Testing
-
-#### Run Tests
+**Enable Verbose Logging**:
 ```bash
-flutter test
+flutter run -v
 ```
 
-#### Run Specific Test
+### Hot Reload Development
+
 ```bash
-flutter test test/widget_test.dart
+flutter run
+# Press 'r' to reload
+# Press 'R' for hot restart
+# Press 'q' to quit
 ```
+
+**When to use hot restart**:
+- Changes to main() or initState()
+- Changes to const values
+- State needs reset
 
 ---
 
@@ -901,63 +942,40 @@ flutter test test/widget_test.dart
 
 ### Android Build
 
-#### Build APK
+#### Build APK (Local Testing)
+
 ```bash
-flutter build apk --split-per-abi
+flutter build apk --release
 ```
 
-Outputs:
-- `build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk`
-- `build/app/outputs/flutter-apk/app-arm64-v8a-release.apk`
-- `build/app/outputs/flutter-apk/app-x86_64-release.apk`
+Output: `build/app/outputs/flutter-apk/app-release.apk`
 
-#### Build AAB (App Bundle)
+#### Build AAB (Play Store)
+
 ```bash
 flutter build appbundle
 ```
 
 Output: `build/app/outputs/bundle/release/app-release.aab`
 
-#### Sign APK
-1. Create keystore:
-```bash
-keytool -genkey -v -keystore ~/key.jks -keyalg RSA -keysize 2048 -validity 10000 -alias key
-```
+#### Split APK by Platform
 
-2. Update `android/app/build.gradle.kts`:
-```kotlin
-android {
-    signingConfigs {
-        release {
-            keyAlias = "key"
-            keyPassword = "password"
-            storeFile = file("path/to/key.jks")
-            storePassword = "password"
-        }
-    }
-}
-```
-
-3. Build signed APK:
 ```bash
-flutter build apk --release
+flutter build apk --split-per-abi
 ```
 
 ### iOS Build
 
-#### Build for Release
+#### Build for iPhone
+
 ```bash
 flutter build ios --release
 ```
 
-#### Archive for App Store
+#### Build for App Store
+
 ```bash
 flutter build ios --release --export-method=app-store
-```
-
-#### Build for Ad Hoc (Enterprise Distribution)
-```bash
-flutter build ios --release --export-method=ad-hoc
 ```
 
 ### Web Build
@@ -968,219 +986,300 @@ flutter build web --release
 
 Output: `build/web/`
 
-### Windows Build
+### Create Signing Keystore (One-Time)
 
 ```bash
-flutter build windows --release
+keytool -genkey -v -keystore ~/my-keystore.jks \
+  -keyalg RSA -keysize 2048 -validity 10000 \
+  -alias my-key-alias
 ```
 
-### macOS Build
+### Configure Gradle Signing
 
-```bash
-flutter build macos --release
+Edit `android/app/build.gradle.kts`:
+
+```kotlin
+android {
+    signingConfigs {
+        release {
+            keyAlias = "my-key-alias"
+            keyPassword = "your_password"
+            storeFile = file("path/to/my-keystore.jks")
+            storePassword = "your_password"
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig = signingConfigs.release
+        }
+    }
+}
 ```
 
-### CI/CD with CodeMagic
+### Release Checklist
 
-The project includes `codemagic.yaml` for automated builds:
+- [ ] Update version in `pubspec.yaml`
+- [ ] Update Android versionCode/versionName
+- [ ] Update iOS version info.plist
+- [ ] Update API base URL for production
+- [ ] Run `flutter test` successfully
+- [ ] Run `flutter analyze` with no errors
+- [ ] Test on physical devices
+- [ ] Update CHANGELOG.md
+- [ ] Sign all binaries
+- [ ] Create git tag
+
+---
+
+## Testing & Quality
+
+### Run Unit Tests
 
 ```bash
-# Trigger build on push
-codemagic build start
+flutter test                 # All tests
+flutter test test/widget_test.dart  # Specific test
+flutter test -v              # Verbose output
+```
+
+### Code Analysis
+
+```bash
+flutter analyze               # Analyze for errors
+dart format lib/              # Format code
+flutter clean && flutter pub get  # Clean build
+```
+
+### Performance Profiling
+
+```bash
+flutter run --profile        # Profile build
+# Or use DevTools: devtools
+```
+
+### Build Size Analysis
+
+```bash
+flutter build apk --analyze-size
 ```
 
 ---
 
-## Troubleshooting
+## Troubleshooting Guide
 
-### Common Issues & Solutions
+### Login Issues
 
-#### 1. **Login Not Working**
-
-**Error**: "Network error" or "Failed to connect"
-
-**Solutions**:
+**"Network error" or "Failed to connect"**:
 - Verify backend URL in `api_config.dart`
 - Check network connectivity
 - Ensure backend server is running
-- Verify API endpoint is correct
+- Test with: `curl -X POST http://backend:8082/auth/login ...`
 
-#### 2. **Token Expired Despite Auto-Refresh**
+**"Invalid credentials"**:
+- Verify email and password are correct
+- Check with backend team
+- Try resetting password through HRIS portal
 
-**Symptoms**: Logged out unexpectedly
+**"Token expired despite auto-refresh"**:
+- Check TokenManager initialization
+- Verify refresh endpoint is working
+- Check stored credentials validity
 
-**Solutions**:
-```dart
-// Clear token and re-login
-TokenManager()._token = null;
-// Navigate to login
-Navigator.pushReplacementNamed(context, MyRoutes.loginPage);
-```
+### Profile & Data Issues
 
-#### 3. **Image Upload Fails**
+**"Profile fails to load"**:
+- Check API endpoint `/adminuser/get-profile` exists
+- Verify token is valid
+- Check backend response format
+- Enable verbose logging: `flutter run -v`
 
-**Symptoms**: "Failed to upload photo"
+**"Photo not loading"**:
+- Verify photo endpoint returns correct format
+- Check token is not expired
+- Photo might not exist yet
+- Try uploading new photo
 
-**Solutions**:
-- Check image picker has proper permissions
-- Verify image size (keep under 5MB)
-- Check API endpoint `/adminuser/update-employee-photo/` is correct
-- Verify employee ID is correct
+**"Cannot add/edit records"**:
+- Check form validation (all required fields filled)
+- Verify endpoint exists: `/adminuser/family/add-family/{employeeId}`
+- Check employee ID is correct
+- Test endpoint directly with curl
 
-#### 4. **Build Errors**
+### Build Issues
 
-**Error**: "Build failed with SDK version"
-
-**Solutions**:
+**"Build failed with SDK version error"**:
 ```bash
-# Update Flutter
 flutter upgrade
-
-# Update packages
 flutter pub get
-
-# Clean build
 flutter clean
-flutter pub get
 flutter run
 ```
 
-#### 5. **Device Not Detected**
-
+**"APK is too large"**:
 ```bash
-# List connected devices
-flutter devices
-
-# Use specific device
-flutter run -d <device_id>
+flutter build appbundle  # Smaller alternative
+flutter build apk --split-per-abi  # Split by architecture
 ```
 
-#### 6. **DTR Data Not Loading**
+**"Device not detected"**:
+```bash
+flutter devices          # List devices
+flutter run -d <device_id>  # Specify device
+# For Android: adb devices
+# For iOS: Xcode trust device
+```
 
-**Check**:
-- User ID is correct
-- Token is valid
-- API endpoint `/adminuser/api/v1/dtr/{userId}` is responding
-- Network connectivity
+### Runtime Errors
 
-#### 7. **Profile Photo Not Displaying**
+**"MissingPluginException"**:
+```bash
+flutter clean && flutter pub get && flutter run
+# Or press 'R' for hot restart
+```
 
-**Solutions**:
+**"Null safety errors"**:
 ```dart
-// Check image URL format
-print('Image URL: $photoUrl');
-
-// Verify authentication token
+// Add null checks
 final token = TokenManager().token;
-print('Token: $token');
+if (token != null) { /* use token */ }
 
-// Check response status
-// 401 = Unauthorized
-// 404 = Image not found
+// Or use coalescing
+final token = TokenManager().token ?? '';
 ```
 
-### Debug Logging
+### Performance Issues
 
-Enable detailed logging by checking console output:
+**App is slow**:
+- Reduce loaded data
+- Implement pagination
+- Clear caches periodically
+- Profile with DevTools
 
-```bash
-flutter run -v
-```
+---
 
-All services print detailed logs with emoji indicators.
+## FAQ & Best Practices
 
-### Performance Optimization
+### Frequently Asked Questions
 
-#### 1. **Minimize API Calls**
-- Use UserService caching
-- Store user data locally
-- Avoid duplicate requests
+**Q: How do I change the backend URL?**
+A: Edit `lib/config/api_config.dart`: `static const String baseUrl = 'http://your-url:8082';`
 
-#### 2. **Lazy Load Data**
-- Load family background on demand
-- Paginate large lists
-- Cache filtered results
+**Q: How often does token refresh?**
+A: Every 4 minutes (240 seconds). Backend token expires after 5 minutes.
 
-#### 3. **Image Optimization**
-- Compress images before upload
-- Cache downloaded photos
-- Use Progressive JPEG
+**Q: Can I access offline?**
+A: Partially. Cached data is accessible offline, but new data requires internet.
+
+**Q: Where are credentials stored?**
+A: Securely in SharedPreferences (encrypted on iOS, Android 6+).
+
+**Q: How do I reset my password?**
+A: Contact HR or administrator through HRIS portal.
+
+**Q: How do I report a bug?**
+A: Provide: 1) Device type & OS, 2) Error message & stacktrace, 3) Steps to reproduce, 4) Screenshot/video
+
+### Best Practices
+
+#### Security ✅
+
+- Always use HTTPS in production
+- Never hardcode credentials
+- Store tokens securely (SharedPreferences handles this)
+- Validate all user input
+- Consider certificate pinning for production
+
+#### Performance ✅
+
+- Use `const` constructors
+- Implement pagination for large lists
+- Cache data appropriately
+- Lazy load images and data
+- Avoid rebuilding entire pages
+
+#### Code Quality ✅
+
+- Follow naming conventions
+- Write meaningful comments
+- Use proper error handling
+- Test before committing
+- Keep functions focused (<200 lines)
+
+#### UX/UI ✅
+
+- Show loading indicators
+- Provide clear error messages
+- Make buttons easily tappable (>48dp)
+- Test on multiple devices
+- Don't block UI on slow operations
 
 ---
 
 ## Additional Resources
 
 ### Official Documentation
-- [Flutter Documentation](https://flutter.dev/docs)
-- [Dart Language Tour](https://dart.dev/guides/language/language-tour)
+
+- [Flutter Docs](https://flutter.dev/docs)
+- [Dart Guide](https://dart.dev/guides)
 - [Material Design 3](https://m3.material.io/)
+- [Pub.dev](https://pub.dev)
 
-### Dependencies
-- [HTTP Package](https://pub.dev/packages/http)
-- [Shared Preferences](https://pub.dev/packages/shared_preferences)
-- [Image Picker](https://pub.dev/packages/image_picker)
+### Related Packages
 
-### Related Files
-- [pubspec.yaml](pubspec.yaml) - Dependency definitions
-- [analysis_options.yaml](analysis_options.yaml) - Linting rules
-- [codemagic.yaml](codemagic.yaml) - CI/CD configuration
-- [android/build.gradle.kts](android/build.gradle.kts) - Android build config
-- [ios/Runner.xcodeproj](ios/Runner.xcodeproj) - iOS build config
+- [http](https://pub.dev/packages/http)
+- [shared_preferences](https://pub.dev/packages/shared_preferences)
+- [image_picker](https://pub.dev/packages/image_picker)
+
+### Project Documentation Files
+
+- [README.md](README.md)
+- [ARCHITECTURE.md](ARCHITECTURE.md)
+- [API_REFERENCE.md](API_REFERENCE.md)
+- [QUICKSTART.md](QUICKSTART.md)
+- [DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md)
 
 ---
 
 ## Support & Contribution
 
-### Reporting Issues
+### Getting Help
 
-When reporting issues, include:
-1. Device type and OS version
-2. Error message and stacktrace
-3. Steps to reproduce
-4. Screenshot/video if applicable
+1. Check this documentation
+2. Search existing issues
+3. Create detailed bug report with:
+   - Device type & OS version
+   - Error message & stacktrace
+   - Steps to reproduce
+   - Screenshots/videos
 
-### Contribution Guidelines
+### Contributing
 
-1. Fork the repository
-2. Create feature branch: `git checkout -b feature/new-feature`
-3. Commit changes: `git commit -am 'Add new feature'`
-4. Push to branch: `git push origin feature/new-feature`
-5. Submit pull request
-
-### Code Quality Standards
-
-- **Follow Dart style guide**
-- **Write meaningful comments**
-- **Test before committing**
-- **Maintain consistent naming**
-- **Keep functions focused**
-- **Use proper error handling**
+1. Fork repository
+2. Create feature branch: `git checkout -b feature/improvement`
+3. Make changes and test
+4. Commit: `git commit -am 'Add improvement'`
+5. Push: `git push origin feature/improvement`
+6. Submit pull request
 
 ---
 
-## Version History
+## Version Information
 
-| Version | Date | Changes |
-|---------|------|---------|
-| 1.0.0 | Feb 2026 | Initial release |
+**Current Version**: 1.0.0  
+**Release Date**: March 2, 2026  
+**Status**: Production Ready  
+**Last Updated**: March 2, 2026  
+**Maintained By**: Development Team
 
 ---
 
 ## License
 
-This project is proprietary and owned by the organization. All rights reserved.
+This HRIS Mobile Application is proprietary software. All rights reserved. Unauthorized access or use is strictly prohibited.
 
 ---
 
-## Contact & Support
+**End of Documentation**
 
-For technical support or questions:
-- **Email**: support@company.com
-- **Internal Portal**: [HRIS Portal]
-- **IT Department**: ext. XXXX
+For questions or clarifications, contact the Development Team.
 
----
-
-**Last Updated**: February 25, 2026
-**Documentation Version**: 1.0
-**Maintained By**: Development Team

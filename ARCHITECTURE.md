@@ -1,8 +1,470 @@
 # HRIS Mobile Application - Architecture & Design Decisions
 
+## Table of Contents
+
+1. [Overview](#overview)
+2. [System Design](#system-design)
+3. [Technology Stack](#technology-stack)
+4. [Directory Structure](#directory-structure)
+5. [Architecture Pattern](#architecture-pattern)
+6. [Design Patterns Used](#design-patterns-used)
+7. [Key Design Decisions](#key-design-decisions)
+8. [Scalability & Security](#scalability--security)
+9. [Deployment & Testing](#deployment--testing)
+
 ## Overview
 
-This document explains the architectural patterns, design decisions, and technical rationale behind the HRIS Mobile Application.
+This document explains the architectural patterns, design decisions, and technical rationale behind the HRIS Mobile Application. It serves as a comprehensive guide for developers, architects, and stakeholders.
+
+---
+
+## System Design
+
+### High-Level System Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    MOBILE CLIENT LAYER                          │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │           Flutter Mobile Application                     │  │
+│  │  (Android, iOS, Web - Single Codebase)                  │  │
+│  │  - Material Design 3 UI                                 │  │
+│  │  - Responsive Layout                                    │  │
+│  │  - Local State Management                               │  │
+│  └──────────────────────────────────────────────────────────┘  │
+└─────────────────────────┬──────────────────────────────────────┘
+                          │ HTTP/REST APIs
+                          │ Bearer Token Auth
+                          │ JSON Payloads
+┌─────────────────────────▼──────────────────────────────────────┐
+│                   BACKEND API LAYER                             │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │      REST API Server (Port 8082)                        │  │
+│  │  ├── Authentication Endpoints                           │  │
+│  │  │   ├── POST /auth/login                              │  │
+│  │  │   ├── POST /auth/refresh                            │  │
+│  │  │   └── POST /auth/logout                             │  │
+│  │  ├── User Endpoints                                     │  │
+│  │  │   ├── GET /users/{id}                               │  │
+│  │  │   ├── GET /users/profile                            │  │
+│  │  │   ├── PUT /users/{id}                               │  │
+│  │  │   └── POST /users/photo                             │  │
+│  │  ├── DTR Endpoints                                      │  │
+│  │  │   ├── GET /dtr/records                              │  │
+│  │  │   ├── POST /dtr/checkin                             │  │
+│  │  │   └── POST /dtr/checkout                            │  │
+│  │  └── Additional Endpoints (see API_REFERENCE.md)       │  │
+│  └──────────────────────────────────────────────────────────┘  │
+└─────────────────────────┬──────────────────────────────────────┘
+                          │ SQL Queries
+                          │ Business Logic
+┌─────────────────────────▼──────────────────────────────────────┐
+│                  DATABASE LAYER                                 │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │         Relational Database (PostgreSQL/MySQL)          │  │
+│  │  ├── Users Table                                        │  │
+│  │  ├── DTR Records Table                                  │  │
+│  │  ├── User Credentials Table                             │  │
+│  │  ├── Authentication Logs Table                          │  │
+│  │  └── File Storage (Profile Photos)                      │  │
+│  └──────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### System Interaction Flow
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ USER LAUNCHES APP                                           │
+└──────────────────────┬──────────────────────────────────────┘
+                       │
+                       ▼
+┌─────────────────────────────────────────────────────────────┐
+│ Splash Screen → Check Token Validity                        │
+│ (TokenManager checks stored token)                          │
+└──────────────────────┬──────────────────────────────────────┘
+                       │
+            ┌──────────┴──────────┐
+            │                     │
+       ┌────▼──────┐      ┌──────▼────┐
+       │ Token     │      │ No Token  │
+       │ Valid?    │      │ Start Auth│
+       │ ✓ Continue│      │ Flow      │
+       └────┬──────┘      └──────┬────┘
+            │                    │
+            └────────┬───────────┘
+                     │
+                     ▼
+      ┌──────────────────────────────┐
+      │  HomePage or LoginPage      │
+      │  - Start Token Auto-Refresh │
+      │  - Load User Data           │
+      └──────────┬───────────────────┘
+                 │
+                 ▼
+      ┌──────────────────────────────┐
+      │ Main Navigation Container    │
+      │ ├── HomePage (Dashboard)     │
+      │ ├── DTR Page (Check-in/out)  │
+      │ ├── UserCredentials Pages    │
+      │ └── About Page               │
+      └──────────────────────────────┘
+```
+
+### Authentication & Token Flow
+
+```
+┌───────────────────────────┐
+│  USER ENTERS CREDENTIALS  │
+│  Email + Password         │
+└──────────────┬────────────┘
+               │
+               ▼
+    ┌──────────────────────┐
+    │  AuthService.login() │
+    │  POST /auth/login    │
+    └──────────┬───────────┘
+               │
+     ┌─────────┴─────────┐
+     │                   │
+  ✓ Success          ✗ Failure
+     │                   │
+     ▼                   ▼
+┌─────────────┐    ┌──────────────┐
+│ Get Token   │    │ Show Error   │
+│ & Refresh   │    │ Retry Login  │
+│ Token       │    └──────────────┘
+└─────┬───────┘
+      │
+      ▼
+┌──────────────────────────┐
+│ TokenManager.initialize()│
+│ ├── Store token          │
+│ ├── Store credentials    │
+│ └── Start refresh timer  │
+└──────────┬───────────────┘
+           │
+           ▼
+┌──────────────────────────┐
+│ Every 4 minutes:         │
+│ - Check token valid?     │
+│ - Auto-refresh if needed │
+│ - OR re-login with creds │
+└──────────────────────────┘
+```
+
+---
+
+## Technology Stack
+
+### Frontend Technologies
+
+| Layer | Technology | Version | Purpose |
+|-------|-----------|---------|---------|
+| **Framework** | Flutter | Latest | Cross-platform mobile development |
+| **Language** | Dart | 3.10.7 | Type-safe programming language |
+| **UI Design System** | Material Design 3 | Latest | Modern, accessible component library |
+| **Http Client** | http package | ^1.1.0 | REST API communication |
+| **Local Storage** | shared_preferences | ^2.5.4 | Key-value data persistence |
+| **Image Handling** | image_picker | ^1.2.1 | Photo selection & capture |
+| **Icons** | flutter_launcher_icons | ^0.14.4 | App icon generation |
+| **Code Quality** | flutter_lints | ^6.0.0 | Dart linting & analysis |
+
+### Backend Technologies (External)
+
+| Component | Technology | Details |
+|-----------|-----------|---------|
+| **API Server** | REST API | Runs on port 8082 |
+| **Authentication** | Bearer Token | JWT-based tokens |
+| **Database** | Relational DB | PostgreSQL or MySQL |
+| **File Storage** | Server-side | Profile photo storage |
+
+### Platform Support
+
+```
+┌─────────────────────────────────────────┐
+│         Platform Compatibility          │
+├─────────────────────────────────────────┤
+│ ✓ Android (API 21+)                    │
+│ ✓ iOS (11.0+)                          │
+│ ✓ Web (Chrome, Safari, Firefox)        │
+│ ✓ Linux (GTK 3.24+)                    │
+│ ✓ macOS (10.11+)                       │
+│ ✓ Windows (Windows 10+)                │
+└─────────────────────────────────────────┘
+```
+
+### Dependency Analysis
+
+```dart
+// Core Dependencies
+flutter                    → UI framework (required)
+cupertino_icons           → iOS-style icons (optional)
+
+// Network & API
+http                      → REST API calls (required)
+
+// Data Persistence
+shared_preferences        → Lightweight local storage (required)
+
+// Media Handling
+image_picker              → Photo selection (required)
+
+// Build Tools
+flutter_launcher_icons    → App icon generation (required)
+flutter_lints             → Code quality analysis (required)
+```
+
+### Why These Technologies Were Chosen
+
+| Choice | Alternatives Considered | Rationale |
+|--------|------------------------|-----------|
+| **Flutter** | React Native, Native | Single codebase, hot reload, performance, rich widgets |
+| **Dart** | Java, Kotlin, Swift | Built for Flutter, type-safe, excellent tooling |
+| **http package** | Dio, Chopper, Retrofit | Lightweight, official, no unnecessary features |
+| **shared_preferences** | Hive, GetStorage, SQLite | Simple key-value needs, native performance, easy setup |
+| **image_picker** | Custom camera API, gallery_plugin | Official, cross-platform, well-maintained |
+| **Material 3** | Cupertino, custom theme | Modern design, accessibility, platform flexibility |
+
+### Environment Setup
+
+```yaml
+# SDK Requirements
+SDK: ^3.10.7
+
+# Target Platforms
+Android: API 21+ (Android 5.0+)
+iOS: 11.0+
+Web: Chrome 90+
+Linux: GTK 3.24+
+macOS: 10.11+
+Windows: Windows 10+
+
+# Development Tools
+- Flutter SDK 3.10.7+
+- Dart SDK 3.10.7+
+- Android SDK (for Android development)
+- Xcode (for iOS development)
+```
+
+---
+
+## Directory Structure
+
+### Complete Project Layout
+
+```
+mobile_application/                    # Project root
+│
+├── lib/                               # Main application code
+│   ├── main.dart                      # App entry point, theme setup
+│   │
+│   ├── config/                        # Configuration & constants
+│   │   └── api_config.dart           # API endpoints, base URL, headers
+│   │
+│   ├── pages/                         # UI screens & pages
+│   │   ├── login_page.dart           # Authentication screen
+│   │   ├── homepage.dart             # Dashboard/home screen
+│   │   ├── dtr_page.dart             # Daily Time Record screen
+│   │   ├── about.dart                # About/info screen
+│   │   ├── navigation.dart           # Main navigation container
+│   │   │
+│   │   └── UserCredentials/          # User profile detail screens
+│   │       ├── user_details.dart     # Basic user information
+│   │       ├── user_address.dart     # Address details
+│   │       ├── family_background.dart│ Family information
+│   │       ├── education_background.dart│ Education history
+│   │       ├── work_experience.dart  │ Employment history
+│   │       ├── government_ids.dart   │ Government ID info
+│   │       ├── health_info.dart      │ Health & emergency
+│   │       ├── skills.dart           │ Skills & certifications
+│   │       └── benefits.dart         │ Benefits information
+│   │
+│   ├── services/                      # Business logic & API calls
+│   │   ├── auth_service.dart         # Authentication logic
+│   │   ├── user_service.dart         # User data management
+│   │   ├── token_manager.dart        # Token lifecycle manager
+│   │   └── authenticated_photo.dart  │ Photo handling & loading
+│   │
+│   └── widgets/                       # Reusable UI components
+│       ├── splash.dart               # Splash screen logic
+│       ├── routes.dart               # Navigation route definitions
+│       └── [custom_widgets].dart    │ Reusable widgets (if any)
+│
+├── assets/                            # Static resources
+│   ├── icon/                          # App icon sources
+│   │   └── app_icon.png              # Main app icon (1024x1024)
+│   │
+│   └── images/                        # Image assets
+│       ├── logo.png                   # Company logo
+│       ├── placeholder.png            # Placeholder images
+│       └── [other_images]/
+│
+├── android/                           # Android platform code
+│   ├── app/
+│   │   └── src/
+│   │       ├── main/
+│   │       │   ├── AndroidManifest.xml  # Android configuration
+│   │       │   └── res/                 # Android resources
+│   │       ├── debug/
+│   │       └── profile/
+│   ├── gradle/                        # Gradle build files
+│   ├── build.gradle.kts              # Android build config
+│   └── local.properties              # Local Android SDK path
+│
+├── ios/                               # iOS platform code
+│   ├── Runner/
+│   │   ├── AppDelegate.swift         # App entry point
+│   │   ├── Info.plist                # iOS configuration
+│   │   ├── GeneratedPluginRegistrant # Generated plugin code
+│   │   └── Assets.xcassets/          # iOS assets
+│   ├── Runner.xcodeproj/             # Xcode project
+│   └── Runner.xcworkspace/           # Xcode workspace
+│
+├── web/                               # Web platform code
+│   ├── index.html                     # Web entry HTML
+│   ├── manifest.json                 # PWA manifest
+│   ├── icons/                         # Web app icons
+│   └── favicon.ico                    # Browser favicon
+│
+├── windows/                           # Windows platform code
+│   ├── runner/                        # Windows runner app
+│   ├── flutter/                       # Flutter integration
+│   └── CMakeLists.txt                # Build configuration
+│
+├── macos/                             # macOS platform code
+│   ├── Runner/                        # macOS app
+│   ├── Runner.xcodeproj/             # Xcode project
+│   └── Runner.xcworkspace/           # Xcode workspace
+│
+├── linux/                             # Linux platform code
+│   ├── runner/                        # Linux runner
+│   ├── flutter/                       # Flutter integration
+│   └── CMakeLists.txt                # Build configuration
+│
+├── test/                              # Test files
+│   ├── widget_test.dart              # Widget/UI tests
+│   ├── service_test.dart             # Service/business logic tests
+│   └── integration_test/             # End-to-end tests
+│
+├── build/                             # Build output (generated)
+│   └── [platform_outputs]/           # Platform-specific outputs
+│
+├── pubspec.yaml                       # Package dependencies & config
+├── pubspec.lock                       # Locked dependency versions
+├── analysis_options.yaml              # Dart analysis settings
+├── codemagic.yaml                     # CI/CD configuration
+│
+├── README.md                          # Project overview & setup
+├── ARCHITECTURE.md                    # This file (architecture docs)
+├── API_REFERENCE.md                   # API endpoints documentation
+├── DOCUMENTATION.md                   # User & developer docs
+├── QUICKSTART.md                      # Quick start guide
+├── DEPLOYMENT_CHECKLIST.md            # Deployment steps
+└── DOCUMENTATION_INDEX.md             # Documentation index
+```
+
+### Key Directories Explained
+
+#### **lib/** - Application Source Code
+The heart of the application containing all Dart code. Organized in feature-based directories.
+
+#### **lib/config/** - Configuration
+Contains all application-level configuration:
+- API endpoints and base URLs
+- Environment-specific settings
+- Constants and configuration values
+- Theme configurations
+
+#### **lib/pages/** - Screen & UI Pages
+Contains all screen/page widgets:
+- **Login Page**: Authentication UI
+- **HomePage**: Main dashboard
+- **DTR Page**: Check-in/check-out records
+- **About Page**: Application information
+- **Navigation**: Main navigation container
+- **UserCredentials/**: Detailed user information pages
+
+#### **lib/services/** - Business Logic Layer
+Handles all business logic and API communication:
+- **AuthService**: Login, logout, authentication
+- **UserService**: User data fetching and management
+- **TokenManager**: JWT token lifecycle management
+- **AuthenticatedPhoto**: Image loading with auth headers
+
+#### **lib/widgets/** - Reusable Components
+Shared UI components and utilities:
+- **Splash**: Splash screen initialization
+- **Routes**: Navigation route configuration
+- Custom reusable widgets
+
+#### **assets/** - Static Resources
+Non-code resources:
+- **icon/**: App icon sources (all platforms)
+- **images/**: Logos, placeholders, decorative images
+
+#### **android/** - Android Configuration
+Platform-specific Android code and configuration:
+- Gradle build files
+- Android manifest
+- Platform channel implementations
+- Native Android resources
+
+#### **ios/** - iOS Configuration  
+Platform-specific iOS code and configuration:
+- Swift code (AppDelegate, etc.)
+- Xcode project settings
+- iOS resources and assets
+- Platform channel implementations
+
+#### **web/** - Web Platform
+Web-specific configuration:
+- HTML entry point
+- PWA manifest
+- Web assets and icons
+- Service worker configuration
+
+#### **test/** - Testing Code
+Test suites for quality assurance:
+- Widget tests (UI testing)
+- Unit tests (business logic)
+- Integration tests (end-to-end flows)
+
+#### **build/** - Generated Output
+Build artifacts (auto-generated, not committed):
+- Compiled APKs/AABs for Android
+- IPA files for iOS
+- Web build output
+- Platform-specific outputs
+
+#### **Documentation Files**
+- **pubspec.yaml**: Dependencies and metadata
+- **pubspec.lock**: Exact dependency versions (commit to version control)
+- **analysis_options.yaml**: Dart linting rules
+- **codemagic.yaml**: CI/CD pipeline configuration
+- **README.md**: Project overview and setup instructions
+- **ARCHITECTURE.md**: Architecture documentation (this file)
+- **API_REFERENCE.md**: Backend API documentation
+- **DOCUMENTATION.md**: Comprehensive documentation
+- **QUICKSTART.md**: Getting started guide
+
+### File Organization Best Practices
+
+```
+✓ DO:
+  • Keep files small (< 500 lines)
+  • One main class per file
+  • Group related functionality together
+  • Use meaningful, descriptive names
+  • Follow Dart naming conventions
+
+✗ DON'T:
+  • Mix multiple unrelated features
+  • Create deeply nested directories
+  • Use cryptic abbreviations
+  • Put multiple classes in one file
+  • Make files extremely large
+```
 
 ---
 
@@ -53,6 +515,7 @@ The application uses a **layered service-oriented architecture** with clear sepa
 ---
 
 ## Design Patterns Used
+
 
 ### 1. **Singleton Pattern** (TokenManager)
 
@@ -179,7 +642,7 @@ class AuthenticatedProfilePhoto {
 
 ---
 
-## Key Design Decisions & Rationale
+## Key Design Decisions
 
 ### 1. **Token Auto-Refresh Mechanism**
 
@@ -416,51 +879,16 @@ ThemeData(
 
 ---
 
-## Technology Choices
+## Scalability & Security
 
-### Why Flutter?
+### Scalability Considerations
 
-1. **Cross-Platform**: One codebase for Android, iOS, Web
-2. **Performance**: Direct compilation to native code
-3. **Developer Experience**: Hot reload for rapid iteration
-4. **Rich Widgets**: Comprehensive Material/Cupertino widgets
-5. **Community**: Large ecosystem and packages
-
-### Why Dart?
-
-1. **Created for Flutter**: Perfect integration
-2. **Type Safety**: Strong typing prevents errors
-3. **Performance**: JIT and AOT compilation
-4. **Syntax**: Familiar to Java/C# developers
-
-### Dependency Choices
-
-| Package | Why Chosen |
-|---------|-----------|
-| `http` | Official HTTP client, lightweight |
-| `shared_preferences` | Simple key-value storage, native performance |
-| `image_picker` | Standard for image selection cross-platform |
-| `flutter_launcher_icons` | Automated icon generation for all platforms |
-
-### Why Not These Alternatives?
-
-| Alternative | Why Not |
-|------------|----------|
-| Riverpod/Provider | Overkill for current app complexity |
-| Firebase | Centralized HRIS backend sufficient |
-| GetX | BLoC/simple state management sufficient |
-| SqLite | SharedPreferences sufficient for current data |
-
----
-
-## Scalability Considerations
-
-### Current Implementation
+**Current Implementation**
 - Suitable for: 100-1000 daily active users
 - API response time: < 2 seconds acceptable
 - Token refresh: Every 4 minutes reasonable
 
-### For 10,000+ Users - Needed Changes
+**For 10,000+ Users - Needed Changes**
 
 1. **State Management**
    ```dart
@@ -486,9 +914,7 @@ ThemeData(
    // Future: Exponential backoff, offline sync
    ```
 
----
-
-## Security Considerations
+### Security Considerations
 
 ### Currently Implemented
 
@@ -606,31 +1032,33 @@ headers: {'Authorization': 'Bearer $token'}
 
 ---
 
-## Testing Strategy
+## Deployment & Testing
 
-### Unit Tests
+### Testing Strategy
+
+**Unit Tests**
 - Service methods (authentication, user data)
 - Utility functions
 - Data validation
 
-### Widget Tests
+**Widget Tests**
 - Page rendering
 - User interactions (button taps, form input)
 - Navigation
 
-### Integration Tests
+**Integration Tests**
 - End-to-end user flows
 - API integration
 - Error scenarios
 
-### Current Status
+**Current Status**
 - Basic widget_test.dart exists
 - Expand tests as features added
 - Aim for 80%+ coverage
 
 ---
 
-## Deployment Architecture
+### Deployment Architecture
 
 ### Development → Testing → Production
 
@@ -710,6 +1138,6 @@ The architecture is designed to be extended without major refactoring, allowing 
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: February 25, 2026  
+**Document Version**: 2.0  
+**Last Updated**: March 3, 2026  
 **Author**: Development Team

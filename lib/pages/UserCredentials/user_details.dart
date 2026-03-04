@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import 'package:mobile_application/services/user_profile_cache.dart';
 import 'package:mobile_application/services/token_manager.dart';
 import 'package:mobile_application/pages/dtr_page.dart';
 import 'package:mobile_application/pages/login_page.dart';
@@ -173,20 +174,19 @@ class _DisplayOnlyPhotoState extends State<_DisplayOnlyPhoto> {
 }
 
 
-// ════════════════════════════════════════════════════════════════════════════
+
 // UserDetailsPageContent
-// ════════════════════════════════════════════════════════════════════════════
 class UserDetailsPageContent extends StatefulWidget {
   final String token;
   final String baseUrl;
   final GlobalKey<ScaffoldState>? scaffoldKey;
 
   const UserDetailsPageContent({
-    Key? key,
+    super.key,
     required this.token,
     required this.baseUrl,
     this.scaffoldKey,
-  }) : super(key: key);
+  });
 
   @override
   State<UserDetailsPageContent> createState() => _UserDetailsPageContentState();
@@ -228,7 +228,11 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
     setState(() {
       if (result['success']) {
         _userDetails = result['data'];
+        if (_userDetails != null) {
+          UserProfileCache.instance.setFromUserDetails(_userDetails!);
+        }
         if (_userDetails?['employee'] != null) {
+          
           _personalInfoData = Map<String, dynamic>.from(_userDetails!['employee']);
           final photoFields = ['photo', 'photoUrl', 'profilePhoto', 'image', 'profileImage', 'photo_url'];
           for (var field in photoFields) {
@@ -456,6 +460,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
               if (!mounted) return;
 
               if (result['success']) {
+                
                 Navigator.of(dialogContext).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Password changed successfully.'), backgroundColor: Colors.green),
@@ -947,7 +952,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
               ),
             ],
           ),
-          backgroundColor: const Color(0xFF00674F),
+          backgroundColor: const Color(0xFF2C5F4F),
           // ── Photo avatar replaces the old exit_to_app icon ──
           actions: [
             _buildAppBarAvatar(),
@@ -986,8 +991,8 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                   _buildDrawerItem('Work Experience', Icons.work, _selectedMenu == 'Work Experience'),
                   _buildDrawerItem('Voluntary Work', Icons.volunteer_activism, _selectedMenu == 'Voluntary Work'),
                   _buildDrawerItem('Learning and Development', Icons.psychology, _selectedMenu == 'Learning and Development'),
-                  _buildDrawerItem('Person References', Icons.info, _selectedMenu == 'Person References'),
-                  _buildDrawerItem('Other Information', Icons.info, _selectedMenu == 'Other Information'),
+                  _buildDrawerItem('Person References', Icons.person, _selectedMenu == 'Person References'),
+                  _buildDrawerItem('Other Information', Icons.perm_device_information, _selectedMenu == 'Other Information'),
                 ],
               ),
             ],
@@ -1128,19 +1133,28 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: const BoxDecoration(
               color: Color(0xFF2C5F4F),
-              borderRadius: BorderRadius.only(topLeft: Radius.circular(8), topRight: Radius.circular(8)),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(8),
+                topRight: Radius.circular(8),
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('PERSONAL INFORMATION', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
-                IconButton(
-                  icon: const Icon(Icons.edit, size: 15, color: Colors.white),
-                  constraints: const BoxConstraints(),
-                  onPressed: () {
+                const Text(
+                  'PERSONAL INFORMATION',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () {
                     final employee = _userDetails?['employee'];
                     if (employee != null) {
                       setState(() {
@@ -1183,12 +1197,14 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                           'gsis': employee['gsis'] ?? '',
                           'umid': employee['umid'] ?? '',
                           'philsys': employee['philsys'] ?? '',
-                          'employmentStatus': employee['employmentStatus'] ?? 'true',
+                          'employmentStatus':
+                              employee['employmentStatus'] ?? 'true',
                         };
                       });
                       _showEditPersonalInfoDialog();
                     }
                   },
+                  child: const Icon(Icons.edit, size: 20, color: Colors.white),
                 ),
               ],
             ),

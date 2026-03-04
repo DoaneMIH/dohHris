@@ -628,24 +628,9 @@ class _OtherInformationWidgetState extends State<OtherInformationWidget> {
                     letterSpacing: 0.5,
                   ),
                 ),
-                Row(
-                  children: [
-                    if (_isFetchingOtherInfo)
-                      const SizedBox(
-                        child: CircularProgressIndicator(
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      ),
-                    IconButton(
-                      icon: const Icon(Icons.add_circle,
-                          size: 18, color: Colors.white),
-                      tooltip: 'Add',
-                      onPressed: _showAddOtherInfoDialog,
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                    ),
-                  ],
+                GestureDetector(
+                  onTap: () => _showAddOtherInfoDialog(),
+                  child: const Icon(Icons.add_circle, size: 20, color: Colors.white),
                 ),
               ],
             ),

@@ -19,7 +19,6 @@ class PersonReferenceWidget extends StatefulWidget {
 class _PersonReferenceWidgetState extends State<PersonReferenceWidget> {
   final _userService = UserService();
   List<Map<String, dynamic>> _personRefList = [];
-  int? _editingPersonRefIndex;
   bool _isAddingPersonRef = false;
   Map<String, dynamic> _newPersonRefData = {};
 
@@ -157,7 +156,6 @@ class _PersonReferenceWidgetState extends State<PersonReferenceWidget> {
       if (response['success']) {
         await _fetchPersonReferenceData();
         if (mounted) {
-          setState(() => _editingPersonRefIndex = null);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Reference updated successfully'),
@@ -222,7 +220,6 @@ class _PersonReferenceWidgetState extends State<PersonReferenceWidget> {
       if (response['success']) {
         await _fetchPersonReferenceData();
         if (mounted) {
-          setState(() => _editingPersonRefIndex = null);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Reference deleted'),
@@ -430,7 +427,6 @@ class _PersonReferenceWidgetState extends State<PersonReferenceWidget> {
                         'refTelephone': telephoneController.text.trim(),
                       };
                       _isAddingPersonRef = false;
-                      _editingPersonRefIndex = null;
                     });
                     Navigator.of(ctx).pop();
                     _saveNewPersonReference();

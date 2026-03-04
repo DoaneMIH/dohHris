@@ -1,8 +1,9 @@
 class ApiConfig {
   // Update this to your actual backend URL
-  // static const String baseUrl = 'http://10.0.2.2:8082';
-  // static const String baseUrl = 'http://localhost:8082';
-  static const String baseUrl = 'http://192.168.79.55:8082';
+  // static const String baseUrl = 'http://10.0.2.2:8082';   // For Android emulator, use
+  // static const String baseUrl = 'http://localhost:8082'; //local testing with Flutter web
+  //For testing on a physical device, use your machine's local IP address
+  static const String baseUrl = 'http://192.168.79.55:8082'; 
   
   static const String loginEndpoint = '/auth/login';
 

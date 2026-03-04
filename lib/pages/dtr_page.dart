@@ -572,7 +572,7 @@ class _DtrWidgetState extends State<DtrWidget> {
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: const BoxDecoration(
               color: Color(0xFF2C5F4F),
               borderRadius: BorderRadius.only(
@@ -592,51 +592,33 @@ class _DtrWidgetState extends State<DtrWidget> {
                     letterSpacing: 0.5,
                   ),
                 ),
-                Row(
-                  children: [
-                    Stack(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.filter_list,
-                              color: Colors.white, size: 20),
-                          onPressed: _showFilterDialog,
-                          tooltip: 'Filter by Month/Year',
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                        ),
-                        if (_selectedMonth != null || _selectedYear != null)
-                          Positioned(
-                            right: 0,
-                            top: 0,
-                            child: Container(
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(
-                                minWidth: 5,
-                                minHeight: 8,
-                              ),
-                            ),
-                          ),
-
-                        Container(
-                          padding: const EdgeInsets.only(left: 40),
-                          child: IconButton(
-                            icon: const Icon(
-                              Icons.refresh,
-                              color: Colors.white,
-                              size: 20,
-                            ),
-                            onPressed: _fetchDtrRecords,
-                            tooltip: 'Refresh',
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    
-                  ],
-                ),
+               Row(
+  children: [
+    GestureDetector(
+      onTap: _showFilterDialog,
+      child: Stack(
+        children: [
+          const Icon(Icons.filter_list, color: Colors.white, size: 20),
+          if (_selectedMonth != null || _selectedYear != null)
+            Positioned(
+              right: 0,
+              top: 0,
+              child: Container(
+                width: 6,
+                height: 6,
+                
+              ),
+            ),
+        ],
+      ),
+    ),
+    const SizedBox(width: 16),
+    GestureDetector(
+      onTap: _fetchDtrRecords,
+      child: const Icon(Icons.refresh, color: Colors.white, size: 20),
+    ),
+  ],
+),
               ],
             ),
           ),

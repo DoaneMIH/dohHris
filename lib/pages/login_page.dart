@@ -102,7 +102,7 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    const green = Color(0xFF046307);
+    const green = Color(0xFF2C5F4F);
 
     InputDecoration _fieldDecoration({
       required String hint,
@@ -112,12 +112,12 @@ class _LoginPageState extends State<LoginPage> {
       return InputDecoration(
         hintText: hint,
         hintStyle: const TextStyle(fontSize: 13),
-        prefixIcon: Icon(icon, color: green),
+        prefixIcon: Icon(icon, color: const Color(0xFF2C5F4F)),
         suffixIcon: suffixIcon,
         filled: true,
         fillColor: const Color(0xFFEFEFEF),
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
+          horizontal: 20,
           vertical: 14,
         ),
         border: OutlineInputBorder(
@@ -130,7 +130,7 @@ class _LoginPageState extends State<LoginPage> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: green, width: 1.2),
+          borderSide: const BorderSide(color: Color(0xFF2C5F4F), width: 1.2),
         ),
       );
     }
@@ -178,7 +178,7 @@ class _LoginPageState extends State<LoginPage> {
                       'Department of Health',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w800,
-                        color: const Color(0xFF27592D),
+                        color: const Color(0xFF2C5F4F),
                         fontSize: 15,
                         letterSpacing: 0.5,
                         height: 1.2,
@@ -189,7 +189,7 @@ class _LoginPageState extends State<LoginPage> {
                       'Western Visayas',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w900,
-                        color: const Color(0xFF27592D),
+                        color: const Color(0xFF2C5F4F),
                         fontSize: 25,
                         letterSpacing: 0.5,
                         height: 1.2,
@@ -200,36 +200,25 @@ class _LoginPageState extends State<LoginPage> {
                       'Center for Health Development',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w800,
-                        color: const Color(0xFF27592D),
+                        color: const Color(0xFF2C5F4F),
                         fontSize: 15,
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 15),
+                    const SizedBox(height: 18),
                     Text(
                       'Human Resource Information System',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Colors.black,
-                        fontSize: 17,
+                        fontSize: 18,
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 15),
                     Container(
                       padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        // boxShadow: [
-                        //   BoxShadow(
-                        //     color: Colors.black.withOpacity(0.1),
-                        //     blurRadius: 10,
-                        //     offset: const Offset(0, 4),
-                        //     spreadRadius: 2,
-                        //   ),
-                        // ],
-                      ),
+                    
                       child: Column(
                         children: [
                           // EMAIL
@@ -265,7 +254,7 @@ class _LoginPageState extends State<LoginPage> {
                                   _obscurePassword
                                       ? Icons.visibility_outlined
                                       : Icons.visibility_off_outlined,
-                                  color: green,
+                                  color: const Color(0xFF2C5F4F),
                                   size: 20,
                                 ),
                                 onPressed: () {
@@ -292,7 +281,7 @@ class _LoginPageState extends State<LoginPage> {
                             child: ElevatedButton(
                               onPressed: _isLoading ? null : _login,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: green,
+                                backgroundColor: const Color(0xFF2C5F4F),
                                 disabledBackgroundColor: green.withOpacity(0.6),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),
