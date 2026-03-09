@@ -4,9 +4,11 @@ import 'package:mobile_application/config/api_config.dart';
 import 'dart:convert';
 import '../services/token_manager.dart';
 
+/// Widget displaying Daily Time Record entries filtered by month/year to track employee attendance and working hours.
 class DtrWidget extends StatefulWidget {
   final String? token;
   final String baseUrl;
+  /// Employee user ID to fetch DTR records; passed by parent widget.
   final String userId;
 
   const DtrWidget({
@@ -21,6 +23,7 @@ class DtrWidget extends StatefulWidget {
 }
 
 class _DtrWidgetState extends State<DtrWidget> {
+  /// Holds all fetched DTR records from the server before filtering.
   List<Map<String, dynamic>> _dtrRecords = [];
   List<Map<String, dynamic>> _filteredRecords = [];
   bool _isLoading = false;

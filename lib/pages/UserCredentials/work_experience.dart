@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_application/services/user_service.dart';
 
+/// Widget for managing the employee's work history including positions, employers, and employment dates.
 class WorkExperienceWidget extends StatefulWidget {
   final String token;
   final String employeeId;

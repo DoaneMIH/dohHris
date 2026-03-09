@@ -6,7 +6,7 @@ import 'package:mobile_application/services/user_profile_cache.dart';
 import 'package:mobile_application/services/token_manager.dart';
 import 'package:mobile_application/services/user_service.dart';
 
-
+/// Internal widget for displaying a read-only user profile photo fetched from the server.
 class _DisplayOnlyPhoto extends StatefulWidget {
   final String? photoUrl;
   final String? baseUrl;
@@ -145,6 +145,7 @@ class _DisplayOnlyPhotoState extends State<_DisplayOnlyPhoto> {
 }
 
 
+/// Home page showing Daily Time Records and user welcome message with logout button.
 class Homepage extends StatefulWidget {
   final String token;
   final String baseUrl;

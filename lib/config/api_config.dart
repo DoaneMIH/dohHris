@@ -1,13 +1,15 @@
+/// Centralized configuration for all backend API endpoints and base URL to avoid hardcoding throughout the app.
 class ApiConfig {
-  // Update this to your actual backend URL
-  // static const String baseUrl = 'http://10.0.2.2:8082';   // For Android emulator, use
-  // static const String baseUrl = 'http://localhost:8082'; //local testing with Flutter web
-  //For testing on a physical device, use your machine's local IP address
+  /// Backend server URL — update this when deploying to different environments (dev, staging, production).
+  /// For Android emulator: 'http://10.0.2.2:8082'
+  /// For Flutter web: 'http://localhost:8082'
+  /// For physical device: use local IP (e.g., 'http://192.168.79.55:8082')
   static const String baseUrl = 'http://192.168.79.55:8082'; 
   
+  /// Authenticate user with email and password to receive access and refresh tokens.
   static const String loginEndpoint = '/auth/login';
 
-  // User Profile
+  /// Retrieve current logged-in user's complete profile including personal info, photo, and credentials.
   static const String getUserEndpoint = '/adminuser/get-profile';
   static const String updateUserEndpoint = '/adminuser/update-employee/';
 

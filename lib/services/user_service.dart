@@ -3,15 +3,16 @@ import 'dart:convert';
 import '../config/api_config.dart';
 import 'token_manager.dart';
 
+/// API service for user profile operations including fetching, updating, and managing employee credentials and documents.
 class UserService {
-  // Cache to store current user data
+  /// In-memory cache of the current user's profile to avoid redundant API calls and improve performance.
   Map<String, dynamic>? _cachedUserData;
 
-  // GET USER DETAILS
+  /// Fetches the current logged-in user's complete profile (personal info, contact, photo) using the current access token.
   Future<Map<String, dynamic>> getUserDetails(String token) async {
     print('👤 [UserService] Fetching user profile with token...');
 
-    // Use the current token from TokenManager (in case it was refreshed)
+    /// Use the current token from TokenManager to ensure fresh credentials even if token was auto-refreshed since method was called.
     final currentToken = TokenManager().token ?? token;
     print("🎫 [UserService] Token: ${currentToken.toString()}");
     print(

@@ -150,6 +150,7 @@ class _DisplayOnlyPhotoState extends State<_DisplayOnlyPhoto> {
 // ════════════════════════════════════════════════════════════════════════════
 // AboutPage
 // ════════════════════════════════════════════════════════════════════════════
+/// About page displaying app information, version, and contact details for user reference.
 class AboutPage extends StatefulWidget {
   final String token;
   final String baseUrl;

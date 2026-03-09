@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_application/services/user_service.dart';
 
+/// Widget for managing family information including spouse, children, and parents' personal details.
 class FamilyBackgroundWidget extends StatefulWidget {
   final String token;
   final String employeeId;

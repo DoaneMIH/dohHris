@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_application/services/user_service.dart';
 
+/// Widget for documenting the employee's volunteer activities, organizations involved, and dates of service.
 class VoluntaryWorkWidget extends StatefulWidget {
   final String token;
   final String employeeId;

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_application/services/user_service.dart';
 
+/// Widget for managing the employee's educational background including schooling, degrees, and academic credentials.
 class EducationalBackgroundWidget extends StatefulWidget {
   final String token;
   final String employeeId;

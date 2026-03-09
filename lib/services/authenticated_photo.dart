@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:mobile_application/config/api_config.dart';
 import '../services/token_manager.dart';
 
+/// Widget that displays user profile photos with authentication and allows uploading new photos with the current access token.
 class AuthenticatedProfilePhoto extends StatefulWidget {
   final String? photoUrl;
   final String? baseUrl;
@@ -12,7 +13,8 @@ class AuthenticatedProfilePhoto extends StatefulWidget {
   final double radius;
   final String? token;
   final String? employeeId; // Add employeeId for update endpoint
-  final VoidCallback? onPhotoUpdated; // Callback after successful update
+  /// Optional callback fired after a new photo is successfully uploaded to refresh the UI.
+  final VoidCallback? onPhotoUpdated;
 
   const AuthenticatedProfilePhoto({
     Key? key,

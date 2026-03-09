@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_application/services/user_service.dart';
 
+/// Widget for viewing and managing the employee's civil service eligibility, exam results, and certifications.
 class CivilServiceWidget extends StatefulWidget {
   final String token;
   final String employeeId;

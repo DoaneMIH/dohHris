@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_application/services/user_service.dart';
 
+/// Widget for tracking employee training, seminars, and professional development activities completed.
 class LearningDevelopmentWidget extends StatefulWidget {
   final String token;
   final String employeeId;

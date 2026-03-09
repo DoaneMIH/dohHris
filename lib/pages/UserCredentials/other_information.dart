@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_application/services/user_service.dart';
 
+/// Widget for managing miscellaneous employee information including skills, distinctions, and memberships.
 class OtherInformationWidget extends StatefulWidget {
   final String token;
   final String employeeId;
@@ -19,7 +20,6 @@ class OtherInformationWidget extends StatefulWidget {
 class _OtherInformationWidgetState extends State<OtherInformationWidget> {
   final _userService = UserService();
   bool _isOtherInformationExpanded = true;
-  bool _isFetchingOtherInfo = false;
   List<Map<String, dynamic>> _specialSkillsData = [];
   int? _editingSpecialSkillIndex;
   List<Map<String, dynamic>> _nonAcademicDistinctionsData = [];
@@ -44,7 +44,6 @@ class _OtherInformationWidgetState extends State<OtherInformationWidget> {
       return;
     }
 
-    setState(() => _isFetchingOtherInfo = true);
 
     try {
       final response = await _userService.getAllOtherInfo(
@@ -97,17 +96,14 @@ class _OtherInformationWidgetState extends State<OtherInformationWidget> {
             }
           }
 
-          _isFetchingOtherInfo = false;
         });
 
         print('✅ Other info loaded: ${rawList.length} records');
       } else {
         print('⚠️ Other info fetch failed: ${response['error']}');
-        setState(() => _isFetchingOtherInfo = false);
       }
     } catch (e) {
       print('💥 Exception fetching other info: $e');
-      setState(() => _isFetchingOtherInfo = false);
     }
   }
 
