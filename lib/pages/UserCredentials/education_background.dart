@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_application/services/user_service.dart';
 
-/// Widget for managing the employee's educational background including schooling, degrees, and academic credentials.
 class EducationalBackgroundWidget extends StatefulWidget {
   final String token;
   final String employeeId;
@@ -181,7 +180,7 @@ class _EducationalBackgroundWidgetState
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Education saved successfully'),
-              backgroundColor: Colors.green,
+              backgroundColor: Color(0xFF1F2A45),
             ),
           );
         }
@@ -251,7 +250,7 @@ class _EducationalBackgroundWidgetState
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Education deleted'),
-                backgroundColor: Colors.green,
+                backgroundColor: Color(0xFF1F2A45),
               ),
             );
           }
@@ -281,43 +280,67 @@ class _EducationalBackgroundWidgetState
   // ─── Shared helpers ────────────────────────────────────────────────────────
 
   /// Shared field decoration — filled grey style.
-  InputDecoration _fieldDecoration(String label, {bool isDate = false}) =>
-      InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(fontSize: 14, color: Colors.grey),
-        floatingLabelStyle: const TextStyle(fontSize: 16, color: Color(0xFF2C5F4F)),
-        filled: true,
-        fillColor: const Color(0xFFF5F5F5),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6),
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6),
-          borderSide: const BorderSide(color: Color(0xFF2C5F4F), width: 1.5),
-        ),
-        disabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6),
-          borderSide: BorderSide.none,
-        ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        isDense: true,
-        suffixIcon: isDate
-            ? const Icon(Icons.calendar_today, size: 18, color: Color(0xFF2C5F4F))
-            : null,
-      );
-
+  InputDecoration _fieldDecoration(String label, {bool isDate = false}) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  return InputDecoration(
+    labelText: label,
+    labelStyle: TextStyle(
+      fontSize: 14,
+      color: isDark ? Colors.grey[400] : Colors.grey,
+    ),
+    floatingLabelStyle: TextStyle(
+      fontSize: 16,
+      color: isDark
+          ? Theme.of(context).colorScheme.secondary  // ← light grey-green in dark
+          : Theme.of(context).primaryColor,              // ← dark green in light
+    ),
+    filled: true,
+    fillColor: isDark
+        ? const Color(0xFF2C2C2C)       // ← dark fill
+        : const Color(0xFFF5F5F5),      // ← light fill
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(6),
+      borderSide: BorderSide.none,
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(6),
+      borderSide: BorderSide(
+        color: isDark ? const Color(0xFF424242) : Colors.transparent,
+      ),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(6),
+      borderSide: BorderSide(
+        color: isDark
+            ? Theme.of(context).colorScheme.secondary
+            : Theme.of(context).primaryColor,
+        width: 1.5,
+      ),
+    ),
+    disabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(6),
+      borderSide: BorderSide.none,
+    ),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+    isDense: true,
+    suffixIcon: isDate
+        ? Icon(
+            Icons.calendar_today,
+            size: 18,
+            color: isDark
+                ? Theme.of(context).colorScheme.secondary
+                : Theme.of(context).primaryColor,
+          )
+        : null,
+  );
+}
   /// Dark green header for dialogs.
   Widget _dialogHeader(String title) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: const BoxDecoration(
-        color: Color(0xFF2C5F4F),
+      decoration: BoxDecoration(
+        color: Theme.of(context).primaryColor,
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(12),
           topRight: Radius.circular(12),
@@ -349,7 +372,7 @@ class _EducationalBackgroundWidgetState
           child: OutlinedButton(
             onPressed: onSave,
             style: OutlinedButton.styleFrom(
-              backgroundColor: const Color(0xFF2C5F4F),
+              backgroundColor: Theme.of(context).primaryColor,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 12),
               shape: RoundedRectangleBorder(
@@ -398,7 +421,7 @@ class _EducationalBackgroundWidgetState
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
           colorScheme: const ColorScheme.light(
-            primary: Color(0xFF2C5F4F),
+            primary: Color(0xFF1F2A45),
             onPrimary: Colors.white,
             onSurface: Colors.black,
           ),
@@ -421,7 +444,7 @@ class _EducationalBackgroundWidgetState
   }) async {
     await showModalBottomSheet(
       context: ctx,
-      backgroundColor: Colors.white,
+     backgroundColor: Theme.of(context).scaffoldBackgroundColor,  // ← was Colors.white
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -441,8 +464,8 @@ class _EducationalBackgroundWidgetState
                 ),
               ),
               // Title
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
@@ -450,7 +473,9 @@ class _EducationalBackgroundWidgetState
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF2C5F4F),
+                      color: Theme.of(context).brightness == Brightness.dark
+      ? Theme.of(context).colorScheme.secondary
+      : Theme.of(context).primaryColor,
                     ),
                   ),
                 ),
@@ -469,8 +494,9 @@ class _EducationalBackgroundWidgetState
                     padding: const EdgeInsets.symmetric(
                         horizontal: 20, vertical: 14),
                     color: isSelected
-                        ? const Color(0xFF2C5F4F).withOpacity(0.08)
-                        : Colors.white,
+                         ? Theme.of(context).primaryColor.withOpacity(0.08)
+                                    : Colors.transparent,   // ← was Colors.white? const Color(0xFF2C5F4F).withOpacity(0.08)
+                       
                     child: Row(
                       children: [
                         Expanded(
@@ -479,8 +505,12 @@ class _EducationalBackgroundWidgetState
                             style: TextStyle(
                               fontSize: 14,
                               color: isSelected
-                                  ? const Color(0xFF2C5F4F)
-                                  : Colors.black87,
+                                     ? Theme.of(context).brightness == Brightness.dark
+        ? Theme.of(context).colorScheme.secondary
+        : Theme.of(context).primaryColor
+    : Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
+
+
                               fontWeight: isSelected
                                   ? FontWeight.w600
                                   : FontWeight.normal,
@@ -488,10 +518,12 @@ class _EducationalBackgroundWidgetState
                           ),
                         ),
                         if (isSelected)
-                          const Icon(
+                           Icon(
                             Icons.check,
                             size: 18,
-                            color: Color(0xFF2C5F4F),
+                            color: Theme.of(context).brightness == Brightness.dark
+    ? Theme.of(context).colorScheme.secondary
+    : Theme.of(context).primaryColor,
                           ),
                       ],
                     ),
@@ -525,7 +557,9 @@ class _EducationalBackgroundWidgetState
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
-          color: const Color(0xFFF5F5F5),
+          color: Theme.of(context).brightness == Brightness.dark
+      ? const Color(0xFF2C2C2C)   // ← dark fill
+      : const Color(0xFFF5F5F5),  // ← light fill
           borderRadius: BorderRadius.circular(6),
         ),
         child: Row(
@@ -540,20 +574,23 @@ class _EducationalBackgroundWidgetState
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text(
+                         Text(
                           'Education Level',
                           style: TextStyle(
                             fontSize: 11,
-                            color: Color(0xFF2C5F4F),
+                            color: Theme.of(context).brightness == Brightness.dark
+      ? Theme.of(context).colorScheme.secondary
+      : Theme.of(context).primaryColor,
+
                             fontWeight: FontWeight.w500,
                           ),
                         ),
                         const SizedBox(height: 2),
                         Text(
                           selectedLevel,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
-                            color: Colors.black87,
+                             color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
                           ),
                         ),
                       ],
@@ -597,7 +634,7 @@ class _EducationalBackgroundWidgetState
         return StatefulBuilder(
           builder: (ctx, setDialogState) {
             return Dialog(
-              backgroundColor: Colors.white,
+               backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
               insetPadding: EdgeInsets.symmetric(
@@ -626,20 +663,29 @@ class _EducationalBackgroundWidgetState
                           const SizedBox(height: 12),
                           TextField(
                             controller: schoolController,
-                            cursorColor: const Color(0xFF2C5F4F),
+                            cursorColor: Theme.of(context).primaryColor,
+                            style: TextStyle(
+                              // ← add this to every TextField
+                              fontSize: 13,
+                              color:
+                                  Theme.of(
+                                    context,
+                                  ).textTheme.bodyMedium?.color ??
+                                  Colors.black87,
+                            ),
                             decoration: _fieldDecoration('School Name *'),
                           ),
                           const SizedBox(height: 12),
                           TextField(
                             controller: degreeController,
-                            cursorColor: const Color(0xFF2C5F4F),
+                            cursorColor: Theme.of(context).primaryColor,
                             decoration: _fieldDecoration('Degree / Course'),
                           ),
                           const SizedBox(height: 12),
                           TextField(
                             controller: attendedFromController,
                             readOnly: true,
-                            cursorColor: const Color(0xFF2C5F4F),
+                            cursorColor: Theme.of(context).primaryColor,
                             decoration:
                                 _fieldDecoration('Attended From', isDate: true),
                             onTap: () async {
@@ -656,7 +702,7 @@ class _EducationalBackgroundWidgetState
                             controller: attendedToController,
                             readOnly: true,
                             enabled: !onGoing,
-                            cursorColor: const Color(0xFF2C5F4F),
+                            cursorColor: Theme.of(context).primaryColor,
                             decoration:
                                 _fieldDecoration('Attended To', isDate: true),
                             onTap: () async {
@@ -673,7 +719,7 @@ class _EducationalBackgroundWidgetState
                             children: [
                               Checkbox(
                                 value: onGoing,
-                                activeColor: const Color(0xFF2C5F4F),
+                                activeColor: Theme.of(context).primaryColor,
                                 onChanged: (v) {
                                   setDialogState(() {
                                     onGoing = v!;
@@ -681,28 +727,31 @@ class _EducationalBackgroundWidgetState
                                   });
                                 },
                               ),
-                              const Text('On-going',
-                                  style: TextStyle(fontSize: 13)),
+                               Text('On-going',
+                                  style: TextStyle(fontSize: 13,
+                                   color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
+                                  )),
+                                  
                             ],
                           ),
                           const SizedBox(height: 12),
                           TextField(
                             controller: highestLevelController,
-                            cursorColor: const Color(0xFF2C5F4F),
+                            cursorColor: Theme.of(context).primaryColor,
                             decoration:
                                 _fieldDecoration('Highest Level Earned'),
                           ),
                           const SizedBox(height: 12),
                           TextField(
                             controller: yearGraduatedController,
-                            cursorColor: const Color(0xFF2C5F4F),
+                            cursorColor: Theme.of(context).primaryColor,
                             keyboardType: TextInputType.number,
                             decoration: _fieldDecoration('Year Graduated'),
                           ),
                           const SizedBox(height: 12),
                           TextField(
                             controller: academicHonorsController,
-                            cursorColor: const Color(0xFF2C5F4F),
+                            cursorColor: Theme.of(context).primaryColor,
                             decoration: _fieldDecoration('Academic Honors'),
                           ),
                         ],
@@ -800,7 +849,7 @@ class _EducationalBackgroundWidgetState
         return StatefulBuilder(
           builder: (ctx, setDialogState) {
             return Dialog(
-              backgroundColor: Colors.white,
+               backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
               insetPadding: EdgeInsets.symmetric(
@@ -831,7 +880,7 @@ class _EducationalBackgroundWidgetState
                           // School Name
                           TextField(
                             controller: schoolController,
-                            cursorColor: const Color(0xFF2C5F4F),
+                            cursorColor: Theme.of(context).primaryColor,
                             decoration: _fieldDecoration('School Name *'),
                           ),
                           const SizedBox(height: 12),
@@ -839,7 +888,7 @@ class _EducationalBackgroundWidgetState
                           // Degree / Course
                           TextField(
                             controller: degreeController,
-                            cursorColor: const Color(0xFF2C5F4F),
+                            cursorColor: Theme.of(context).primaryColor,
                             decoration: _fieldDecoration('Degree / Course'),
                           ),
                           const SizedBox(height: 12),
@@ -848,7 +897,7 @@ class _EducationalBackgroundWidgetState
                           TextField(
                             controller: attendedFromController,
                             readOnly: true,
-                            cursorColor: const Color(0xFF2C5F4F),
+                            cursorColor: Theme.of(context).primaryColor,
                             decoration:
                                 _fieldDecoration('Attended From', isDate: true),
                             onTap: () async {
@@ -867,7 +916,7 @@ class _EducationalBackgroundWidgetState
                             controller: attendedToController,
                             readOnly: true,
                             enabled: !onGoing,
-                            cursorColor: const Color(0xFF2C5F4F),
+                            cursorColor: Theme.of(context).primaryColor,
                             decoration:
                                 _fieldDecoration('Attended To', isDate: true),
                             onTap: () async {
@@ -886,7 +935,7 @@ class _EducationalBackgroundWidgetState
                             children: [
                               Checkbox(
                                 value: onGoing,
-                                activeColor: const Color(0xFF2C5F4F),
+                                activeColor: Theme.of(context).primaryColor,
                                 onChanged: (v) {
                                   setDialogState(() {
                                     onGoing = v!;
@@ -903,7 +952,7 @@ class _EducationalBackgroundWidgetState
                           // Highest Level Earned
                           TextField(
                             controller: highestLevelController,
-                            cursorColor: const Color(0xFF2C5F4F),
+                            cursorColor: Theme.of(context).primaryColor,
                             decoration:
                                 _fieldDecoration('Highest Level Earned'),
                           ),
@@ -912,7 +961,7 @@ class _EducationalBackgroundWidgetState
                           // Year Graduated
                           TextField(
                             controller: yearGraduatedController,
-                            cursorColor: const Color(0xFF2C5F4F),
+                            cursorColor: Theme.of(context).primaryColor,
                             keyboardType: TextInputType.number,
                             decoration: _fieldDecoration('Year Graduated'),
                           ),
@@ -921,7 +970,7 @@ class _EducationalBackgroundWidgetState
                           // Academic Honors
                           TextField(
                             controller: academicHonorsController,
-                            cursorColor: const Color(0xFF2C5F4F),
+                            cursorColor: Theme.of(context).primaryColor,
                             decoration: _fieldDecoration('Academic Honors'),
                           ),
                         ],
@@ -987,8 +1036,8 @@ class _EducationalBackgroundWidgetState
           // Header with Add button
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: const BoxDecoration(
-              color: Color(0xFF2C5F4F),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.tertiary,
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(8),
                 topRight: Radius.circular(8),
@@ -1052,10 +1101,7 @@ class _EducationalBackgroundWidgetState
                             return Container(
                               margin: const EdgeInsets.only(bottom: 8),
                               padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
+                             
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -1084,9 +1130,11 @@ class _EducationalBackgroundWidgetState
                                             children: [
                                               Text(
                                                 education['level'] ?? 'N/A',
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   fontSize: 15,
-                                                  color: Colors.black,
+                                                   color: Theme.of(context).brightness == Brightness.dark
+        ? Colors.white          // ← white in dark
+        : Colors.black,         // ← black in lightblack,
                                                   fontWeight: FontWeight.bold,
                                                 ),
                                               ),
@@ -1096,7 +1144,9 @@ class _EducationalBackgroundWidgetState
                                                       'N/A',
                                                   style: TextStyle(
                                                     fontSize: 11,
-                                                    color: Colors.grey[600],
+                                                    color: Theme.of(context).brightness == Brightness.dark
+          ? Colors.grey[400]   // ← lighter in dark
+          : Colors.grey[600],  // ← same in light
                                                   ),
                                                 ),
                                             ],
@@ -1121,14 +1171,16 @@ class _EducationalBackgroundWidgetState
                                               ? Icons.expand_more
                                               : Icons.expand_less,
                                           size: 20,
-                                          color: Colors.black,
+                                         color: Theme.of(context).brightness == Brightness.dark
+      ? Colors.white    // ← white in dark
+      : Colors.black,   // ← black in light
                                         ),
                                       ),
                                       const SizedBox(width: 4),
 
                                       // 3-dot menu
                                       PopupMenuButton<String>(
-                                        color: Colors.white,
+                                        color: Theme.of(context).scaffoldBackgroundColor,
                                         position: PopupMenuPosition.under,
                                         shape: RoundedRectangleBorder(
                                           borderRadius:
@@ -1138,10 +1190,12 @@ class _EducationalBackgroundWidgetState
                                         ),
                                         icon: Container(
                                           padding: const EdgeInsets.all(6),
-                                          child: const Icon(
+                                          child: Icon(
                                             Icons.more_horiz,
                                             size: 18,
-                                            color: Colors.black87,
+                                            color:
+                  Theme.of(context).textTheme.bodyMedium?.color ??
+                  Colors.black87,
                                           ),
                                         ),
                                         padding: EdgeInsets.zero,
@@ -1157,16 +1211,17 @@ class _EducationalBackgroundWidgetState
                                             value: 'edit',
                                             height: 30,
                                             child: Row(
-                                              children: const [
+                                              children: [
                                                 Icon(Icons.edit,
                                                     size: 15,
-                                                    color: Colors.black87),
+                                                    color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87),
                                                 SizedBox(width: 8),
                                                 Text(
                                                   'Edit',
                                                   style: TextStyle(
                                                     fontSize: 12,
                                                     fontWeight: FontWeight.w500,
+                                                     color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
                                                   ),
                                                 ),
                                               ],
@@ -1283,17 +1338,21 @@ class _EducationalBackgroundWidgetState
         Text(
           label,
           style: TextStyle(
-            fontSize: 15,
-            color: Colors.grey[600],
-            fontWeight: FontWeight.w500,
-          ),
+          fontSize: 15,
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.grey[400]   // ← lighter grey in dark
+              : Colors.grey[600],  // ← same as before in light
+          fontWeight: FontWeight.w500,
         ),
+      ),
         const SizedBox(height: 1),
         Text(
           displayValue,
-          style: const TextStyle(
-            fontSize: 14,
-            color: Colors.black87,
+          style: TextStyle(
+            fontSize: 15,
+            color:
+                  Theme.of(context).textTheme.bodyMedium?.color ??
+                  Colors.black87,
             fontWeight: FontWeight.bold,
           ),
         ),

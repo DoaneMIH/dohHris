@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_application/services/user_service.dart';
 
-/// Widget for viewing and managing the employee's civil service eligibility, exam results, and certifications.
 class CivilServiceWidget extends StatefulWidget {
   final String token;
   final String employeeId;
@@ -118,7 +117,7 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Civil service eligibility saved successfully'),
-              backgroundColor: Colors.green,
+              backgroundColor: Color(0xFF1F2A45),
             ),
           );
         }
@@ -172,7 +171,7 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
           await _fetchCivilServiceEligibilityData();
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Civil service eligibility deleted'), backgroundColor: Colors.green),
+              const SnackBar(content: Text('Civil service eligibility deleted'), backgroundColor: Color(0xFF1F2A45)),
             );
           }
         } else {
@@ -214,32 +213,50 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
     return val ?? 'N/A';
   }
 
-  InputDecoration _fieldDecoration(String label, {bool isDate = false}) =>
-      InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(fontSize: 14, color: Colors.grey),
-        floatingLabelStyle: const TextStyle(fontSize: 16, color: Color(0xFF2C5F4F)),
-        filled: true,
-        fillColor: const Color(0xFFF5F5F5),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide.none),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide.none),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6),
-          borderSide: const BorderSide(color: Color(0xFF2C5F4F), width: 1.5),
-        ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        isDense: true,
-        suffixIcon: isDate
-            ? const Icon(Icons.calendar_today, size: 18, color: Color(0xFF2C5F4F))
-            : null,
-      );
+  InputDecoration _fieldDecoration(String label, {bool isDate = false}) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  return InputDecoration(
+    labelText: label,
+    labelStyle: TextStyle(
+      fontSize: 14,
+      color: isDark ? Colors.grey[400] : Colors.grey,
+    ),
+    floatingLabelStyle: TextStyle(
+      fontSize: 16,
+      color: isDark ? Theme.of(context).colorScheme.secondary : Theme.of(context).primaryColor,
+    ),
+    filled: true,
+    fillColor: isDark ? const Color(0xFF2C2C2C) : const Color(0xFFF5F5F5),
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide.none),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(6),
+      borderSide: BorderSide(color: isDark ? const Color(0xFF424242) : Colors.transparent),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(6),
+      borderSide: BorderSide(
+        color: isDark ? Theme.of(context).colorScheme.secondary : Theme.of(context).primaryColor,
+        width: 1.5,
+      ),
+    ),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+    isDense: true,
+    suffixIcon: isDate
+        ? Icon(
+            Icons.calendar_today,
+            size: 18,
+            color: isDark ? Theme.of(context).colorScheme.secondary : Theme.of(context).primaryColor,
+          )
+        : null,
+  );
+}
 
   Widget _dialogHeader(String title) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: const BoxDecoration(
-        color: Color(0xFF2C5F4F),
+      decoration: BoxDecoration(
+        color: Theme.of(context).primaryColor,
         borderRadius: BorderRadius.only(topLeft: Radius.circular(12), topRight: Radius.circular(12)),
       ),
       child: Row(
@@ -261,10 +278,12 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
           child: OutlinedButton(
             onPressed: onSave,
             style: OutlinedButton.styleFrom(
-              backgroundColor: const Color(0xFF2C5F4F),
+              backgroundColor: Theme.of(context).primaryColor,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             child: const Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -301,7 +320,7 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
           colorScheme: const ColorScheme.light(
-            primary: Color(0xFF2C5F4F),
+            primary: Color(0xFF1F2A45),
             onPrimary: Colors.white,
             onSurface: Colors.black,
           ),
@@ -322,7 +341,7 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
   }) async {
     await showModalBottomSheet(
       context: ctx,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,  // ← was Colors.white
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -346,7 +365,7 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
                 ),
               ),
               // Title
-              const Padding(
+               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Align(
                   alignment: Alignment.centerLeft,
@@ -355,7 +374,9 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF2C5F4F),
+                     color: Theme.of(context).brightness == Brightness.dark
+      ? Theme.of(context).colorScheme.secondary
+      : Theme.of(context).primaryColor,
                     ),
                   ),
                 ),
@@ -379,8 +400,8 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                         color: isSelected
-                            ? const Color(0xFF2C5F4F).withOpacity(0.08)
-                            : Colors.white,
+                            ? Theme.of(context).primaryColor.withOpacity(0.08)
+    : Colors.transparent,  // ← was Colors.white
                         child: Row(
                           children: [
                             Expanded(
@@ -388,13 +409,18 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
                                 item['label']!,
                                 style: TextStyle(
                                   fontSize: 14,
-                                  color: isSelected ? const Color(0xFF2C5F4F) : Colors.black87,
+                                  color: isSelected ? Theme.of(context).brightness == Brightness.dark
+        ? Theme.of(context).colorScheme.secondary
+        : Theme.of(context).primaryColor
+    : Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
                                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                                 ),
                               ),
                             ),
                             if (isSelected)
-                              const Icon(Icons.check, size: 18, color: Color(0xFF2C5F4F)),
+                               Icon(Icons.check, size: 18,color: Theme.of(context).brightness == Brightness.dark
+    ? Theme.of(context).colorScheme.secondary
+    : Theme.of(context).primaryColor,),
                           ],
                         ),
                       ),
@@ -427,24 +453,35 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
-          color: const Color(0xFFF5F5F5),
+          color: Theme.of(context).brightness == Brightness.dark
+      ? const Color(0xFF2C2C2C)
+      : const Color(0xFFF5F5F5),
           borderRadius: BorderRadius.circular(6),
         ),
         child: Row(
           children: [
             Expanded(
               child: selectedValue.isEmpty
-                  ? const Text('Eligibility Type', style: TextStyle(fontSize: 14, color: Colors.grey))
-                  : Column(
+                  ?  Text('Eligibility Type', style: TextStyle(
+  fontSize: 14,
+  color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
+),
+                  ):
+                 Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text(
+                        Text(
                           'Eligibility Type',
-                          style: TextStyle(fontSize: 11, color: Color(0xFF2C5F4F), fontWeight: FontWeight.w500),
+                          style: TextStyle(fontSize: 11, color: Theme.of(context).brightness == Brightness.dark
+      ? Theme.of(context).colorScheme.secondary
+      : Theme.of(context).primaryColor,
+       fontWeight: FontWeight.w500),
                         ),
                         const SizedBox(height: 2),
-                        Text(label, style: const TextStyle(fontSize: 14, color: Colors.black87)),
+                        Text(label, style: TextStyle(fontSize: 14,  color: Theme.of(context).brightness == Brightness.dark
+      ? Theme.of(context).colorScheme.secondary
+      : Theme.of(context).primaryColor,)),
                       ],
                     ),
             ),
@@ -470,7 +507,7 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
         return StatefulBuilder(
           builder: (ctx, setDialogState) {
             return Dialog(
-              backgroundColor: Colors.white,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               insetPadding: EdgeInsets.symmetric(
                 horizontal: MediaQuery.of(ctx).size.width * 0.025,
@@ -495,14 +532,22 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
                           const SizedBox(height: 12),
                           TextField(
                             controller: ratingController,
-                            cursorColor: const Color(0xFF2C5F4F),
+                            cursorColor: Theme.of(context).primaryColor, 
+                              style: TextStyle(   // ← add to every TextField
+    fontSize: 13,
+    color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
+  ),
                             decoration: _fieldDecoration('Rating'),
                           ),
                           const SizedBox(height: 12),
                           TextField(
                             controller: examDateController,
                             readOnly: true,
-                            cursorColor: const Color(0xFF2C5F4F),
+                            cursorColor: Theme.of(context).primaryColor,
+                              style: TextStyle(   // ← add to every TextField
+    fontSize: 13,
+    color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
+  ),
                             decoration: _fieldDecoration('Date of Exam', isDate: true),
                             onTap: () async {
                               final d = await _pickDate(ctx, examDateController.text);
@@ -512,13 +557,21 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
                           const SizedBox(height: 12),
                           TextField(
                             controller: examPlaceController,
-                            cursorColor: const Color(0xFF2C5F4F),
+                            cursorColor: Theme.of(context).primaryColor,
+                              style: TextStyle(   // ← add to every TextField
+    fontSize: 13,
+    color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
+  ),
                             decoration: _fieldDecoration('Place of Exam'),
                           ),
                           const SizedBox(height: 12),
                           TextField(
                             controller: licenseNoController,
-                            cursorColor: const Color(0xFF2C5F4F),
+                            cursorColor: Theme.of(context).primaryColor,
+                              style: TextStyle(   // ← add to every TextField
+    fontSize: 13,
+    color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
+  ),
                             decoration: _fieldDecoration('License Number'),
                           ),
                         ],
@@ -573,7 +626,7 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
         return StatefulBuilder(
           builder: (ctx, setDialogState) {
             return Dialog(
-              backgroundColor: Colors.white,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               insetPadding: EdgeInsets.symmetric(
                 horizontal: MediaQuery.of(ctx).size.width * 0.025,
@@ -597,15 +650,23 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
                           ),
                           const SizedBox(height: 12),
                           TextField(
-                            controller: ratingController,
-                            cursorColor: const Color(0xFF2C5F4F),
-                            decoration: _fieldDecoration('Rating'),
-                          ),
+  controller: ratingController,
+  cursorColor: Theme.of(context).primaryColor,
+  style: TextStyle(   // ← add to every TextField
+    fontSize: 13,
+    color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
+  ),
+  decoration: _fieldDecoration('Rating'),
+),
                           const SizedBox(height: 12),
                           TextField(
                             controller: examDateController,
                             readOnly: true,
-                            cursorColor: const Color(0xFF2C5F4F),
+                            cursorColor: Theme.of(context).primaryColor,
+                              style: TextStyle(   // ← add to every TextField
+    fontSize: 13,
+    color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
+  ),
                             decoration: _fieldDecoration('Date of Exam', isDate: true),
                             onTap: () async {
                               final d = await _pickDate(ctx, examDateController.text);
@@ -615,13 +676,21 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
                           const SizedBox(height: 12),
                           TextField(
                             controller: examPlaceController,
-                            cursorColor: const Color(0xFF2C5F4F),
+                            cursorColor: Theme.of(context).primaryColor,
+                              style: TextStyle(   // ← add to every TextField
+    fontSize: 13,
+    color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
+  ),
                             decoration: _fieldDecoration('Place of Exam'),
                           ),
                           const SizedBox(height: 12),
                           TextField(
                             controller: licenseNoController,
-                            cursorColor: const Color(0xFF2C5F4F),
+                            cursorColor: Theme.of(context).primaryColor,
+                              style: TextStyle(   // ← add to every TextField
+    fontSize: 13,
+    color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
+  ),
                             decoration: _fieldDecoration('License Number'),
                           ),
                         ],
@@ -660,8 +729,8 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
         children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: const BoxDecoration(
-              color: Color(0xFF2C5F4F),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.tertiary,
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(8),
                 topRight: Radius.circular(8),
@@ -710,7 +779,6 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
                             return Container(
                               margin: const EdgeInsets.only(bottom: 8),
                               padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8)),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -728,7 +796,9 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
                                           }),
                                           child: Text(
                                             _eligibilityLabel(service['serviceEligibility']),
-                                            style: const TextStyle(fontSize: 15, color: Colors.black, fontWeight: FontWeight.bold),
+                                            style: TextStyle(fontSize: 15, color: Theme.of(context).brightness == Brightness.dark
+      ? Colors.white
+      : Colors.black, fontWeight: FontWeight.bold),
                                           ),
                                         ),
                                       ),
@@ -742,12 +812,14 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
                                         }),
                                         child: Icon(
                                           isCollapsed ? Icons.expand_more : Icons.expand_less,
-                                          size: 20, color: Colors.black,
+                                          size: 20, color: Theme.of(context).brightness == Brightness.dark
+      ? Colors.white
+      : Colors.black,
                                         ),
                                       ),
                                       const SizedBox(width: 4),
                                       PopupMenuButton<String>(
-                                        color: Colors.white,
+                                        color: Theme.of(context).scaffoldBackgroundColor,
                                         position: PopupMenuPosition.under,
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(14),
@@ -755,7 +827,15 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
                                         ),
                                         icon: Container(
                                           padding: const EdgeInsets.all(6),
-                                          child: const Icon(Icons.more_horiz, size: 18, color: Colors.black87),
+                                          child: Icon(
+                                            Icons.more_horiz,
+                                            size: 18,
+                                            color:
+                                                Theme.of(
+                                                  context,
+                                                ).textTheme.bodyMedium?.color ??
+                                                Colors.black87,
+                                          ),
                                         ),
                                         padding: EdgeInsets.zero,
                                         onSelected: (value) {
@@ -770,10 +850,10 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
                                             value: 'edit',
                                             height: 30,
                                             child: Row(
-                                              children: const [
-                                                Icon(Icons.edit, size: 15, color: Colors.black87),
+                                              children: [
+                                                Icon(Icons.edit, size: 15, color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87),
                                                 SizedBox(width: 8),
-                                                Text('Edit', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+                                                Text('Edit', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500,color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,)),
                                               ],
                                             ),
                                           ),
@@ -835,9 +915,13 @@ class _CivilServiceWidgetState extends State<CivilServiceWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(fontSize: 15, color: Colors.grey[600], fontWeight: FontWeight.w500)),
+        Text(label, style: TextStyle(fontSize: 15, color: Theme.of(context).brightness == Brightness.dark
+        ? Colors.grey[400]
+        : Colors.grey[600], fontWeight: FontWeight.w500)),
         const SizedBox(height: 1),
-        Text(displayValue, style: const TextStyle(fontSize: 15, color: Colors.black87, fontWeight: FontWeight.bold)),
+        Text(displayValue, style: TextStyle(fontSize: 15, color:
+                  Theme.of(context).textTheme.bodyMedium?.color ??
+                  Colors.black87, fontWeight: FontWeight.bold)),
       ],
     );
   }

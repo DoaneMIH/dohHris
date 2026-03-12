@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
-import 'package:mobile_application/config/api_config.dart';
 import 'package:mobile_application/services/auth_service.dart';
 import 'package:mobile_application/services/user_profile_cache.dart';
 import 'package:mobile_application/services/token_manager.dart';
 import 'package:mobile_application/pages/dtr_page.dart';
-// import 'package:mobile_application/widgets/routes.dart';
 import 'package:mobile_application/pages/UserCredentials/civil_service.dart';
 import 'package:mobile_application/pages/UserCredentials/education_background.dart';
 import 'package:mobile_application/pages/UserCredentials/family_background.dart';
@@ -85,7 +83,7 @@ class _DisplayOnlyPhotoState extends State<_DisplayOnlyPhoto> {
         fullPhotoUrl = '${widget.baseUrl ?? ''}${widget.photoUrl}';
       } else {
         fullPhotoUrl =
-            '${widget.baseUrl ?? ''}${ApiConfig.getEmployeePhoto}${widget.photoUrl}';
+            '${widget.baseUrl ?? ''}/employee/image/${widget.photoUrl}';
       }
 
       final token = TokenManager().token ?? widget.token;
@@ -177,7 +175,6 @@ class _DisplayOnlyPhotoState extends State<_DisplayOnlyPhoto> {
 }
 
 // UserDetailsPageContent
-/// Main profile page showing all employee information sections like personal details, education, experience, family, etc.
 class UserDetailsPageContent extends StatefulWidget {
   final String token;
   final String baseUrl;
@@ -308,7 +305,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Personal information updated successfully'),
-              backgroundColor: Colors.green,
+              backgroundColor: Color(0xFF344A51),
             ),
           );
         }
@@ -327,16 +324,6 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
       }
     }
   }
-
-  // Future<void> _logout() async {
-  //   // Clear stored session data
-  //   final tokenManager = TokenManager();
-  //   await tokenManager.clearStorage();
-    
-  //   if (mounted) {
-  //     Navigator.pushReplacementNamed(context, MyRoutes.loginPage);
-  //   }
-  // }
 
   // ═══════════════════════════════════════════════════════════════════════════
   // OPTION BOTTOM SHEET HELPERS
@@ -480,7 +467,11 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
           labelText: label,
           labelStyle: TextStyle(
             fontSize: 14,
-            color: Theme.of(ctx).primaryColor,
+            color: Theme.of(ctx).brightness == Brightness.dark
+                ? Theme.of(ctx)
+                      .colorScheme
+                      .secondary // ← light grey-green in dark
+                : Theme.of(ctx).primaryColor, // ← dark green in light
           ),
           filled: true,
           fillColor: Theme.of(ctx).inputDecorationTheme.fillColor,
@@ -489,6 +480,10 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
             borderSide: BorderSide.none,
           ),
           enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide.none,
+          ),
+          disabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
             borderSide: BorderSide.none,
           ),
@@ -721,9 +716,9 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
               if (result['success']) {
                 Navigator.of(dialogContext).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
+                   SnackBar(
                     content: Text('Password changed successfully.'),
-                    backgroundColor: Colors.green,
+                    backgroundColor: Theme.of(context).primaryColor,
                   ),
                 );
               } else {
@@ -962,12 +957,16 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
         InputDecoration(
           labelText: label,
           labelStyle: TextStyle(
-            fontSize: 14,
-            color: Theme.of(context).primaryColor,
-          ),
+        fontSize: 14,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? Theme.of(context).colorScheme.secondary  // ← light grey-green in dark
+            : Theme.of(context).primaryColor,           // ← dark green in light
+      ),
           filled: true,
           fillColor: readOnly
-              ? Colors.grey[100]
+              ? Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF2A2A2A)
+                    : Colors.grey[100]
               : Theme.of(context).inputDecorationTheme.fillColor,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
@@ -1053,16 +1052,16 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
             child: TextFormField(
               controller: ctrl,
               readOnly: true,
-              style: const TextStyle(
-                fontSize: 13,
-                color: Colors.black87,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(
+  fontSize: 13,
+  color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
+  fontWeight: FontWeight.w600,
+),
               decoration: fieldDeco(label).copyWith(
                 suffixIcon: Icon(
                   Icons.calendar_today,
                   size: 16,
-                  color: Theme.of(context).primaryColor,
+                  color: Theme.of(context).iconTheme.color,
                 ),
               ),
             ),
@@ -1094,18 +1093,23 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
       padding: const EdgeInsets.only(bottom: 10, top: 4),
       child: Row(
         children: [
-          Icon(icon, size: 15, color: Theme.of(context).primaryColor),
+          Icon(icon, size: 15,  
+         color: Theme.of(context).brightness == Brightness.dark
+                    ? Color(0xFF587CA5)                         // ←  in dark
+                    : Theme.of(context).primaryColor),         // ←  in light ),
           const SizedBox(width: 6),
           Text(
             title,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
-              color: Theme.of(context).primaryColor,
+               color: Theme.of(context).brightness == Brightness.dark
+                    ? Color(0xFF587CA5)                         // ←  in dark
+                    : Theme.of(context).primaryColor,           // ←  in light 
             ),
           ),
           const SizedBox(width: 8),
-          Expanded(child: Divider(color: Colors.grey[300], thickness: 1)),
+          Expanded(child: Divider(color: Theme.of(context).dividerColor, thickness: 1)),
         ],
       ),
     );
@@ -1218,9 +1222,13 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                                 FilteringTextInputFormatter.digitsOnly,
                                 LengthLimitingTextInputFormatter(11),
                               ],
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13,
-                                color: Colors.black87,
+                                color:
+                                    Theme.of(
+                                      context,
+                                    ).textTheme.bodyMedium?.color ??
+                                    Colors.black87,
                                 fontWeight: FontWeight.w600,
                               ),
                               decoration: fieldDeco('Telephone No.'),
@@ -1238,11 +1246,11 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                                 FilteringTextInputFormatter.digitsOnly,
                                 LengthLimitingTextInputFormatter(11),
                               ],
-                              style: const TextStyle(
-                                fontSize: 13,
-                                color: Colors.black87,
-                                fontWeight: FontWeight.w600,
-                              ),
+                              style: TextStyle(
+  fontSize: 13,
+  color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
+  fontWeight: FontWeight.w600,
+),
                               decoration: fieldDeco('Mobile No.'),
                             ),
                           ),
@@ -1278,15 +1286,29 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                               ),
                               decoration: BoxDecoration(
                                 color: sameAddress
-                                    ? Theme.of(
-                                        context,
-                                      ).primaryColor.withOpacity(0.1)
-                                    : Colors.orange.withOpacity(0.1),
+                                    ? Theme.of(context).brightness ==
+                                              Brightness.dark
+                                          ? const Color.fromARGB(255, 0, 0, 0) // ← dark muted green in dark mode
+                                          : Theme.of(
+                                              context,
+                                            ).primaryColor.withOpacity(
+                                              0.1,
+                                            ) // ← light green in light
+                                    : Theme.of(context).brightness ==
+                                          Brightness.dark
+                                    ? const Color.fromARGB(255, 0, 0, 0) // ← dark muted orange in dark mode
+                                    : const Color.fromARGB(255, 245, 245, 245), // ← light orange in light
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
                                   color: sameAddress
-                                      ? Theme.of(context).primaryColor
-                                      : Colors.orange.shade300,
+                                      ? Theme.of(context).brightness ==
+                                                Brightness.dark
+                                            ? Theme.of(context).primaryColor // ← muted green border in dark
+                                            : Theme.of(context).primaryColor
+                                      : Theme.of(context).brightness ==
+                                            Brightness.dark
+                                      ? Theme.of(context).colorScheme.secondary // ← muted orange border in dark
+                                      : Theme.of(context).colorScheme.secondary
                                 ),
                               ),
                               child: Row(
@@ -1316,8 +1338,8 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                                             fontSize: 12,
                                             fontWeight: FontWeight.w600,
                                             color: sameAddress
-                                                ? Theme.of(context).primaryColor
-                                                : Colors.orange.shade800,
+                                                ? Theme.of(context).colorScheme.secondary
+                                                : Theme.of(context).colorScheme.secondary,
                                           ),
                                         ),
                                         Text(
@@ -1359,65 +1381,66 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            icon: const Icon(Icons.save, size: 16),
-                            label: const Text(
-                              'Save',
-                              style: TextStyle(fontWeight: FontWeight.w700),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Theme.of(context).primaryColor,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            onPressed: () {
-                              if (sameAddress) {
-                                localData['resHouseNo'] = localData['houseNo'];
-                                localData['resStreet'] = localData['street'];
-                                localData['resVillage'] = localData['village'];
-                                localData['resBarangay'] =
-                                    localData['barangay'];
-                                localData['resMunicipality'] =
-                                    localData['municipality'];
-                                localData['resProvince'] =
-                                    localData['province'];
-                                localData['resZipCode'] = localData['zipCode'];
-                              }
-                              setState(() => _personalInfoData = localData);
-                              Navigator.pop(dialogContext);
-                              _savePersonalInformation();
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.grey[200],
-                              foregroundColor: Colors.black87,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              elevation: 0,
-                            ),
-                            onPressed: () => Navigator.pop(dialogContext),
-                            child: const Text(
-                              'Cancel',
-                              style: TextStyle(fontWeight: FontWeight.w700),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+  padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+  child: Row(
+    children: [
+      Expanded(
+        child: ElevatedButton.icon(
+          icon: const Icon(Icons.save, size: 16),
+          label: const Text(
+            'Save',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Theme.of(context).primaryColor,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          onPressed: () {
+            if (sameAddress) {
+              localData['resHouseNo'] = localData['houseNo'];
+              localData['resStreet'] = localData['street'];
+              localData['resVillage'] = localData['village'];
+              localData['resBarangay'] = localData['barangay'];
+              localData['resMunicipality'] = localData['municipality'];
+              localData['resProvince'] = localData['province'];
+              localData['resZipCode'] = localData['zipCode'];
+            }
+            setState(() => _personalInfoData = localData);
+            Navigator.pop(dialogContext);
+            _savePersonalInformation();
+          },
+        ),
+      ),
+      const SizedBox(width: 12),
+      Expanded(
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF3A3A3A)
+                : Colors.grey[200],
+            foregroundColor: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white
+                : Colors.black87,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            elevation: 0,
+          ),
+          onPressed: () => Navigator.pop(dialogContext),
+          child: const Text(
+            'Cancel',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
+        ),
+      ),
+    ],
+  ),
+),
                 ],
               ),
             );
@@ -1435,7 +1458,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
     return Padding(
       padding: const EdgeInsets.only(right: 12),
       child: PopupMenuButton<String>(
-        color: Colors.white,
+        color: Theme.of(context).scaffoldBackgroundColor,
         offset: const Offset(0, 50),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         onSelected: (value) {
@@ -1449,10 +1472,20 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
           PopupMenuItem(
             value: 'reset_password',
             child: Row(
-              children: const [
-                Icon(Icons.lock_reset, color: Color(0xFF00674F), size: 20),
-                SizedBox(width: 10),
-                Text('Reset Password', style: TextStyle(fontSize: 14)),
+              children: [
+                 Icon(Icons.lock_reset, 
+                 color: Theme.of(context).brightness == Brightness.dark
+                   ? Color(0xFF587CA5)                         // ←  in dark
+                   : Theme.of(context).primaryColor,           // ←  in light
+                 size: 20),
+                const SizedBox(width: 10),
+                Text(
+                  'Reset Password',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
+                  ),
+                ),
               ],
             ),
           ),
@@ -1494,9 +1527,9 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
         resizeToAvoidBottomInset: false,
         backgroundColor: Colors.transparent,
         appBar: AppBar(
-          iconTheme: const IconThemeData(color: Colors.white),
+          iconTheme:  IconThemeData(color: Colors.white),
           automaticallyImplyLeading: false,
-          backgroundColor: Theme.of(context).primaryColor,
+          backgroundColor: Theme.of(context).colorScheme.tertiary,
           title: Row(
             children: [
               const SizedBox(width: 10),
@@ -1579,17 +1612,25 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
               ExpansionTile(
                 leading: Icon(
                   Icons.room_service,
-                  color: Theme.of(context).primaryColor,
+                  color: Theme.of(context).brightness == Brightness.dark
+        ? Theme.of(context).colorScheme.secondary  // ←  in dark
+        : Theme.of(context).primaryColor,           // ←  in light
                 ),
                 title: Text(
                   'Services',
                   style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).primaryColor,
-                  ),
-                ),
-                iconColor: Colors.black,
-                collapsedIconColor: Colors.black,
+      fontWeight: FontWeight.bold,
+      color: Theme.of(context).brightness == Brightness.dark
+          ? Theme.of(context).colorScheme.secondary  // ←  in dark
+          : Theme.of(context).primaryColor,           // ← in light
+    ),
+  ),
+                iconColor: Theme.of(context).brightness == Brightness.dark
+      ? Theme.of(context).colorScheme.secondary       // ← white arrow in dark
+      : Colors.black,       // ← black arrow in light
+  collapsedIconColor: Theme.of(context).brightness == Brightness.dark
+      ? Theme.of(context).colorScheme.secondary        // ← white arrow in dark
+      : Colors.black,       // ← black arrow in light
                 initiallyExpanded: _isServicesExpanded,
                 onExpansionChanged: (expanded) =>
                     setState(() => _isServicesExpanded = expanded),
@@ -1601,20 +1642,29 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                   ),
                 ],
               ),
-              ExpansionTile(
-                leading: Icon(
-                  Icons.info_outline,
-                  color: Theme.of(context).primaryColor,
-                ),
+            
+ExpansionTile(
+  leading: Icon(
+    Icons.info_outline,
+    color: Theme.of(context).brightness == Brightness.dark
+        ? Theme.of(context).colorScheme.secondary  // ← light grey-green in dark
+        : Theme.of(context).primaryColor,           // ← dark green in light
+  ),
                 title: Text(
                   'Information',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).primaryColor,
-                  ),
-                ),
-                iconColor: Colors.black,
-                collapsedIconColor: Colors.black,
+                   style: TextStyle(
+      fontWeight: FontWeight.bold,
+      color: Theme.of(context).brightness == Brightness.dark
+          ? Theme.of(context).colorScheme.secondary  // ← light grey-green in dark
+          : Theme.of(context).primaryColor,           // ← dark green in light
+    ),
+  ),
+                iconColor: Theme.of(context).brightness == Brightness.dark
+      ? Theme.of(context).colorScheme.secondary       // ← white arrow in dark
+      : Colors.black,       // ← black arrow in light
+  collapsedIconColor: Theme.of(context).brightness == Brightness.dark
+      ? Theme.of(context).colorScheme.secondary       // ← white arrow in dark
+      : Colors.black,       // ← black arrow in light
                 initiallyExpanded: _isInformationExpanded,
                 onExpansionChanged: (expanded) =>
                     setState(() => _isInformationExpanded = expanded),
@@ -1771,7 +1821,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.badge, size: 18, color: Colors.black),
+                     Icon(Icons.badge, size: 18, color: Theme.of(context).iconTheme.color),
                     const SizedBox(width: 6),
                     Text(
                       _userDetails?['employee']?['designation']?['desigCode'] ??
@@ -1784,7 +1834,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.apartment, size: 18, color: Colors.black),
+                     Icon(Icons.apartment, size: 18, color: Theme.of(context).iconTheme.color),
                     const SizedBox(width: 6),
                     const Text('ICTU', style: TextStyle(fontSize: 14)),
                   ],
@@ -1854,8 +1904,8 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
         children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: const BoxDecoration(
-              color: Color(0xFF2C5F4F),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.tertiary,
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(8),
                 topRight: Radius.circular(8),
@@ -2102,28 +2152,40 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
 
   // ─── Drawer Item ─────────────────────────────────────────────────────────
   Widget _buildDrawerItem(String title, IconData icon, bool isSelected) {
-    return Builder(
-      builder: (context) => ListTile(
-        leading: Icon(
-          icon,
-          color: isSelected ? Theme.of(context).primaryColor : Colors.grey[600],
-        ),
-        title: Text(
-          title,
-          style: TextStyle(
-            color: isSelected ? Theme.of(context).primaryColor : Colors.black87,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-          ),
-        ),
-        selected: isSelected,
-        selectedTileColor: Theme.of(context).primaryColor.withOpacity(0.1),
-        onTap: () {
-          setState(() => _selectedMenu = title);
-          Navigator.pop(context);
-        },
+  return Builder(
+    builder: (context) => ListTile(
+      leading: Icon(
+       icon,
+  color: isSelected
+      ? Theme.of(context).brightness == Brightness.dark
+          ? Theme.of(context).colorScheme.secondary  // ← light grey-green in dark
+          : Theme.of(context).primaryColor            // ← dark green in light
+      : Theme.of(context).brightness == Brightness.dark
+          ? Colors.grey[400]
+          : Colors.grey[600],
       ),
-    );
-  }
+      title: Text(
+        title,
+        style: TextStyle(
+         color: isSelected
+        ? Theme.of(context).brightness == Brightness.dark
+            ? Theme.of(context).colorScheme.secondary  // ← light grey-green in dark
+            : Theme.of(context).primaryColor            // ← dark green in light
+        : Theme.of(context).brightness == Brightness.dark
+            ? Colors.grey[300]
+            : Colors.black87,
+    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        ),
+      ),
+      selected: isSelected,
+      selectedTileColor: Theme.of(context).primaryColor.withOpacity(0.4),
+      onTap: () {
+        setState(() => _selectedMenu = title);
+        Navigator.pop(context);
+      },
+    ),
+  );
+}
 
   // ─── Shared Field Helpers ─────────────────────────────────────────────────
 
@@ -2132,14 +2194,19 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
       padding: const EdgeInsets.only(bottom: 12, top: 8),
       child: Row(
         children: [
-          Icon(icon, size: 15, color: Theme.of(context).primaryColor),
+          Icon(icon, size: 15, 
+          color: Theme.of(context).brightness == Brightness.dark
+                    ? Color(0xFF587CA5)                         // ←  in dark
+                    : Theme.of(context).primaryColor),
           const SizedBox(width: 6),
           Text(
             title,
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w700,
-              color: Theme.of(context).primaryColor,
+              color: Theme.of(context).brightness == Brightness.dark
+                    ? Color(0xFF587CA5)                         // ←  in dark
+                    : Theme.of(context).primaryColor,  
             ),
           ),
           const SizedBox(width: 8),

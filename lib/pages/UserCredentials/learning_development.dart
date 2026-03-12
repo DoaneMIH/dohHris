@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_application/services/user_service.dart';
 
-/// Widget for tracking employee training, seminars, and professional development activities completed.
 class LearningDevelopmentWidget extends StatefulWidget {
   final String token;
   final String employeeId;
@@ -137,7 +136,7 @@ class _LearningDevelopmentWidgetState
             const SnackBar(
               content:
                   Text('Learning and development record saved successfully'),
-              backgroundColor: Colors.green,
+              backgroundColor: Color(0xFF1F2A45),
             ),
           );
         }
@@ -161,24 +160,31 @@ class _LearningDevelopmentWidgetState
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
-        title: const Text('Delete Learning and Development Record'),
-        content: const Text(
-          'Are you sure you want to delete this learning and development record?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            style: TextButton.styleFrom(foregroundColor: Colors.black),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
-          ),
-        ],
+  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+  title: Text(
+    'Delete Learning and Development Record',
+    style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
+  ),
+  content: Text(
+    'Are you sure you want to delete this learning and development record?',
+    style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
+  ),
+  actions: [
+    TextButton(
+      onPressed: () => Navigator.pop(context, false),
+      style: TextButton.styleFrom(
+        foregroundColor: Theme.of(context).brightness == Brightness.dark
+            ? Colors.grey[300] : Colors.black,
       ),
+      child: const Text('Cancel'),
+    ),
+    TextButton(
+      onPressed: () => Navigator.pop(context, true),
+      style: TextButton.styleFrom(foregroundColor: Colors.red),
+      child: const Text('Delete'),
+    ),
+  ],
+),
     );
     if (confirmed != true) return;
     showDialog(
@@ -201,7 +207,7 @@ class _LearningDevelopmentWidgetState
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Learning and development record deleted'),
-                backgroundColor: Colors.green,
+                backgroundColor: Color(0xFF1F2A45),
               ),
             );
           }
@@ -230,43 +236,45 @@ class _LearningDevelopmentWidgetState
   }
 
   // ─── Shared dialog helpers ─────────────────────────────────────────────────
-
-  InputDecoration _fieldDecoration(String label, {bool isDate = false}) =>
-      InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(fontSize: 14, color: Colors.grey),
-        floatingLabelStyle:
-            const TextStyle(fontSize: 16, color: Color(0xFF2C5F4F)),
-        filled: true,
-        fillColor: const Color(0xFFF5F5F5),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6),
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6),
-          borderSide: const BorderSide(color: Color(0xFF2C5F4F), width: 1.5),
-        ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        isDense: true,
-        suffixIcon: isDate
-            ? const Icon(Icons.calendar_today,
-                size: 16, color: Color(0xFF2C5F4F))
-            : null,
-      );
+InputDecoration _fieldDecoration(String label, {bool isDate = false}) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  return InputDecoration(
+    labelText: label,
+    labelStyle: TextStyle(fontSize: 14, color: isDark ? Colors.grey[400] : Colors.grey),
+    floatingLabelStyle: TextStyle(
+      fontSize: 16,
+      color: isDark ? Theme.of(context).colorScheme.secondary : Theme.of(context).primaryColor,
+    ),
+    filled: true,
+    fillColor: isDark ? const Color(0xFF2C2C2C) : const Color(0xFFF5F5F5),
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide.none),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(6),
+      borderSide: BorderSide(color: isDark ? const Color(0xFF424242) : Colors.transparent),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(6),
+      borderSide: BorderSide(
+        color: isDark ? Theme.of(context).colorScheme.secondary : Theme.of(context).primaryColor,
+        width: 1.5,
+      ),
+    ),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+    isDense: true,
+    suffixIcon: isDate
+        ? Icon(Icons.calendar_today, size: 16,
+            color: isDark ? Theme.of(context).colorScheme.secondary : Theme.of(context).primaryColor,)
+        : null,
+  );
+}
 
   /// Dark green header banner for dialogs.
   Widget _dialogHeader(String title) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: const BoxDecoration(
-        color: Color(0xFF2C5F4F),
+      decoration: BoxDecoration(
+        color: Theme.of(context).primaryColor,
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(12),
           topRight: Radius.circular(12),
@@ -292,6 +300,7 @@ class _LearningDevelopmentWidgetState
 
   /// Full-width Cancel / Save button row.
   Widget _dialogActions(BuildContext ctx, VoidCallback onSave, {String saveLabel = 'Save'}) {
+     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       child: Row(
@@ -300,7 +309,7 @@ class _LearningDevelopmentWidgetState
             child: OutlinedButton(
               onPressed: onSave,
               style: OutlinedButton.styleFrom(
-                backgroundColor: const Color(0xFF2C5F4F),
+                backgroundColor: Theme.of(context).primaryColor,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(
@@ -318,19 +327,17 @@ class _LearningDevelopmentWidgetState
             ),
           ),
           const SizedBox(width: 12),
-          Expanded(
-            child: ElevatedButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.grey[200],
-                foregroundColor: Colors.black87,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                elevation: 0,
-              ),
-              child: const Text('Cancel'),
+         Expanded(
+          child: ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isDark ? const Color(0xFF3A3A3A) : Colors.grey[200],
+              foregroundColor: isDark ? Colors.white : Colors.black87,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              elevation: 0,
+            ),
+            child: const Text('Cancel'),
             ),
           ),
         ],
@@ -349,7 +356,7 @@ class _LearningDevelopmentWidgetState
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
           colorScheme: const ColorScheme.light(
-            primary: Color(0xFF2C5F4F),
+            primary: Color(0xFF1F2A45),
             onPrimary: Colors.white,
             onSurface: Colors.black,
           ),
@@ -377,7 +384,7 @@ class _LearningDevelopmentWidgetState
         return StatefulBuilder(
           builder: (ctx, setDialogState) {
             return Dialog(
-              backgroundColor: Colors.white,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
               insetPadding: EdgeInsets.symmetric(
@@ -397,7 +404,7 @@ class _LearningDevelopmentWidgetState
                         children: [
                             TextField(
                               controller: titleController,
-                              cursorColor: const Color(0xFF2C5F4F),
+                              cursorColor: Theme.of(context).primaryColor,
                               decoration:
                                   _fieldDecoration('Training Program Title *'),
                             ),
@@ -408,7 +415,7 @@ class _LearningDevelopmentWidgetState
                                   child: TextField(
                                     controller: attendedFromController,
                                     readOnly: true,
-                                    cursorColor: const Color(0xFF2C5F4F),
+                                    cursorColor: Theme.of(context).primaryColor,
                                     decoration: _fieldDecoration('Date From',
                                         isDate: true),
                                     onTap: () async {
@@ -426,7 +433,7 @@ class _LearningDevelopmentWidgetState
                                   child: TextField(
                                     controller: attendedToController,
                                     readOnly: true,
-                                    cursorColor: const Color(0xFF2C5F4F),
+                                    cursorColor: Theme.of(context).primaryColor,
                                     decoration: _fieldDecoration('Date To',
                                         isDate: true),
                                     onTap: () async {
@@ -447,7 +454,7 @@ class _LearningDevelopmentWidgetState
                                 Expanded(
                                   child: TextField(
                                     controller: hoursController,
-                                    cursorColor: const Color(0xFF2C5F4F),
+                                    cursorColor: Theme.of(context).primaryColor,
                                     keyboardType: TextInputType.number,
                                     decoration: _fieldDecoration('No. of Hours'),
                                   ),
@@ -456,7 +463,7 @@ class _LearningDevelopmentWidgetState
                                 Expanded(
                                   child: TextField(
                                     controller: ldTypeController,
-                                    cursorColor: const Color(0xFF2C5F4F),
+                                    cursorColor: Theme.of(context).primaryColor,
                                     decoration: _fieldDecoration('Type of L&D'),
                                   ),
                                 ),
@@ -465,7 +472,7 @@ class _LearningDevelopmentWidgetState
                             const SizedBox(height: 12),
                             TextField(
                               controller: conductedByController,
-                              cursorColor: const Color(0xFF2C5F4F),
+                              cursorColor: Theme.of(context).primaryColor,
                               decoration:
                                   _fieldDecoration('Conducted / Sponsored By'),
                             ),
@@ -537,7 +544,7 @@ class _LearningDevelopmentWidgetState
         return StatefulBuilder(
           builder: (ctx, setDialogState) {
             return Dialog(
-              backgroundColor: Colors.white,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
               insetPadding: EdgeInsets.symmetric(
@@ -558,7 +565,11 @@ class _LearningDevelopmentWidgetState
                             // Training Program Title
                             TextField(
                               controller: titleController,
-                              cursorColor: const Color(0xFF2C5F4F),
+                              cursorColor: Theme.of(context).primaryColor,
+                              style: TextStyle(
+  fontSize: 13,
+  color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
+),
                               decoration:
                                   _fieldDecoration('Training Program Title *'),
                             ),
@@ -570,8 +581,12 @@ class _LearningDevelopmentWidgetState
                                 Expanded(
                                   child: TextField(
                                     controller: attendedFromController,
+                                    style: TextStyle(
+  fontSize: 13,
+  color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
+),
                                     readOnly: true,
-                                    cursorColor: const Color(0xFF2C5F4F),
+                                    cursorColor: Theme.of(context).primaryColor,
                                     decoration: _fieldDecoration('Date From',
                                         isDate: true),
                                     onTap: () async {
@@ -588,8 +603,12 @@ class _LearningDevelopmentWidgetState
                                 Expanded(
                                   child: TextField(
                                     controller: attendedToController,
+                                    style: TextStyle(
+  fontSize: 13,
+  color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
+),
                                     readOnly: true,
-                                    cursorColor: const Color(0xFF2C5F4F),
+                                    cursorColor: Theme.of(context).primaryColor,
                                     decoration: _fieldDecoration('Date To',
                                         isDate: true),
                                     onTap: () async {
@@ -612,7 +631,11 @@ class _LearningDevelopmentWidgetState
                                 Expanded(
                                   child: TextField(
                                     controller: hoursController,
-                                    cursorColor: const Color(0xFF2C5F4F),
+                                    cursorColor: Theme.of(context).primaryColor,
+                                    style: TextStyle(
+  fontSize: 13,
+  color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
+),
                                     keyboardType: TextInputType.number,
                                     decoration: _fieldDecoration('No. of Hours'),
                                   ),
@@ -621,7 +644,11 @@ class _LearningDevelopmentWidgetState
                                 Expanded(
                                   child: TextField(
                                     controller: ldTypeController,
-                                    cursorColor: const Color(0xFF2C5F4F),
+                                    cursorColor: Theme.of(context).primaryColor,
+                                    style: TextStyle(
+  fontSize: 13,
+  color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
+),
                                     decoration: _fieldDecoration('Type of L&D'),
                                   ),
                                 ),
@@ -632,7 +659,11 @@ class _LearningDevelopmentWidgetState
                             // Conducted / Sponsored By
                             TextField(
                               controller: conductedByController,
-                              cursorColor: const Color(0xFF2C5F4F),
+                              cursorColor: Theme.of(context).primaryColor,
+                              style: TextStyle(
+  fontSize: 13,
+  color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
+),
                               decoration:
                                   _fieldDecoration('Conducted / Sponsored By'),
                             ),
@@ -690,8 +721,8 @@ class _LearningDevelopmentWidgetState
           // Header with Add button
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: const BoxDecoration(
-              color: Color(0xFF2C5F4F),
+            decoration: BoxDecoration(
+              color: Theme.of(context).primaryColor,
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(8),
                 topRight: Radius.circular(8),
@@ -754,9 +785,6 @@ class _LearningDevelopmentWidgetState
                               return Container(
                                 margin: const EdgeInsets.only(bottom: 8),
                                 padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(8)),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -779,10 +807,10 @@ class _LearningDevelopmentWidgetState
                                             }),
                                             child: Text(
                                               training['title'] ?? 'N/A',
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                   fontSize: 15,
                                                   fontWeight: FontWeight.bold,
-                                                  color: Colors.black),
+                                                   color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,),
                                             ),
                                           ),
                                         ),
@@ -803,14 +831,14 @@ class _LearningDevelopmentWidgetState
                                                 ? Icons.expand_more
                                                 : Icons.expand_less,
                                             size: 20,
-                                            color: Colors.black,
+                                            color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
                                           ),
                                         ),
                                         const SizedBox(width: 4),
 
                                         // 3-dot menu — Edit opens popup dialog
                                         PopupMenuButton<String>(
-                                          color: Colors.white,
+                                          color: Theme.of(context).scaffoldBackgroundColor,
                                           position: PopupMenuPosition.under,
                                           shape: RoundedRectangleBorder(
                                             borderRadius:
@@ -820,9 +848,9 @@ class _LearningDevelopmentWidgetState
                                           ),
                                           icon: Container(
                                             padding: const EdgeInsets.all(6),
-                                            child: const Icon(Icons.more_horiz,
+                                            child: Icon(Icons.more_horiz,
                                                 size: 18,
-                                                color: Colors.black87),
+                                                color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,),
                                           ),
                                           padding: EdgeInsets.zero,
                                           onSelected: (value) {
@@ -838,16 +866,18 @@ class _LearningDevelopmentWidgetState
                                               value: 'edit',
                                               height: 30,
                                               child: Row(
-                                                children: const [
+                                                children: [
                                                   Icon(Icons.edit,
                                                       size: 15,
-                                                      color: Colors.black87),
+                                                      color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87),
                                                   SizedBox(width: 8),
                                                   Text('Edit',
                                                       style: TextStyle(
                                                           fontSize: 12,
                                                           fontWeight:
-                                                              FontWeight.w500)),
+                                                              FontWeight.w500,
+                                                              color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87
+                                                              )),
                                                 ],
                                               ),
                                             ),
@@ -943,30 +973,28 @@ class _LearningDevelopmentWidgetState
   // ─── Field display helpers (UNCHANGED) ────────────────────────────────────
 
   Widget _buildInfoFieldInline(String label, dynamic value) {
-    String displayValue = 'N/A';
-    if (value != null &&
-        value.toString().isNotEmpty &&
-        value.toString() != 'null') {
-      displayValue = value.toString();
-    }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label,
-            style: TextStyle(
-                fontSize: 15,
-                color: Colors.grey[600],
-                fontWeight: FontWeight.w500)),
-        const SizedBox(height: 1),
-        Text(displayValue,
-            style: const TextStyle(
-                fontSize: 15,
-                color: Colors.black87,
-                fontWeight: FontWeight.bold)),
-      ],
-    );
+  String displayValue = 'N/A';
+  if (value != null && value.toString().isNotEmpty && value.toString() != 'null') {
+    displayValue = value.toString();
   }
-
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(label,
+          style: TextStyle(
+              fontSize: 15,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.grey[400] : Colors.grey[600],
+              fontWeight: FontWeight.w500)),
+      const SizedBox(height: 1),
+      Text(displayValue,
+          style: TextStyle(
+              fontSize: 15,
+              color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
+              fontWeight: FontWeight.bold)),
+    ],
+  );
+}
 
   @override
   Widget build(BuildContext context) {

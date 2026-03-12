@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_application/services/user_service.dart';
 
-/// Widget for managing miscellaneous employee information including skills, distinctions, and memberships.
 class OtherInformationWidget extends StatefulWidget {
   final String token;
   final String employeeId;
@@ -202,47 +201,53 @@ class _OtherInformationWidgetState extends State<OtherInformationWidget> {
   // ─── Dialog helpers (L&D style) ────────────────────────────────────────────
 
   /// Filled grey field — matches L&D style, with optional disabled state.
-  InputDecoration _fieldDeco(String label, {bool enabled = true}) =>
-      
-      InputDecoration(
-        labelText: label,
-        labelStyle: TextStyle(
-            fontSize: 14,
-            color: enabled ? Colors.grey : Colors.grey[400]),
-        floatingLabelStyle: TextStyle(
-          fontSize: 16,
-          color: enabled ? const Color(0xFF2C5F4F) : Colors.grey[400],
-        ),
-        filled: true,
-        fillColor: enabled ? const Color(0xFFF5F5F5) : const Color(0xFFF0F0F0),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6),
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6),
-          borderSide: const BorderSide(color: Color(0xFF2C5F4F), width: 1.5),
-        ),
-        disabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6),
-          borderSide: BorderSide.none,
-        ),
-        isDense: true,
-      );
+InputDecoration _fieldDeco(String label, {bool enabled = true}) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  return InputDecoration(
+    labelText: label,
+    labelStyle: TextStyle(
+        fontSize: 14,
+        color: enabled
+            ? (isDark ? Colors.grey[400] : Colors.grey)
+            : Colors.grey[600]),
+    floatingLabelStyle: TextStyle(
+      fontSize: 16,
+      color: enabled
+          ? (isDark ? Theme.of(context).colorScheme.secondary : Theme.of(context).primaryColor)
+          : Colors.grey[500],
+    ),
+    filled: true,
+    fillColor: enabled
+        ? (isDark ? const Color(0xFF2C2C2C) : const Color(0xFFF5F5F5))
+        : (isDark ? const Color(0xFF232323) : const Color(0xFFF0F0F0)),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide.none),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(6),
+      borderSide: BorderSide(color: isDark ? const Color(0xFF424242) : Colors.transparent),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(6),
+      borderSide: BorderSide(
+        color: isDark ? Theme.of(context).colorScheme.secondary : Theme.of(context).primaryColor,
+        width: 1.5,
+      ),
+    ),
+    disabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(6),
+      borderSide: BorderSide(color: isDark ? const Color(0xFF333333) : Colors.transparent),
+    ),
+    isDense: true,
+  );
+}
 
   /// Dark green header banner — matches L&D style.
   Widget _dialogHeader(String title) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: const BoxDecoration(
-        color: Color(0xFF2C5F4F),
+      decoration: BoxDecoration(
+        color: Theme.of(context).primaryColor,
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(12),
           topRight: Radius.circular(12),
@@ -270,6 +275,7 @@ class _OtherInformationWidgetState extends State<OtherInformationWidget> {
   /// Save / Cancel button row — matches L&D style.
   Widget _dialogActions(BuildContext ctx, VoidCallback? onSave,
       {String saveLabel = 'Save'}) {
+         final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       child: Row(
@@ -279,7 +285,7 @@ class _OtherInformationWidgetState extends State<OtherInformationWidget> {
               onPressed: onSave,
               style: OutlinedButton.styleFrom(
                 backgroundColor: onSave != null
-                    ? const Color(0xFF2C5F4F)
+                    ? Theme.of(context).primaryColor
                     : Colors.grey[300],
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 12),
@@ -298,19 +304,17 @@ class _OtherInformationWidgetState extends State<OtherInformationWidget> {
             ),
           ),
           const SizedBox(width: 12),
-          Expanded(
-            child: ElevatedButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.grey[200],
-                foregroundColor: Colors.black87,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                elevation: 0,
-              ),
-              child: const Text('Cancel'),
+         Expanded(
+          child: ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isDark ? const Color(0xFF3A3A3A) : Colors.grey[200],
+              foregroundColor: isDark ? Colors.white : Colors.black87,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              elevation: 0,
+            ),
+            child: const Text('Cancel'),
             ),
           ),
         ],
@@ -319,27 +323,27 @@ class _OtherInformationWidgetState extends State<OtherInformationWidget> {
   }
 
   /// Section divider header — kept for Add dialog's "one field only" sections.
-  Widget _sectionHeader( String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Row(
-        children: [
-          
-          const SizedBox(width: 6),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF2C5F4F),
-            ),
+ Widget _sectionHeader(String title) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 20),
+    child: Row(
+      children: [
+        const SizedBox(width: 6),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: isDark ? Theme.of(context).colorScheme.secondary : Theme.of(context).primaryColor,
           ),
-          const SizedBox(width: 8),
-          Expanded(child: Divider(color: Colors.grey[300], thickness: 1)),
-        ],
-      ),
-    );
-  }
+        ),
+        const SizedBox(width: 8),
+        Expanded(child: Divider(color: Colors.grey[isDark ? 700 : 300], thickness: 1)),
+      ],
+    ),
+  );
+}
 
   // ─── Edit Other Info Dialog ────────────────────────────────────────────────
 
@@ -377,7 +381,7 @@ class _OtherInformationWidgetState extends State<OtherInformationWidget> {
         return StatefulBuilder(
           builder: (ctx, setDialogState) {
             return Dialog(
-              backgroundColor: Colors.white,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
               insetPadding: EdgeInsets.symmetric(
@@ -400,7 +404,7 @@ class _OtherInformationWidgetState extends State<OtherInformationWidget> {
                         children: [
                           TextFormField(
                             controller: controller,
-                            cursorColor: const Color(0xFF2C5F4F),
+                            cursorColor: Theme.of(context).primaryColor,
                             style: const TextStyle(fontSize: 14),
                             autofocus: true,
                             decoration: _fieldDeco(labelText),
@@ -464,7 +468,7 @@ class _OtherInformationWidgetState extends State<OtherInformationWidget> {
             final bool hasMembershipText = membershipController.text.isNotEmpty;
 
             return Dialog(
-              backgroundColor: Colors.white,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
               insetPadding: EdgeInsets.symmetric(
@@ -488,39 +492,47 @@ class _OtherInformationWidgetState extends State<OtherInformationWidget> {
                         children: [
                           // Hint banner
                           Container(
-                            padding: const EdgeInsets.all(10),
-                            margin: const EdgeInsets.only(bottom: 16),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFEFF6F3),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                  color: const Color(0xFF2C5F4F)
-                                      .withOpacity(0.2)),
-                            ),
-                            child: Row(
-                              children: const [
-                                Icon(Icons.info_outline,
-                                    size: 16, color: Color(0xFF2C5F4F)),
-                                SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    'Fill in only ONE field below',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Color(0xFF2C5F4F),
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+  padding: const EdgeInsets.all(10),
+  margin: const EdgeInsets.only(bottom: 16),
+  decoration: BoxDecoration(
+    color: Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFF1A2E27)
+        : const Color(0xFFEFF6F3),
+    borderRadius: BorderRadius.circular(8),
+    border: Border.all(color: Theme.of(context).primaryColor.withOpacity(0.2)),
+  ),
+  child: Row(
+    children: [
+      Icon(Icons.info_outline, size: 16,
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Theme.of(context).colorScheme.secondary
+              : Theme.of(context).primaryColor),
+      const SizedBox(width: 8),
+      Expanded(
+        child: Text(
+          'Fill in only ONE field below',
+          style: TextStyle(
+            fontSize: 12,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Theme.of(context).colorScheme.secondary
+                : Theme.of(context).primaryColor,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+    ],
+  ),
+),
 
                           _sectionHeader( 'Special Skill / Hobby'),
                           TextFormField(
                             controller: skillController,
                             enabled: !hasDistinctionText && !hasMembershipText,
-                            cursorColor: const Color(0xFF2C5F4F),
+                            cursorColor: Theme.of(context).primaryColor,
+                            style: TextStyle(
+  fontSize: 14,
+  color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
+),
                             decoration: _fieldDeco(
                               'Special Skill/Hobby',
                               enabled: !hasDistinctionText && !hasMembershipText,
@@ -534,7 +546,11 @@ class _OtherInformationWidgetState extends State<OtherInformationWidget> {
                           TextFormField(
                             controller: distinctionController,
                             enabled: !hasSkillText && !hasMembershipText,
-                            cursorColor: const Color(0xFF2C5F4F),
+                            cursorColor: Theme.of(context).primaryColor,
+                            style: TextStyle(
+  fontSize: 14,
+  color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
+),
                             decoration: _fieldDeco(
                               'Non-Academic Distinction/Recognition',
                               enabled: !hasSkillText && !hasMembershipText,
@@ -548,7 +564,11 @@ class _OtherInformationWidgetState extends State<OtherInformationWidget> {
                           TextFormField(
                             controller: membershipController,
                             enabled: !hasSkillText && !hasDistinctionText,
-                            cursorColor: const Color(0xFF2C5F4F),
+                            style: TextStyle(
+  fontSize: 14,
+  color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
+),
+                            cursorColor: Theme.of(context).primaryColor,
                             decoration: _fieldDeco(
                               'Membership in Association/Organization',
                               enabled: !hasSkillText && !hasDistinctionText,
@@ -605,8 +625,8 @@ class _OtherInformationWidgetState extends State<OtherInformationWidget> {
           // ── Header ──
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: const BoxDecoration(
-              color: Color(0xFF2C5F4F),
+            decoration: BoxDecoration(
+              color: Theme.of(context).primaryColor,
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(8),
                 topRight: Radius.circular(8),
@@ -640,12 +660,14 @@ class _OtherInformationWidgetState extends State<OtherInformationWidget> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // ── Special Skills ──
-                  const Text(
+                   Text(
                     'Special Skills and Hobbies',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: Color.fromARGB(255, 97, 97, 97),
+                      color: Theme.of(context).brightness == Brightness.dark
+        ? Colors.grey[300]
+        : const Color.fromARGB(255, 97, 97, 97),
                     ),
                   ),
                   const SizedBox(height: 5),
@@ -667,15 +689,15 @@ class _OtherInformationWidgetState extends State<OtherInformationWidget> {
                     final int index = entry.key;
                     final Map<String, dynamic> skill = entry.value;
                     return Container(
+                      margin: const EdgeInsets.only(bottom: 8),
                       padding: const EdgeInsets.only(left: 10),
-                      decoration: const BoxDecoration(color: Colors.white),
                       child: Row(
                         children: [
                           Expanded(
                               child:
                                   _buildInfoFieldInline('', skill['skill'])),
                           PopupMenuButton<String>(
-                            color: Colors.white,
+                            color: Theme.of(context).scaffoldBackgroundColor,
                             position: PopupMenuPosition.under,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14),
@@ -683,8 +705,8 @@ class _OtherInformationWidgetState extends State<OtherInformationWidget> {
                             ),
                             icon: Container(
                               padding: const EdgeInsets.all(6),
-                              child: const Icon(Icons.more_horiz,
-                                  size: 18, color: Colors.black87),
+                              child: Icon(Icons.more_horiz,
+                                  size: 18, color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87),
                             ),
                             padding: EdgeInsets.zero,
                             onSelected: (value) async {
@@ -706,12 +728,14 @@ class _OtherInformationWidgetState extends State<OtherInformationWidget> {
                   const SizedBox(height: 30),
 
                   // ── Non-Academic Distinctions ──
-                  const Text(
+                   Text(
                     'Non-Academic Distinctions /\nRecognition',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: Color.fromARGB(255, 97, 97, 97),
+                     color: Theme.of(context).brightness == Brightness.dark
+        ? Colors.grey[300]
+        : const Color.fromARGB(255, 97, 97, 97),
                     ),
                   ),
                   const SizedBox(height: 5),
@@ -735,14 +759,14 @@ class _OtherInformationWidgetState extends State<OtherInformationWidget> {
                     return Container(
                       margin: const EdgeInsets.only(bottom: 8),
                       padding: const EdgeInsets.only(left: 10),
-                      decoration: const BoxDecoration(color: Colors.white),
+                  
                       child: Row(
                         children: [
                           Expanded(
                               child: _buildInfoFieldInline(
                                   '', distinction['distinction'])),
                           PopupMenuButton<String>(
-                            color: Colors.white,
+                            color: Theme.of(context).scaffoldBackgroundColor,
                             position: PopupMenuPosition.under,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14),
@@ -750,8 +774,8 @@ class _OtherInformationWidgetState extends State<OtherInformationWidget> {
                             ),
                             icon: Container(
                               padding: const EdgeInsets.all(6),
-                              child: const Icon(Icons.more_horiz,
-                                  size: 18, color: Colors.black87),
+                              child: Icon(Icons.more_horiz,
+                                  size: 18,  color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87),
                             ),
                             padding: EdgeInsets.zero,
                             onSelected: (value) async {
@@ -775,12 +799,14 @@ class _OtherInformationWidgetState extends State<OtherInformationWidget> {
                   const SizedBox(height: 30),
 
                   // ── Membership ──
-                  const Text(
+                  Text(
                     'Membership in Association /\nOrganization',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: Color.fromARGB(255, 97, 97, 97),
+                     color: Theme.of(context).brightness == Brightness.dark
+        ? Colors.grey[300]
+        : const Color.fromARGB(255, 97, 97, 97),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -804,14 +830,13 @@ class _OtherInformationWidgetState extends State<OtherInformationWidget> {
                     return Container(
                       margin: const EdgeInsets.only(bottom: 8),
                       padding: const EdgeInsets.only(left: 10),
-                      decoration: const BoxDecoration(color: Colors.white),
                       child: Row(
                         children: [
                           Expanded(
                               child: _buildInfoFieldInline(
                                   '', membership['organization'])),
                           PopupMenuButton<String>(
-                            color: Colors.white,
+                            color: Theme.of(context).scaffoldBackgroundColor,
                             position: PopupMenuPosition.under,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14),
@@ -819,8 +844,8 @@ class _OtherInformationWidgetState extends State<OtherInformationWidget> {
                             ),
                             icon: Container(
                               padding: const EdgeInsets.all(6),
-                              child: const Icon(Icons.more_horiz,
-                                  size: 18, color: Colors.black87),
+                              child: Icon(Icons.more_horiz,
+                                  size: 18, color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87),
                             ),
                             padding: EdgeInsets.zero,
                             onSelected: (value) async {
@@ -855,12 +880,12 @@ class _OtherInformationWidgetState extends State<OtherInformationWidget> {
           value: 'edit',
           height: 30,
           child: Row(
-            children: const [
-              Icon(Icons.edit, size: 15, color: Colors.black87),
+            children: [
+              Icon(Icons.edit, size: 15,color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87),
               SizedBox(width: 8),
               Text('Edit',
                   style:
-                      TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+                      TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87)),
             ],
           ),
         ),
@@ -884,58 +909,61 @@ class _OtherInformationWidgetState extends State<OtherInformationWidget> {
 
   // ─── Display helper ────────────────────────────────────────────────────────
 
-  Widget _buildInfoFieldInline(String label, dynamic value) {
-    String displayValue = 'N/A';
-    if (value != null &&
-        value.toString().isNotEmpty &&
-        value.toString() != 'null') {
-      displayValue = value.toString();
-    }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
+ Widget _buildInfoFieldInline(String label, dynamic value) {
+  String displayValue = 'N/A';
+  if (value != null && value.toString().isNotEmpty && value.toString() != 'null') {
+    displayValue = value.toString();
+  }
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      if (label.isNotEmpty)
+        Text(label,
+            style: TextStyle(
+                fontSize: 15,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.grey[400] : Colors.grey[600],
+                fontWeight: FontWeight.w500)),
+      if (label.isNotEmpty) const SizedBox(height: 1),
+      Text(displayValue,
           style: TextStyle(
               fontSize: 15,
-              color: Colors.grey[600],
-              fontWeight: FontWeight.w500),
-        ),
-        const SizedBox(height: 1),
-        Text(
-          displayValue,
-          style: const TextStyle(
-              fontSize: 15,
-              color: Colors.black87,
-              fontWeight: FontWeight.bold),
-        ),
-      ],
-    );
-  }
-
+              color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
+              fontWeight: FontWeight.bold)),
+    ],
+  );
+}
   // ─── Delete confirmations ──────────────────────────────────────────────────
 
   Future<void> _deleteSpecialSkill(int index) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
-        title: const Text('Delete Special Skill'),
-        content: const Text(
-            'Are you sure you want to delete this special skill?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            style: TextButton.styleFrom(foregroundColor: Colors.black),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
-          ),
-        ],
+   builder: (context) => AlertDialog(
+  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+  title: Text(
+    'Delete Special Skill', // (and the other two titles)
+    style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
+  ),
+  content: Text(
+    'Are you sure you want to delete this special skill?', // (and the other two messages)
+    style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
+  ),
+  actions: [
+    TextButton(
+      onPressed: () => Navigator.pop(context, false),
+      style: TextButton.styleFrom(
+        foregroundColor: Theme.of(context).brightness == Brightness.dark
+            ? Colors.grey[300] : Colors.black,
       ),
+      child: const Text('Cancel'),
+    ),
+    TextButton(
+      onPressed: () => Navigator.pop(context, true),
+      style: TextButton.styleFrom(foregroundColor: Colors.red),
+      child: const Text('Delete'),
+    ),
+  ],
+),
     );
     if (confirmed != true) return;
 
@@ -953,9 +981,9 @@ class _OtherInformationWidgetState extends State<OtherInformationWidget> {
     if (response['success']) {
       await _fetchOtherInfoData();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar( SnackBar(
             content: Text('Skill deleted successfully'),
-            backgroundColor: Colors.green));
+            backgroundColor: Theme.of(context).primaryColor));
       }
     } else {
       if (mounted) {
@@ -1005,9 +1033,9 @@ class _OtherInformationWidgetState extends State<OtherInformationWidget> {
     if (response['success']) {
       await _fetchOtherInfoData();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar( SnackBar(
             content: Text('Distinction deleted successfully'),
-            backgroundColor: Colors.green));
+            backgroundColor: Theme.of(context).primaryColor));
       }
     } else {
       if (mounted) {
@@ -1056,9 +1084,9 @@ class _OtherInformationWidgetState extends State<OtherInformationWidget> {
     if (response['success']) {
       await _fetchOtherInfoData();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar( SnackBar(
             content: Text('Membership deleted successfully'),
-            backgroundColor: Colors.green));
+            backgroundColor: Theme.of(context).primaryColor));
       }
     } else {
       if (mounted) {

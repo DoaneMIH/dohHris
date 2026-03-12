@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
-import 'package:mobile_application/pages/login_page.dart';
+import 'package:mobile_application/services/auth_service.dart';
 import 'package:mobile_application/services/user_profile_cache.dart';
 import 'package:mobile_application/services/token_manager.dart';
 import 'package:mobile_application/services/user_service.dart';
+import 'package:provider/provider.dart';
+import 'package:mobile_application/providers/theme_provider.dart';
 
 
 // ════════════════════════════════════════════════════════════════════════════
-// _DisplayOnlyPhoto  — identical to user_details.dart version
+// _DisplayOnlyPhoto
 // ════════════════════════════════════════════════════════════════════════════
 class _DisplayOnlyPhoto extends StatefulWidget {
   final String? photoUrl;
@@ -22,7 +24,8 @@ class _DisplayOnlyPhoto extends StatefulWidget {
     required this.baseUrl,
     required this.token,
     required this.userName,
-    required this.radius, required ValueKey<String> key,
+    required this.radius,
+    required ValueKey<String> key,
   });
 
   @override
@@ -62,7 +65,6 @@ class _DisplayOnlyPhotoState extends State<_DisplayOnlyPhoto> {
     setState(() { _isLoading = true; _hasError = false; });
 
     try {
-      // ── Exact same URL-building logic as user_details.dart ──
       String fullPhotoUrl;
       if (widget.photoUrl!.startsWith('http')) {
         fullPhotoUrl = widget.photoUrl!;
@@ -72,7 +74,6 @@ class _DisplayOnlyPhotoState extends State<_DisplayOnlyPhoto> {
         fullPhotoUrl = '${widget.baseUrl ?? ''}/employee/image/${widget.photoUrl}';
       }
 
-      // ── TokenManager is primary source, widget.token is fallback ──
       final token = TokenManager().token ?? widget.token;
 
       final response = await http.get(
@@ -121,7 +122,6 @@ class _DisplayOnlyPhotoState extends State<_DisplayOnlyPhoto> {
       );
     }
 
-    // Fallback: initials
     final initials = widget.userName.isNotEmpty
         ? widget.userName.trim().split(' ')
             .where((w) => w.isNotEmpty)
@@ -150,7 +150,6 @@ class _DisplayOnlyPhotoState extends State<_DisplayOnlyPhoto> {
 // ════════════════════════════════════════════════════════════════════════════
 // AboutPage
 // ════════════════════════════════════════════════════════════════════════════
-/// About page displaying app information, version, and contact details for user reference.
 class AboutPage extends StatefulWidget {
   final String token;
   final String baseUrl;
@@ -168,13 +167,11 @@ class AboutPage extends StatefulWidget {
 class _AboutPageState extends State<AboutPage> {
   final _userService = UserService();
 
-  // ── Exact same data fields + field paths as user_details.dart ──
-  Map<String, dynamic>? _userDetails; // stores full result['data']
+  Map<String, dynamic>? _userDetails;
   bool _isFetchingPhoto = false;
 
-  // Convenience getters — mirrors user_details.dart's own access pattern
-  String? get _photoUrl  => _userDetails?['employee']?['photoUrl']?.toString();
-  String  get _userName  => (_userDetails?['name'] ?? 'User').toString();
+  String? get _photoUrl => _userDetails?['employee']?['photoUrl']?.toString();
+  String  get _userName => (_userDetails?['name'] ?? 'User').toString();
 
   @override
   void initState() {
@@ -182,9 +179,6 @@ class _AboutPageState extends State<AboutPage> {
     _fetchUserData();
   }
 
-  // ─── Fetch user data and push into UserProfileCache ──────────────────────
-  // Runs once on init as a seed — after this, user_details.dart keeps
-  // UserProfileCache updated automatically via setFromUserDetails().
   Future<void> _fetchUserData() async {
     if (_isFetchingPhoto) return;
     if (mounted) setState(() => _isFetchingPhoto = true);
@@ -193,31 +187,21 @@ class _AboutPageState extends State<AboutPage> {
       final token = TokenManager().token ?? widget.token;
       final result = await _userService.getUserDetails(token);
 
-      // ── Truthy check — same as user_details.dart: if (result['success']) ──
       if (result['success']) {
         final data = result['data'];
         if (data != null && mounted) {
           setState(() => _userDetails = data);
-          // ── Push into cache so ValueListenableBuilder rebuilds avatar ──
           UserProfileCache.instance.setFromUserDetails(data);
         }
       }
     } catch (_) {
-      // Silently ignore — avatar falls back to initials
+      // Silently ignore
     } finally {
       if (mounted) setState(() => _isFetchingPhoto = false);
     }
   }
 
-  // ─── Logout ───────────────────────────────────────────────────────────────
-  void _logout() {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const LoginPage()),
-    );
-  }
-
-  // ─── Reset / Change Password Dialog ──────────────────────────────────────
+  // ─── Reset Password Dialog ────────────────────────────────────────────────
   void _showResetPasswordDialog() {
     final currentPasswordController = TextEditingController();
     final newPasswordController     = TextEditingController();
@@ -254,6 +238,7 @@ class _AboutPageState extends State<AboutPage> {
       builder: (BuildContext dialogContext) {
         return StatefulBuilder(
           builder: (dialogContext, setDs) {
+            final isDark = Theme.of(context).brightness == Brightness.dark;
 
             Widget buildField({
               required TextEditingController controller,
@@ -270,27 +255,46 @@ class _AboutPageState extends State<AboutPage> {
                     controller: controller,
                     obscureText: obscure,
                     onChanged: onChanged,
-                    style: const TextStyle(fontSize: 14),
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
+                    ),
                     decoration: InputDecoration(
                       hintText: hint,
-                      hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
+                      hintStyle: TextStyle(
+                        color: isDark ? Colors.grey[400] : Colors.grey[500],
+                        fontSize: 13,
+                      ),
                       filled: true,
-                      fillColor: errorText != null ? const Color(0xFFFFF0F0) : const Color(0xFFF0F4F3),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide.none),
+                      fillColor: errorText != null
+                          ? (isDark ? const Color(0xFF3C2020) : const Color(0xFFFFF0F0))
+                          : (isDark ? const Color(0xFF2C2C2C) : const Color(0xFFF0F4F3)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        borderSide: BorderSide.none,
+                      ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(6),
-                        borderSide: errorText != null ? const BorderSide(color: Colors.red, width: 1) : BorderSide.none,
+                        borderSide: errorText != null
+                            ? const BorderSide(color: Colors.red, width: 1)
+                            : BorderSide(
+                                color: isDark ? const Color(0xFF424242) : Colors.transparent,
+                              ),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(6),
                         borderSide: BorderSide(
-                          color: errorText != null ? Colors.red : const Color(0xFF00674F),
+                          color: errorText != null ? Colors.red : Theme.of(context).primaryColor,
                           width: 1.5,
                         ),
                       ),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                       suffixIcon: IconButton(
-                        icon: Icon(obscure ? Icons.visibility_off : Icons.visibility, size: 18, color: Colors.grey),
+                        icon: Icon(
+                          obscure ? Icons.visibility_off : Icons.visibility,
+                          size: 18,
+                          color: isDark ? Colors.grey[400] : Colors.grey,
+                        ),
                         onPressed: onToggle,
                       ),
                     ),
@@ -310,15 +314,21 @@ class _AboutPageState extends State<AboutPage> {
             Widget buildStrength(String password) {
               if (password.isEmpty) return const SizedBox.shrink();
               Widget rule(bool met, String label) => Row(children: [
-                Icon(met ? Icons.check_circle : Icons.radio_button_unchecked,
-                    size: 13, color: met ? const Color(0xFF00674F) : Colors.grey),
+                Icon(
+                  met ? Icons.check_circle : Icons.radio_button_unchecked,
+                  size: 13,
+                  color: met ? Theme.of(context).primaryColor : Colors.grey,
+                ),
                 const SizedBox(width: 5),
-                Text(label, style: TextStyle(fontSize: 11, color: met ? const Color(0xFF00674F) : Colors.grey[600])),
+                Text(label, style: TextStyle(
+                  fontSize: 11,
+                  color: met ? Theme.of(context).primaryColor : Colors.grey[600],
+                )),
               ]);
               return Padding(
                 padding: const EdgeInsets.only(top: 6),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  rule(hasMinLength(password),   'At least 8 characters'),
+                  rule(hasMinLength(password), 'At least 8 characters'),
                   const SizedBox(height: 2),
                   rule(hasSpecialChar(password), 'At least 1 special character (e.g. @, #, !)'),
                 ]),
@@ -353,9 +363,9 @@ class _AboutPageState extends State<AboutPage> {
 
               if (result['success']) {
                 Navigator.of(dialogContext).pop();
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                ScaffoldMessenger.of(context).showSnackBar( SnackBar(
                   content: Text('Password changed successfully.'),
-                  backgroundColor: Colors.green,
+                  backgroundColor: Theme.of(context).primaryColor,
                 ));
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -366,21 +376,27 @@ class _AboutPageState extends State<AboutPage> {
             }
 
             return Dialog(
-              backgroundColor: Colors.white,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF00674F),
-                      borderRadius: BorderRadius.only(topLeft: Radius.circular(12), topRight: Radius.circular(12)),
+                    decoration:  BoxDecoration(
+                      color: Theme.of(context).primaryColor,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(12),
+                        topRight: Radius.circular(12),
+                      ),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Change Password', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
+                        const Text(
+                          'Change Password',
+                          style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+                        ),
                         GestureDetector(
                           onTap: isLoading ? null : () => Navigator.pop(dialogContext),
                           child: const Icon(Icons.close, color: Colors.white, size: 20),
@@ -393,11 +409,30 @@ class _AboutPageState extends State<AboutPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Enter Current Password', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black87)),
+                        Text(
+                          'Enter Current Password',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
+                          ),
+                        ),
                         const SizedBox(height: 6),
-                        buildField(controller: currentPasswordController, obscure: obscureCurrent, hint: 'Current password', onToggle: () => setDs(() => obscureCurrent = !obscureCurrent)),
+                        buildField(
+                          controller: currentPasswordController,
+                          obscure: obscureCurrent,
+                          hint: 'Current password',
+                          onToggle: () => setDs(() => obscureCurrent = !obscureCurrent),
+                        ),
                         const SizedBox(height: 14),
-                        const Text('Set New Password', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black87)),
+                        Text(
+                          'Set New Password',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
+                          ),
+                        ),
                         const SizedBox(height: 6),
                         buildField(
                           controller: newPasswordController,
@@ -405,11 +440,20 @@ class _AboutPageState extends State<AboutPage> {
                           hint: 'New password',
                           errorText: newPasswordError,
                           onToggle: () => setDs(() => obscureNew = !obscureNew),
-                          onChanged: (v) => setDs(() { if (newPasswordError != null) newPasswordError = validateNew(v); }),
+                          onChanged: (v) => setDs(() {
+                            if (newPasswordError != null) newPasswordError = validateNew(v);
+                          }),
                         ),
                         buildStrength(newPasswordController.text),
                         const SizedBox(height: 14),
-                        const Text('Confirm New Password', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black87)),
+                        Text(
+                          'Confirm New Password',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
+                          ),
+                        ),
                         const SizedBox(height: 6),
                         buildField(
                           controller: confirmPasswordController,
@@ -417,21 +461,29 @@ class _AboutPageState extends State<AboutPage> {
                           hint: 'Confirm new password',
                           errorText: confirmPasswordError,
                           onToggle: () => setDs(() => obscureConfirm = !obscureConfirm),
-                          onChanged: (v) => setDs(() { if (confirmPasswordError != null) confirmPasswordError = validateConfirm(newPasswordController.text, v); }),
+                          onChanged: (v) => setDs(() {
+                            if (confirmPasswordError != null) {
+                              confirmPasswordError = validateConfirm(newPasswordController.text, v);
+                            }
+                          }),
                         ),
                         const SizedBox(height: 22),
                         Row(children: [
                           Expanded(
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF00674F),
+                                backgroundColor: Theme.of(context).primaryColor,
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(vertical: 12),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                               ),
                               onPressed: isLoading ? null : onSave,
                               child: isLoading
-                                  ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                  ? const SizedBox(
+                                      height: 18,
+                                      width: 18,
+                                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                    )
                                   : const Text('Save', style: TextStyle(fontWeight: FontWeight.w700)),
                             ),
                           ),
@@ -439,10 +491,11 @@ class _AboutPageState extends State<AboutPage> {
                           Expanded(
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.grey[400],
-                                foregroundColor: Colors.white,
+                                backgroundColor: isDark ? const Color(0xFF3A3A3A) : Colors.grey[300],
+                                foregroundColor: isDark ? Colors.white : Colors.black87,
                                 padding: const EdgeInsets.symmetric(vertical: 12),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                                elevation: 0,
                               ),
                               onPressed: isLoading ? null : () => Navigator.pop(dialogContext),
                               child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w700)),
@@ -461,115 +514,140 @@ class _AboutPageState extends State<AboutPage> {
     );
   }
 
-  // ─── Header avatar — identical pattern to user_details.dart ──────────────
- Widget _buildHeaderAvatar() {
-  return Padding(
-    padding: const EdgeInsets.only(right: 12),
-    child: PopupMenuButton<String>(
-      color: Colors.white,
-      offset: const Offset(0, 50),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      onSelected: (value) {
-        if (value == 'reset_password') _showResetPasswordDialog();
-        else if (value == 'logout') _logout();
-      },
-      itemBuilder: (context) => [
-        PopupMenuItem(
-          value: 'reset_password',
-          child: Row(children: const [
-            Icon(Icons.lock_reset, color: Color(0xFF00674F), size: 20),
-            SizedBox(width: 10),
-            Text('Reset Password', style: TextStyle(fontSize: 14)),
-          ]),
-        ),
-        const PopupMenuDivider(),
-        PopupMenuItem(
-          value: 'logout',
-          child: Row(children: const [
-            Icon(Icons.logout, color: Colors.red, size: 20),
-            SizedBox(width: 10),
-            Text('Logout', style: TextStyle(fontSize: 14, color: Colors.red)),
-          ]),
-        ),
-      ],
-
-      // ✅ listen for photo updates
-        child: ValueListenableBuilder<int>(
-        valueListenable: UserProfileCache.instance.photoVersion, // ✅ NEW
-        builder: (context, version, _) {
-          return ValueListenableBuilder<String?>(
-            valueListenable: UserProfileCache.instance.photoUrl,
-            builder: (context, photoUrl, _) {
-              return ValueListenableBuilder<String>(
-                valueListenable: UserProfileCache.instance.userName,
-                builder: (context, name, __) {
-                  return _DisplayOnlyPhoto(
-                    key: ValueKey('avatar_$version'), // ✅ NEW — forces full rebuild + re-fetch
-                    photoUrl: photoUrl ?? _photoUrl,
-                    baseUrl: widget.baseUrl,
-                    token: widget.token,
-                    userName: name.isNotEmpty ? name : _userName,
-                    radius: 17,
-                  );
-                },
-              );
-            },
-          );
+  // ─── Header Avatar ────────────────────────────────────────────────────────
+  Widget _buildHeaderAvatar() {
+    return Padding(
+      padding: const EdgeInsets.only(right: 12),
+      child: PopupMenuButton<String>(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        offset: const Offset(0, 50),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        onSelected: (value) {
+          if (value == 'reset_password') _showResetPasswordDialog();
+          else if (value == 'logout') AuthService.logout(context);
         },
+        itemBuilder: (context) => [
+          PopupMenuItem(
+            value: 'reset_password',
+            child: Row(children: [
+              Icon(Icons.lock_reset, 
+              color: Theme.of(context).brightness == Brightness.dark
+                 ? Color(0xFF587CA5) // ←  in dark
+                  : Theme.of(context).primaryColor,           // ←  in light
+               size: 20),
+              const SizedBox(width: 10),
+              Text(
+                'Reset Password',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
+                ),
+              ),
+            ]),
+          ),
+          const PopupMenuDivider(),
+          PopupMenuItem(
+            value: 'logout',
+            child: Row(children: const [
+              Icon(Icons.logout, color: Colors.red, size: 20),
+              SizedBox(width: 10),
+              Text('Logout', style: TextStyle(fontSize: 14, color: Colors.red)),
+            ]),
+          ),
+        ],
+        child: ValueListenableBuilder<int>(
+          valueListenable: UserProfileCache.instance.photoVersion,
+          builder: (context, version, _) {
+            return ValueListenableBuilder<String?>(
+              valueListenable: UserProfileCache.instance.photoUrl,
+              builder: (context, photoUrl, _) {
+                return ValueListenableBuilder<String>(
+                  valueListenable: UserProfileCache.instance.userName,
+                  builder: (context, name, __) {
+                    return _DisplayOnlyPhoto(
+                      key: ValueKey('avatar_$version'),
+                      photoUrl: photoUrl ?? _photoUrl,
+                      baseUrl: widget.baseUrl,
+                      token: widget.token,
+                      userName: name.isNotEmpty ? name : _userName,
+                      radius: 17,
+                    );
+                  },
+                );
+              },
+            );
+          },
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    const blue = Color(0xFF1F2A45);
+
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Header bar — pixel-identical to UserDetailsPage AppBar ──
+          // ── AppBar ──────────────────────────────────────────────────────
           AppBar(
-  iconTheme: const IconThemeData(color: Colors.white),
-  automaticallyImplyLeading: false,
-  backgroundColor: const Color(0xFF2C5F4F),
-  title: Row(
-    children: [
-      const SizedBox(width: 10),
-      CircleAvatar(
-        backgroundColor: Colors.transparent,
-        child: Image.asset('assets/logo.png', width: 200, height: 200, fit: BoxFit.cover),
-      ),
-      const SizedBox(width: 7),
-      CircleAvatar(
-        backgroundColor: Colors.transparent,
-        child: Image.asset('assets/bp_logo.png', width: 100, height: 100, fit: BoxFit.cover),
-      ),
-      const SizedBox(width: 20),
-      Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          Text('DOH WV CHD', textAlign: TextAlign.left, style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: 0.9)),
-          Text('HRIS', textAlign: TextAlign.left, style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
-        ],
-      ),
-    ],
-  ),
-                    actions: [
-                  _buildHeaderAvatar(),
-                    ],
-              
+            iconTheme: const IconThemeData(color: Colors.white),
+            automaticallyImplyLeading: false,
+            backgroundColor: blue,
+            title: Row(
+              children: [
+                const SizedBox(width: 10),
+                CircleAvatar(
+                  backgroundColor: Colors.transparent,
+                  child: Image.asset('assets/logo.png', width: 200, height: 200, fit: BoxFit.cover),
+                ),
+                const SizedBox(width: 7),
+                CircleAvatar(
+                  backgroundColor: Colors.transparent,
+                  child: Image.asset('assets/bp_logo.png', width: 100, height: 100, fit: BoxFit.cover),
+                ),
+                const SizedBox(width: 20),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Text('DOH WV CHD', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: 0.9)),
+                    Text('HRIS', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
+                  ],
+                ),
+              ],
             ),
+            actions: [
+              // Theme toggle
+              Consumer<ThemeProvider>(
+                builder: (context, themeProvider, _) {
+                  return IconButton(
+                    icon: Icon(
+                      themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+                      color: Colors.white,
+                      size: 22,
+                    ),
+                    onPressed: () => themeProvider.toggleTheme(),
+                  );
+                },
+              ),
+              _buildHeaderAvatar(),
+            ],
+          ),
 
-          // ── Body ──────────────────────────────────────────────────────
+          // ── Body ────────────────────────────────────────────────────────
           Container(
-            color: Colors.white,
+            color: Theme.of(context).scaffoldBackgroundColor,
             width: double.infinity,
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+
+                  // ── Logo circle ──────────────────────────────────────
                   Center(
                     child: Container(
                       width: 90,
@@ -577,10 +655,12 @@ class _AboutPageState extends State<AboutPage> {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         // ignore: deprecated_member_use
-                        color: const Color(0xFF2C5F4F).withOpacity(0.08),
+                        color: isDark
+                            ? const Color(0xFF1A2E27)
+                            : blue.withOpacity(0.08),
                         border: Border.all(
                           // ignore: deprecated_member_use
-                          color: const Color(0xFF2C5F4F).withOpacity(0.25),
+                          color: blue.withOpacity(0.25),
                           width: 2,
                         ),
                       ),
@@ -588,38 +668,65 @@ class _AboutPageState extends State<AboutPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
+
+                  // ── App title ────────────────────────────────────────
+                   Text(
                     'DOH WV CHD HRIS',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF2C5F4F), letterSpacing: 0.8),
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: Theme.of(context).brightness == Brightness.dark
+                            ? Color(0xFF587CA5)                          // ←  in dark
+                            : Theme.of(context).primaryColor,           // ←  in light
+                      letterSpacing: 0.8,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'Human Resource Information System',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: isDark ? Colors.grey[400] : Colors.black87,
+                    ),
                   ),
                   const SizedBox(height: 10),
-                  _buildBadge('Version 1.0.0', const Color(0xFF2C5F4F)),
+                  _buildBadge('Version 1.0.0', 
+                  Theme.of(context).brightness == Brightness.dark
+                            ? Color(0xFF587CA5)                          // ←  in dark
+                            : Theme.of(context).primaryColor,           // ←  in light
+                  ),
                   const SizedBox(height: 28),
-                  const Divider(),
+                  Divider(color: isDark ? Colors.grey[700] : null),
                   const SizedBox(height: 20),
-                  _buildInfoRow(Icons.business,             'Organization', 'Department of Health\nWestern Visayas Center for Health Development'),
+
+                  // ── Info rows ────────────────────────────────────────
+                  _buildInfoRow(Icons.business, 'Organization', 'Department of Health\nWestern Visayas Center for Health Development'),
                   const SizedBox(height: 16),
-                  _buildInfoRow(Icons.location_on_outlined, 'Address',      'RG7J+656, Bolong Oeste, Santa Barbara, Iloilo'),
+                  _buildInfoRow(Icons.location_on_outlined, 'Address', 'RG7J+656, Bolong Oeste, Santa Barbara, Iloilo'),
                   const SizedBox(height: 16),
-                  _buildInfoRow(Icons.phone_outlined,       'Contact',      '(033) 332-4778'),
+                  _buildInfoRow(Icons.phone_outlined, 'Contact', '(033) 332-4778'),
                   const SizedBox(height: 16),
-                  _buildInfoRow(Icons.email_outlined,       'Email',        'hrmo@dohwv.com'),
+                  _buildInfoRow(Icons.email_outlined, 'Email', 'hrmo@dohwv.com'),
                   const SizedBox(height: 16),
-                  _buildInfoRow(Icons.language_outlined,    'Website',      'www.doh.gov.ph'),
+                  _buildInfoRow(Icons.language_outlined, 'Website', 'www.doh.gov.ph'),
                   const SizedBox(height: 28),
-                  const Divider(),
+                  Divider(color: isDark ? Colors.grey[700] : null),
                   const SizedBox(height: 20),
+
+                  // ── App details section ──────────────────────────────
                   Align(
                     alignment: Alignment.centerLeft,
-                    child: Text('APPLICATION DETAILS',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey[500], letterSpacing: 0.8)),
+                    child: Text(
+                      'APPLICATION DETAILS',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.grey[400] : Colors.grey[500],
+                        letterSpacing: 0.8,
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 14),
                   _buildDetailRow('App Version',  '1.0.0'),
@@ -627,14 +734,24 @@ class _AboutPageState extends State<AboutPage> {
                   _buildDetailRow('Developer',    'ICTU — DOH WV CHD'),
                   _buildDetailRow('Last Updated', 'June 2025'),
                   _buildDetailRow('Data Privacy', 'RA 10173 Compliant'),
+                  _buildDetailRow('Created By', 'Dianna Rose A. Souribio'),
+                  _buildDetailRow(' ', 'Doane Marie I. Horlador'),
                   const SizedBox(height: 20),
-                  const Divider(),
+                  Divider(color: isDark ? Colors.grey[700] : null),
                   const SizedBox(height: 20),
-                  Text('© ${DateTime.now().year} DOH WV CHD. All rights reserved.',
-                      textAlign: TextAlign.center, style: TextStyle(fontSize: 11, color: Colors.grey[500])),
+
+                  // ── Footer ───────────────────────────────────────────
+                  Text(
+                    '© ${DateTime.now().year} DOH WV CHD. All rights reserved.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                  ),
                   const SizedBox(height: 4),
-                  Text('Developed by ICTU',
-                      textAlign: TextAlign.center, style: TextStyle(fontSize: 11, color: Colors.grey[500])),
+                  Text(
+                    'Developed by ICTU',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                  ),
                   const SizedBox(height: 16),
                 ],
               ),
@@ -644,9 +761,8 @@ class _AboutPageState extends State<AboutPage> {
       ),
     );
   }
-  
 
-  // ── Reusable widgets ──────────────────────────────────────────────────────
+  // ── Reusable widgets ────────────────────────────────────────────────────
 
   Widget _buildBadge(String label, Color color) {
     return Container(
@@ -663,18 +779,38 @@ class _AboutPageState extends State<AboutPage> {
   }
 
   Widget _buildInfoRow(IconData icon, String label, String value) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 20, color: const Color(0xFF2C5F4F)),
+        const Icon(Icons.circle, size: 0), // placeholder for alignment — replaced below
+        Icon(icon, size: 20, 
+        color: Theme.of(context).brightness == Brightness.dark
+        ? Color(0xFF587CA5) // ←  in dark
+        : Theme.of(context).primaryColor,           // ←  in light
+        ),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: TextStyle(fontSize: 11, color: Colors.grey[500], fontWeight: FontWeight.w500)),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: isDark ? Colors.grey[400] : Colors.grey[500],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
               const SizedBox(height: 2),
-              Text(value, style: const TextStyle(fontSize: 14, color: Colors.black87, fontWeight: FontWeight.w600)),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ],
           ),
         ),
@@ -683,13 +819,28 @@ class _AboutPageState extends State<AboutPage> {
   }
 
   Widget _buildDetailRow(String label, String value) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(fontSize: 13, color: Colors.grey[600], fontWeight: FontWeight.w500)),
-          Text(value, style: const TextStyle(fontSize: 13, color: Colors.black87, fontWeight: FontWeight.w600)),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              color: isDark ? Colors.grey[400] : Colors.grey[600],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 13,
+              color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );

@@ -4,11 +4,9 @@ import 'package:mobile_application/config/api_config.dart';
 import 'dart:convert';
 import '../services/token_manager.dart';
 
-/// Widget displaying Daily Time Record entries filtered by month/year to track employee attendance and working hours.
 class DtrWidget extends StatefulWidget {
   final String? token;
   final String baseUrl;
-  /// Employee user ID to fetch DTR records; passed by parent widget.
   final String userId;
 
   const DtrWidget({
@@ -23,7 +21,6 @@ class DtrWidget extends StatefulWidget {
 }
 
 class _DtrWidgetState extends State<DtrWidget> {
-  /// Holds all fetched DTR records from the server before filtering.
   List<Map<String, dynamic>> _dtrRecords = [];
   List<Map<String, dynamic>> _filteredRecords = [];
   bool _isLoading = false;
@@ -153,7 +150,7 @@ class _DtrWidgetState extends State<DtrWidget> {
     }
   }
 
-  // ─── Bottom Sheet helpers (Education Level style) ──────────────────────────
+  // ─── Bottom Sheet helpers ──────────────────────────────────────────────────
 
   Future<void> _showOptionsBottomSheet({
     required BuildContext ctx,
@@ -162,13 +159,13 @@ class _DtrWidgetState extends State<DtrWidget> {
     required String? currentValue,
     required void Function(String) onSelected,
   }) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     await showModalBottomSheet(
       context: ctx,
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      // Allow the sheet to grow up to 60% of screen height
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(ctx).size.height * 0.6,
       ),
@@ -177,7 +174,6 @@ class _DtrWidgetState extends State<DtrWidget> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Handle
               Container(
                 margin: const EdgeInsets.only(top: 10, bottom: 6),
                 width: 40,
@@ -187,24 +183,21 @@ class _DtrWidgetState extends State<DtrWidget> {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              // Title
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF2C5F4F),
+                      color: Theme.of(context).primaryColor,
                     ),
                   ),
                 ),
               ),
               const Divider(height: 1),
-
-              // Scrollable options list
               Flexible(
                 child: ListView.builder(
                   shrinkWrap: true,
@@ -222,8 +215,8 @@ class _DtrWidgetState extends State<DtrWidget> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 20, vertical: 14),
                         color: isSelected
-                            ? const Color(0xFF2C5F4F).withOpacity(0.08)
-                            : Colors.white,
+                            ? Theme.of(context).primaryColor.withOpacity(0.08)
+                            : Colors.transparent,
                         child: Row(
                           children: [
                             Expanded(
@@ -232,8 +225,8 @@ class _DtrWidgetState extends State<DtrWidget> {
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: isSelected
-                                      ? const Color(0xFF2C5F4F)
-                                      : Colors.black87,
+                                      ? Theme.of(context).primaryColor
+                                      : Theme.of(context).textTheme.bodyMedium?.color,
                                   fontWeight: isSelected
                                       ? FontWeight.w600
                                       : FontWeight.normal,
@@ -241,8 +234,8 @@ class _DtrWidgetState extends State<DtrWidget> {
                               ),
                             ),
                             if (isSelected)
-                              const Icon(Icons.check,
-                                  size: 18, color: Color(0xFF2C5F4F)),
+                              Icon(Icons.check,
+                                  size: 18, color: Theme.of(context).primaryColor),
                           ],
                         ),
                       ),
@@ -250,7 +243,6 @@ class _DtrWidgetState extends State<DtrWidget> {
                   },
                 ),
               ),
-
               const SizedBox(height: 8),
             ],
           ),
@@ -259,7 +251,6 @@ class _DtrWidgetState extends State<DtrWidget> {
     );
   }
 
-  /// Builds a selector button matching the Education Level field style.
   Widget _buildSelector({
     required String label,
     required String? selectedValue,
@@ -267,6 +258,7 @@ class _DtrWidgetState extends State<DtrWidget> {
     required List<String> options,
     required void Function(String) onChanged,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: () => _showOptionsBottomSheet(
         ctx: ctx,
@@ -278,17 +270,16 @@ class _DtrWidgetState extends State<DtrWidget> {
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF5F5F5),
-          borderRadius: BorderRadius.circular(6),
-        ),
         child: Row(
           children: [
             Expanded(
               child: selectedValue == null || selectedValue.isEmpty
                   ? Text(
                       label,
-                      style: const TextStyle(fontSize: 14, color: Colors.grey),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isDark ? Colors.grey[400] : Colors.grey,
+                      ),
                     )
                   : Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -296,24 +287,28 @@ class _DtrWidgetState extends State<DtrWidget> {
                       children: [
                         Text(
                           label,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
-                            color: Color(0xFF2C5F4F),
+                            color: Theme.of(context).primaryColor,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
                         const SizedBox(height: 2),
                         Text(
                           selectedValue,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
-                            color: Colors.black87,
+                            color: Theme.of(context).textTheme.bodyMedium?.color,
                           ),
                         ),
                       ],
                     ),
             ),
-            const Icon(Icons.arrow_drop_down, size: 22, color: Colors.grey),
+            Icon(
+              Icons.arrow_drop_down,
+              size: 22,
+              color: isDark ? Colors.grey[400] : Colors.grey,
+            ),
           ],
         ),
       ),
@@ -323,6 +318,7 @@ class _DtrWidgetState extends State<DtrWidget> {
   // ─── Filter Dialog ─────────────────────────────────────────────────────────
 
   void _showFilterDialog() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
@@ -336,7 +332,7 @@ class _DtrWidgetState extends State<DtrWidget> {
             final monthOptions = List.generate(12, (i) => _getMonthName(i + 1));
 
             return Dialog(
-              backgroundColor: Colors.white,
+              backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
               insetPadding: EdgeInsets.symmetric(
@@ -352,15 +348,15 @@ class _DtrWidgetState extends State<DtrWidget> {
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 14),
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF2C5F4F),
-                      borderRadius: BorderRadius.only(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).primaryColor,
+                      borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(12),
                         topRight: Radius.circular(12),
                       ),
                     ),
-                    child: Row(
-                      children: const [
+                    child: const Row(
+                      children: [
                         SizedBox(width: 8),
                         Text(
                           'Filter DTR Records',
@@ -380,7 +376,6 @@ class _DtrWidgetState extends State<DtrWidget> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Year selector
                         _buildSelector(
                           label: 'Year',
                           selectedValue: tempYear?.toString(),
@@ -390,8 +385,6 @@ class _DtrWidgetState extends State<DtrWidget> {
                               () => tempYear = int.tryParse(v)),
                         ),
                         const SizedBox(height: 12),
-
-                        // Month selector
                         _buildSelector(
                           label: 'Month',
                           selectedValue: tempMonth != null
@@ -424,7 +417,7 @@ class _DtrWidgetState extends State<DtrWidget> {
                               Navigator.of(dialogContext).pop();
                             },
                             style: OutlinedButton.styleFrom(
-                              backgroundColor: const Color(0xFF2C5F4F),
+                              backgroundColor: Theme.of(context).primaryColor,
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               shape: RoundedRectangleBorder(
@@ -447,8 +440,12 @@ class _DtrWidgetState extends State<DtrWidget> {
                             onPressed: () =>
                                 Navigator.of(dialogContext).pop(),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.grey[200],
-                              foregroundColor: Colors.black87,
+                              backgroundColor: isDark
+                                  ? Colors.grey[700]
+                                  : Colors.grey[200],
+                              foregroundColor: isDark
+                                  ? Colors.white
+                                  : Colors.black87,
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
@@ -550,7 +547,7 @@ class _DtrWidgetState extends State<DtrWidget> {
             ElevatedButton(
               onPressed: _fetchDtrRecords,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF00674F),
+                backgroundColor: Theme.of(context).primaryColor,
                 foregroundColor: Colors.white,
               ),
               child: const Text('Retry'),
@@ -574,11 +571,12 @@ class _DtrWidgetState extends State<DtrWidget> {
       padding: EdgeInsets.zero,
       child: Column(
         children: [
+          // ── Header bar ──
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: const BoxDecoration(
-              color: Color(0xFF2C5F4F),
-              borderRadius: BorderRadius.only(
+            decoration: BoxDecoration(
+              color: Theme.of(context).primaryColor,
+              borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(8),
                 topRight: Radius.circular(8),
               ),
@@ -595,38 +593,39 @@ class _DtrWidgetState extends State<DtrWidget> {
                     letterSpacing: 0.5,
                   ),
                 ),
-               Row(
-  children: [
-    GestureDetector(
-      onTap: _showFilterDialog,
-      child: Stack(
-        children: [
-          const Icon(Icons.filter_list, color: Colors.white, size: 20),
-          if (_selectedMonth != null || _selectedYear != null)
-            Positioned(
-              right: 0,
-              top: 0,
-              child: Container(
-                width: 6,
-                height: 6,
-                
-              ),
-            ),
-        ],
-      ),
-    ),
-    const SizedBox(width: 16),
-    GestureDetector(
-      onTap: _fetchDtrRecords,
-      child: const Icon(Icons.refresh, color: Colors.white, size: 20),
-    ),
-  ],
-),
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: _showFilterDialog,
+                      child: Stack(
+                        children: [
+                          const Icon(Icons.filter_list,
+                              color: Colors.white, size: 20),
+                          if (_selectedMonth != null || _selectedYear != null)
+                            Positioned(
+                              right: 0,
+                              top: 0,
+                              child: Container(
+                                width: 6,
+                                height: 6,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    GestureDetector(
+                      onTap: _fetchDtrRecords,
+                      child: const Icon(Icons.refresh,
+                          color: Colors.white, size: 20),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
 
-          // DTR records list
+          // ── DTR records list ──
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: _filteredRecords.isEmpty
@@ -655,30 +654,33 @@ class _DtrWidgetState extends State<DtrWidget> {
   }
 
   Widget _buildDtrCard(Map<String, dynamic> record) {
+    // ✅ Respects light/dark theme automatically
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = Theme.of(context).scaffoldBackgroundColor;  // ✅ Use scaffold background for cards to ensure contrast
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final subTextColor = isDark ? Colors.grey[400]! : Colors.grey.shade700;
+
     return Card(
       elevation: 0,
-      color: Colors.white,
+      color: cardColor,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       child: Padding(
-        padding: EdgeInsets.zero,
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Row(
-                  children: [
-                    const Icon(Icons.calendar_today,
-                        size: 20, color: Color(0xFF00674F)),
-                    const SizedBox(width: 5),
-                    Text(
-                      _formatDateWithDay(record['date']),
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF00674F),
-                      ),
-                    ),
-                  ],
+                Icon(Icons.calendar_today,
+    size: 20, color: isDark ? Colors.white : Theme.of(context).primaryColor),
+                const SizedBox(width: 5),
+                Text(
+                  _formatDateWithDay(record['date']),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : Theme.of(context).primaryColor,
+                  ),
                 ),
               ],
             ),
@@ -687,54 +689,64 @@ class _DtrWidgetState extends State<DtrWidget> {
               'Morning',
               'In: ${_formatTime(record['amIn'])}',
               'Out: ${_formatTime(record['amOut'])}',
+              textColor: textColor,
+              subTextColor: subTextColor,
             ),
             _buildTimeSection(
               'Afternoon',
               'In: ${_formatTime(record['pmIn'])}',
               'Out: ${_formatTime(record['pmOut'])}',
+              textColor: textColor,
+              subTextColor: subTextColor,
             ),
             const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _buildHoursInfo('Undertime',
-                    _formatMinutes(record['undertime']),
-                    const Color.fromARGB(255, 126, 126, 126)),
+                    _formatMinutes(record['undertime']), subTextColor),
                 _buildHoursInfo('OT Hours',
-                    _formatMinutes(record['utHours']),
-                    const Color.fromARGB(255, 126, 126, 126)),
+                    _formatMinutes(record['utHours']), subTextColor),
                 _buildHoursInfo('OT Minutes',
-                    _formatMinutes(record['utMinutes']),
-                    const Color.fromARGB(255, 126, 126, 126)),
+                    _formatMinutes(record['utMinutes']), subTextColor),
               ],
             ),
             const SizedBox(height: 20),
-            const Divider(height: 20),
+            Divider(
+              height: 20,
+              color: isDark ? Colors.grey[700] : Colors.grey[300],
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildTimeSection(String title, String timeIn, String timeOut) {
+  Widget _buildTimeSection(
+    String title,
+    String timeIn,
+    String timeOut, {
+    required Color textColor,
+    required Color subTextColor,
+  }) {
     return Container(
       padding: const EdgeInsets.all(5),
-      decoration: const BoxDecoration(color: Colors.white),
+      decoration: const BoxDecoration(color: Colors.transparent),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(title,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: Colors.black87)),
+                  color: textColor)),        // ✅ theme-aware
           Row(
             children: [
               Text(timeIn,
-                  style: TextStyle(fontSize: 13, color: Colors.grey.shade700)),
+                  style: TextStyle(fontSize: 13, color: subTextColor)),  // ✅ theme-aware
               const SizedBox(width: 12),
               Text(timeOut,
-                  style: TextStyle(fontSize: 13, color: Colors.grey.shade700)),
+                  style: TextStyle(fontSize: 13, color: subTextColor)),  // ✅ theme-aware
             ],
           ),
         ],
@@ -750,7 +762,7 @@ class _DtrWidgetState extends State<DtrWidget> {
                 fontSize: 20, fontWeight: FontWeight.bold, color: color)),
         const SizedBox(height: 4),
         Text(label,
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+            style: TextStyle(fontSize: 12, color: color)),              // ✅ theme-aware
       ],
     );
   }

@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 
-/// Defines consistent light and dark themes across the app to maintain a professional appearance and support user preferences.
+  // backgroundColor: Theme.of(context).appBarTheme.backgroundColor,  // ← Use theme color
+
 class AppTheme {
   // Light Theme
   static ThemeData lightTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
-    primaryColor: const Color(0xFF2C5F4F),
+    primaryColor: const Color(0xFF1F2A45),
     scaffoldBackgroundColor: const Color(0xFFFFFFFF),
     colorScheme: ColorScheme.fromSeed(
-      seedColor: const Color(0xFF2C5F4F),
+      seedColor: const Color(0xFF587CA5),
       brightness: Brightness.light,
+      secondary: const Color(0x587CA5), // ← Add secondary color
+      tertiary: const  Color(0xFF1F2A45),
     ),
     textTheme: const TextTheme(
       displayLarge: TextStyle(
@@ -19,7 +22,7 @@ class AppTheme {
         fontWeight: FontWeight.bold,
       ),
       displayMedium: TextStyle(
-        color: Color(0xFF1A1A1A),
+        color: Color.fromARGB(255, 0, 0, 0),
         fontSize: 28,
         fontWeight: FontWeight.bold,
       ),
@@ -29,22 +32,22 @@ class AppTheme {
         fontWeight: FontWeight.bold,
       ),
       headlineMedium: TextStyle(
-        color: Color(0xFF212121),
+        color: Color.fromARGB(255, 0, 0, 0),
         fontSize: 20,
         fontWeight: FontWeight.w600,
       ),
       headlineSmall: TextStyle(
-        color: Color(0xFF212121),
+        color: Color.fromARGB(255, 0, 0, 0),
         fontSize: 18,
         fontWeight: FontWeight.w600,
       ),
       titleLarge: TextStyle(
-        color: Color(0xFF212121),
+        color: Color.fromARGB(255, 0, 0, 0),
         fontSize: 16,
         fontWeight: FontWeight.w500,
       ),
       titleMedium: TextStyle(
-        color: Color(0xFF424242),
+        color: Color.fromARGB(255, 0, 0, 0),
         fontSize: 14,
         fontWeight: FontWeight.w500,
       ),
@@ -58,7 +61,7 @@ class AppTheme {
         fontSize: 16,
       ),
       bodyMedium: TextStyle(
-        color: Color(0xFF616161),
+        color: Color.fromARGB(255, 0, 0, 0),
         fontSize: 14,
       ),
       bodySmall: TextStyle(
@@ -72,7 +75,7 @@ class AppTheme {
       ),
     ),
     iconTheme: const IconThemeData(
-      color: Color(0xFF1976D2),
+      color: Colors.black,
     ),
     appBarTheme: const AppBarTheme(
       backgroundColor: Color(0xFFFFFFFF),
@@ -121,11 +124,14 @@ class AppTheme {
   static ThemeData darkTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
-    primaryColor: const Color(0xFF2C5F4F),
+     primaryColor: const Color(0xFF365175),
     scaffoldBackgroundColor: const Color(0xFF121212),
     colorScheme: ColorScheme.fromSeed(
-      seedColor: const Color(0xFF2C5F4F),
+     seedColor: const Color(0xFF1F2A45),
       brightness: Brightness.dark,
+      secondary: const Color(0xFFE6F0EC),
+      tertiary: const  Color(0xFF1F2A45),
+       // ← Add tertiary color
     ),
     textTheme: const TextTheme(
       displayLarge: TextStyle(
@@ -173,11 +179,11 @@ class AppTheme {
         fontSize: 16,
       ),
       bodyMedium: TextStyle(
-        color: Color(0xFF9E9E9E),
+        color: Color(0xFFE0E0E0),
         fontSize: 14,
       ),
       bodySmall: TextStyle(
-        color: Color(0xFF757575),
+        color: Color(0xFFE0E0E0),
         fontSize: 12,
       ),
       labelLarge: TextStyle(
@@ -187,7 +193,7 @@ class AppTheme {
       ),
     ),
     iconTheme: const IconThemeData(
-      color: Color(0xFF64B5F6),
+      color: Color.fromARGB(255, 255, 255, 255),
     ),
     appBarTheme: const AppBarTheme(
       backgroundColor: Color(0xFF1F1F1F),

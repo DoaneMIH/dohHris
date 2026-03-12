@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_application/services/user_service.dart';
 
-/// Widget for managing family information including spouse, children, and parents' personal details.
 class FamilyBackgroundWidget extends StatefulWidget {
   final String token;
   final String employeeId;
@@ -244,8 +243,8 @@ class _FamilyBackgroundWidgetState extends State<FamilyBackgroundWidget> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Spouse saved successfully'),
-              backgroundColor: Colors.green,
+              content: Text('Spouse updated successfully'),
+              backgroundColor: Color(0xFF344A51),
             ),
           );
         }
@@ -418,8 +417,8 @@ class _FamilyBackgroundWidgetState extends State<FamilyBackgroundWidget> {
           setState(() => _editingChildIndex = null);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Child saved successfully'),
-              backgroundColor: Colors.green,
+              content: Text('Child updated successfully'),
+              backgroundColor: Color(0xFF344A51),
             ),
           );
         }
@@ -486,7 +485,7 @@ class _FamilyBackgroundWidgetState extends State<FamilyBackgroundWidget> {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Child deleted'),
-                backgroundColor: Colors.green,
+                backgroundColor: Color(0xFF1F2A45),
               ),
             );
           }
@@ -552,8 +551,8 @@ class _FamilyBackgroundWidgetState extends State<FamilyBackgroundWidget> {
           setState(() => _isEditingFather = false);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Father saved successfully'),
-              backgroundColor: Colors.green,
+              content: Text('Father updated successfully'),
+              backgroundColor: Color(0xFF344A51),
             ),
           );
         }
@@ -612,8 +611,8 @@ class _FamilyBackgroundWidgetState extends State<FamilyBackgroundWidget> {
           setState(() => _isEditingMother = false);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Mother saved successfully'),
-              backgroundColor: Colors.green,
+              content: Text('Mother updated successfully'),
+              backgroundColor: Color(0xFF344A51),
             ),
           );
         }
@@ -645,8 +644,8 @@ class _FamilyBackgroundWidgetState extends State<FamilyBackgroundWidget> {
           InkWell(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              decoration: const BoxDecoration(
-                color: Color(0xFF2C5F4F),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.tertiary,
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(8),
                   topRight: Radius.circular(8),
@@ -724,7 +723,7 @@ class _FamilyBackgroundWidgetState extends State<FamilyBackgroundWidget> {
 
 
   // ── Shared helper: styled dialog text field ──────────────────────────────
-  Widget _dialogField(
+Widget _dialogField(
   String label,
   TextEditingController controller, {
   TextInputType keyboardType = TextInputType.text,
@@ -733,24 +732,35 @@ class _FamilyBackgroundWidgetState extends State<FamilyBackgroundWidget> {
   VoidCallback? onTap,
   Widget? suffixIcon,
 }) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
   return TextField(
     controller: controller,
     readOnly: readOnly,
     onTap: onTap,
     keyboardType: keyboardType,
     inputFormatters: inputFormatters,
-    cursorColor: const Color(0xFF2C5F4F),
-    style: const TextStyle(fontSize: 14, color: Colors.black87),
+    cursorColor: Theme.of(context).primaryColor,
+    style: TextStyle(
+      fontSize: 14,
+      color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87 ,// ← theme-aware
+    ),
     decoration: InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(fontSize: 14, color: Colors.grey),
-      floatingLabelStyle: const TextStyle(
+      labelStyle: TextStyle(
+        fontSize: 14,
+        color: isDark ? Colors.grey[400] : Colors.grey,  // ← lighter in dark
+      ),
+      floatingLabelStyle: TextStyle(
         fontSize: 16,
-        color: Color(0xFF2C5F4F),
+        color: isDark
+            ? Theme.of(context).colorScheme.secondary  // ← light grey-green in dark
+            : Theme.of(context).primaryColor,             // ← dark green in light
         fontWeight: FontWeight.w500,
       ),
       filled: true,
-      fillColor: const Color(0xFFF5F5F5),
+      fillColor: isDark
+          ? const Color(0xFF2C2C2C)       // ← dark fill in dark mode
+          : const Color(0xFFF5F5F5),      // ← light fill in light mode
       suffixIcon: suffixIcon,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(6),
@@ -758,11 +768,19 @@ class _FamilyBackgroundWidgetState extends State<FamilyBackgroundWidget> {
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(6),
-        borderSide: const BorderSide(color: Color(0xFFE0E0E0), width: 1),
+        borderSide: BorderSide(
+          color: isDark ? const Color(0xFF424242) : const Color(0xFFE0E0E0),
+          width: 1,
+        ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(6),
-        borderSide: const BorderSide(color: Color(0xFF2C5F4F), width: 1.5),
+        borderSide: BorderSide(
+          color: isDark
+              ? Theme.of(context).colorScheme.secondary  // ← light grey-green in dark
+              : Theme.of(context).primaryColor,                  // ← dark green in light
+          width: 1.5,
+        ),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
       isDense: true,
@@ -778,7 +796,7 @@ class _FamilyBackgroundWidgetState extends State<FamilyBackgroundWidget> {
           child: OutlinedButton(
             onPressed: onSave,
             style: OutlinedButton.styleFrom(
-              backgroundColor: const Color(0xFF2C5F4F),
+              backgroundColor: Theme.of(context).primaryColor,  
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 12),
               shape: RoundedRectangleBorder(
@@ -821,8 +839,8 @@ class _FamilyBackgroundWidgetState extends State<FamilyBackgroundWidget> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: const BoxDecoration(
-        color: Color(0xFF2C5F4F),
+      decoration: BoxDecoration(
+        color: Theme.of(context).primaryColor,  
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(12),
           topRight: Radius.circular(12),
@@ -859,7 +877,7 @@ class _FamilyBackgroundWidgetState extends State<FamilyBackgroundWidget> {
       context: context,
       builder: (BuildContext context) {
         return Dialog(
-          backgroundColor: Colors.white,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           insetPadding: EdgeInsets.symmetric(
             horizontal: MediaQuery.of(context).size.width * 0.025,
@@ -934,12 +952,14 @@ class _FamilyBackgroundWidgetState extends State<FamilyBackgroundWidget> {
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text(
+          Text(
             'SPOUSE',
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w700,
-              color: Colors.black,
+              color:
+                  Theme.of(context).textTheme.bodyMedium?.color ??
+                  Colors.black87,
             ),
           ),
           // Show Add button only when there is no spouse yet
@@ -960,15 +980,15 @@ class _FamilyBackgroundWidgetState extends State<FamilyBackgroundWidget> {
                 });
                 _showEditSpouseDialog();
               },
-              icon: const Icon(
+              icon: Icon(
                 Icons.add_circle,
                 size: 20,
-                color: Color(0xFF2C5F4F),
+                color: Theme.of(context).primaryColor,
               ),
-              label: const Text(
+              label: Text(
                 'Add',
                 style: TextStyle(
-                  color: Color(0xFF2C5F4F),
+                  color: Theme.of(context).primaryColor,  
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -979,7 +999,7 @@ class _FamilyBackgroundWidgetState extends State<FamilyBackgroundWidget> {
           // Show Edit + Delete buttons only when spouse exists
           if (hasSpouse)
             PopupMenuButton<String>(
-              color: Colors.white,
+              color: Theme.of(context).scaffoldBackgroundColor,
               position: PopupMenuPosition.under,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),
@@ -987,10 +1007,13 @@ class _FamilyBackgroundWidgetState extends State<FamilyBackgroundWidget> {
               ),
               icon: Container(
                 padding: const EdgeInsets.all(6),
-                child: const Icon(
+                child: Icon(
                   Icons.more_horiz,
                   size: 18,
-                  color: Colors.black87,
+                  color:
+                  Theme.of(context).textTheme.bodyMedium?.color ??
+                  Colors.black87,
+
                 ),
               ),
               padding: EdgeInsets.zero,
@@ -1006,14 +1029,15 @@ class _FamilyBackgroundWidgetState extends State<FamilyBackgroundWidget> {
                   value: 'edit',
                   height: 30,
                   child: Row(
-                    children: const [
-                      Icon(Icons.edit, size: 15, color: Colors.black87),
+                    children:  [
+                      Icon(Icons.edit, size: 15, color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87),
                       SizedBox(width: 8),
                       Text(
                         'Edit',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
+                          color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
                         ),
                       ),
                     ],
@@ -1120,7 +1144,7 @@ void _showEditChildDialog(int index) {
     context: context,
     builder: (BuildContext context) {
       return Dialog(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         insetPadding: EdgeInsets.symmetric(
           horizontal: MediaQuery.of(context).size.width * 0.025,
@@ -1142,7 +1166,7 @@ void _showEditChildDialog(int index) {
                     'Birthday',
                     birthdayController,
                     readOnly: true,
-                    suffixIcon: const Icon(Icons.calendar_today, size: 18, color: Color(0xFF2C5F4F)),
+                    suffixIcon: const Icon(Icons.calendar_today, size: 18, color: Color(0xFF1F2A45)),
                     onTap: () async {
                       DateTime? initialDate = DateTime.tryParse(birthdayController.text);
                       final DateTime? pickedDate = await showDatePicker(
@@ -1153,7 +1177,7 @@ void _showEditChildDialog(int index) {
                         builder: (context, child) => Theme(
                           data: Theme.of(context).copyWith(
                             colorScheme: const ColorScheme.light(
-                              primary: Color(0xFF2C5F4F),
+                              primary: Color(0xFF1F2A45),
                               onPrimary: Colors.white,
                               onSurface: Colors.black,
                             ),
@@ -1200,16 +1224,18 @@ void _showEditChildDialog(int index) {
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text(
+          Text(
             'CHILDREN',
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w700,
-              color: Colors.black,
+              color:
+                  Theme.of(context).textTheme.bodyMedium?.color ??
+                  Colors.black87,
             ),
           ),
           PopupMenuButton<String>(
-            color: Colors.white,
+            color: Theme.of(context).scaffoldBackgroundColor,
             position: PopupMenuPosition.under,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
@@ -1217,10 +1243,13 @@ void _showEditChildDialog(int index) {
             ),
             icon: Container(
               padding: const EdgeInsets.all(6),
-              child: const Icon(
+              child: Icon(
                 Icons.more_horiz,
                 size: 20,
-                color: Colors.black,
+                              color:
+                  Theme.of(context).textTheme.bodyMedium?.color ??
+                  Colors.black87,
+
               ),
             ),
             padding: EdgeInsets.zero,
@@ -1230,13 +1259,19 @@ void _showEditChildDialog(int index) {
               }
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(
+               PopupMenuItem(
                 value: 'add',
                 child: Row(
                   children: [
-                    Icon(Icons.add_circle, size: 18, color: Color(0xFF2C5F4F)),
+                    Icon(Icons.add_circle, size: 18, color: Theme.of(context).primaryColor),
                     SizedBox(width: 8),
-                    Text('Add Child'),
+                    Text('Add Child',
+                     style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
+                              ),
+                    ),
                   ],
                 ),
               ),
@@ -1264,7 +1299,7 @@ void _showEditChildDialog(int index) {
 
         return Container(
           padding: const EdgeInsets.all(5),
-          decoration: const BoxDecoration(color: Colors.white),
+          // decoration: const BoxDecoration(color: Colors.white),
           child: Column(
             children: [
               Row(
@@ -1276,12 +1311,14 @@ void _showEditChildDialog(int index) {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        color: Colors.grey[700],
+                         color:
+                  Theme.of(context).textTheme.bodyMedium?.color ??
+                  Colors.black87,
                       ),
                     ),
                   ),
                   PopupMenuButton<String>(
-                    color: Colors.white,
+                    color: Theme.of(context).scaffoldBackgroundColor,
                     position: PopupMenuPosition.under,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -1289,10 +1326,13 @@ void _showEditChildDialog(int index) {
                     ),
                     icon: Container(
                       padding: const EdgeInsets.all(6),
-                      child: const Icon(
+                      child: Icon(
                         Icons.more_horiz,
                         size: 18,
-                        color: Colors.black87,
+                                      color:
+                  Theme.of(context).textTheme.bodyMedium?.color ??
+                  Colors.black87,
+
                       ),
                     ),
                     padding: EdgeInsets.zero,
@@ -1308,14 +1348,15 @@ void _showEditChildDialog(int index) {
                         value: 'edit',
                         height: 30,
                         child: Row(
-                          children: const [
-                            Icon(Icons.edit, size: 15, color: Colors.black87),
+                          children: [
+                            Icon(Icons.edit, size: 15, color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87),
                             SizedBox(width: 8),
                             Text(
                               'Edit',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
+                                color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
                               ),
                             ),
                           ],
@@ -1349,10 +1390,10 @@ void _showEditChildDialog(int index) {
                 margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(6),
-                ),
+                // decoration: BoxDecoration(
+                //   color: Colors.white,
+                //   borderRadius: BorderRadius.circular(6),
+                // ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -1378,7 +1419,7 @@ void _showEditChildDialog(int index) {
       context: context,
       builder: (BuildContext context) {
         return Dialog(
-          backgroundColor: Colors.white,
+         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           insetPadding: EdgeInsets.symmetric(
             horizontal: MediaQuery.of(context).size.width * 0.025,
@@ -1400,7 +1441,7 @@ void _showEditChildDialog(int index) {
                       'Birthday',
                       birthdayController,
                       readOnly: true,
-                      suffixIcon: const Icon(Icons.calendar_today, size: 18, color: Color(0xFF2C5F4F)),
+                      suffixIcon: const Icon(Icons.calendar_today, size: 18, color: Color(0xFF1F2A45)),
                       onTap: () async {
                         DateTime? initialDate;
                         if (birthdayController.text.isNotEmpty) {
@@ -1414,7 +1455,7 @@ void _showEditChildDialog(int index) {
                           builder: (context, child) => Theme(
                             data: Theme.of(context).copyWith(
                               colorScheme: const ColorScheme.light(
-                                primary: Color(0xFF2C5F4F),
+                                primary: Color(0xFF1F2A45),
                                 onPrimary: Colors.white,
                                 onSurface: Colors.black,
                               ),
@@ -1467,7 +1508,7 @@ void _showEditChildDialog(int index) {
       context: context,
       builder: (BuildContext context) {
         return Dialog(
-          backgroundColor: Colors.white,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           insetPadding: EdgeInsets.symmetric(
             horizontal: MediaQuery.of(context).size.width * 0.025,
@@ -1523,12 +1564,14 @@ void _showEditChildDialog(int index) {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
+             Text(
               'FATHER',
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
-                color: Colors.black,
+                 color:
+                  Theme.of(context).textTheme.bodyMedium?.color ??
+                  Colors.black87,
               ),
             ),
             // Show Add button only when there is no father record yet
@@ -1545,15 +1588,15 @@ void _showEditChildDialog(int index) {
                     _isEditingFather = true;
                   });
                 },
-                icon: const Icon(
+                icon: Icon(
                   Icons.add_circle,
                   size: 20,
-                  color: Color(0xFF2C5F4F),
+                  color: Theme.of(context).primaryColor,  
                 ),
                 label: const Text(
                   'Add',
                   style: TextStyle(
-                    color: Color(0xFF2C5F4F),
+                    color: Colors.black,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -1562,9 +1605,25 @@ void _showEditChildDialog(int index) {
                 ),
               )
             // Show 3-dot menu when father record exists or currently editing
-            else if (hasFather || _isEditingFather)
+            else if (hasFather )
               PopupMenuButton<String>(
-                icon: const Icon(Icons.more_horiz, size: 20, color: Colors.black),
+              color: Theme.of(context).scaffoldBackgroundColor,
+              position: PopupMenuPosition.under,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+                side: BorderSide(color: Colors.grey.shade200),
+              ),
+              icon: Container(
+                padding: const EdgeInsets.all(6),
+                child: Icon(
+                  Icons.more_horiz,
+                  size: 18,
+                  color:
+                  Theme.of(context).textTheme.bodyMedium?.color ??
+                  Colors.black87,
+
+                ),
+              ),
                 padding: EdgeInsets.zero,
                 onSelected: (value) {
                   if (value == 'edit') {
@@ -1572,16 +1631,24 @@ void _showEditChildDialog(int index) {
                   }
                 },
                 itemBuilder: (context) => [
-                  PopupMenuItem(
-                    value: 'edit',
-                    child: Row(
-                      children: [
-                        Icon(Icons.edit, size: 18),
-                        const SizedBox(width: 8),
-                        Text('Edit'),
-                      ],
-                    ),
+                  PopupMenuItem<String>(
+                  value: 'edit',
+                  height: 30,
+                  child: Row(
+                    children: [
+                      Icon(Icons.edit, size: 15, color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87),
+                      SizedBox(width: 8),
+                      Text(
+                        'Edit',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
+                        ),
+                      ),
+                    ],
                   ),
+                ),
                 ],
               ),
           ],
@@ -1677,7 +1744,7 @@ void _showEditChildDialog(int index) {
       context: context,
       builder: (BuildContext context) {
         return Dialog(
-          backgroundColor: Colors.white,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           insetPadding: EdgeInsets.symmetric(
             horizontal: MediaQuery.of(context).size.width * 0.025,
@@ -1733,12 +1800,14 @@ void _showEditChildDialog(int index) {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
+            Text(
               "MOTHER'S MAIDEN NAME",
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
-                color: Colors.black,
+                 color:
+                  Theme.of(context).textTheme.bodyMedium?.color ??
+                  Colors.black87,
               ),
             ),
             // Show Add button only when there is no mother record yet
@@ -1758,12 +1827,12 @@ void _showEditChildDialog(int index) {
                 icon: const Icon(
                   Icons.add_circle,
                   size: 20,
-                  color: Color(0xFF2C5F4F),
+                  color: Color(0xFF1F2A45),
                 ),
                 label: const Text(
                   'Add',
                   style: TextStyle(
-                    color: Color(0xFF2C5F4F),
+                    color: Color(0xFF1F2A45),
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -1772,9 +1841,25 @@ void _showEditChildDialog(int index) {
                 ),
               )
             // Show Edit button when mother record exists or currently adding
-            else if (hasMother || _isEditingMother)
+            else if (hasMother)
               PopupMenuButton<String>(
-                icon: const Icon(Icons.more_horiz, size: 20, color: Colors.black),
+                color: Theme.of(context).scaffoldBackgroundColor,
+              position: PopupMenuPosition.under,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+                side: BorderSide(color: Colors.grey.shade200),
+              ),
+              icon: Container(
+                padding: const EdgeInsets.all(6),
+                child: Icon(
+                  Icons.more_horiz,
+                  size: 18,
+                  color:
+                  Theme.of(context).textTheme.bodyMedium?.color ??
+                  Colors.black87,
+
+                ),
+              ),
                 padding: EdgeInsets.zero,
                 onSelected: (value) {
                   if (value == 'edit') {
@@ -1782,16 +1867,24 @@ void _showEditChildDialog(int index) {
                   }
                 },
                 itemBuilder: (context) => [
-                  PopupMenuItem(
-                    value: 'edit',
-                    child: Row(
-                      children: [
-                        Icon(Icons.edit, size: 18),
-                        const SizedBox(width: 8),
-                        Text('Edit'),
-        ],
-                    ),
+                  PopupMenuItem<String>(
+                  value: 'edit',
+                  height: 30,
+                  child: Row(
+                    children: [
+                      Icon(Icons.edit, size: 15, color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87),
+                      SizedBox(width: 8),
+                      Text(
+                        'Edit',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
+                        ),
+                      ),
+                    ],
                   ),
+                ),
                 ],
               ),
           ],
@@ -1897,9 +1990,11 @@ void _showEditChildDialog(int index) {
         const SizedBox(height: 1),
         Text(
           displayValue,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 15,
-            color: Colors.black87,
+            color:
+                  Theme.of(context).textTheme.bodyMedium?.color ??
+                  Colors.black87,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -1934,13 +2029,13 @@ void _showEditChildDialog(int index) {
           ),
           decoration: InputDecoration(
             border: UnderlineInputBorder(
-              borderSide: BorderSide(color: const Color(0xFF2C5F4F)),
+              borderSide: BorderSide(color: Theme.of(context).primaryColor),
             ),
             enabledBorder: UnderlineInputBorder(
               borderSide: BorderSide(color: Colors.grey[300]!),
             ),
-            focusedBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: Color(0xFF2C5F4F), width: 2),
+            focusedBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 2),
             ),
             contentPadding: const EdgeInsets.symmetric(vertical: 4),
             isDense: true,
