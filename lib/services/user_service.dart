@@ -1424,4 +1424,133 @@ class UserService {
       return {'success': false, 'error': 'Error: $e'};
     }
   }
+
+
+// ── PAYROLL ───────────────────────────────────────────────────────────────
+ 
+  /// Fetches all active payroll periods from the backend.
+  /// Returns a list of period objects, each containing id, periodStart, periodEnd, payrollState, etc.
+  Future<Map<String, dynamic>> getActivePayrollPeriods(String token) async {
+    print('\n📅 [UserService] GET Active Payroll Periods');
+ 
+    final currentToken = TokenManager().token ?? token;
+    final url = Uri.parse(
+      '${ApiConfig.baseUrl}${ApiConfig.getPayrollPeriodsEndpoint}',
+    );
+    print('🌐 [UserService] Request URL: $url');
+ 
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Authorization': 'Bearer $currentToken',
+          'Content-Type': 'application/json',
+        },
+      );
+ 
+      print('📥 [UserService] Periods status: ${response.statusCode}');
+      print('📥 [UserService] Periods body: ${response.body}');
+ 
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {'success': true, 'data': data};
+      } else {
+        return {
+          'success': false,
+          'error': 'Failed to load payroll periods: ${response.statusCode}',
+        };
+      }
+    } catch (e) {
+      print('💥 [UserService] Error fetching payroll periods: $e');
+      return {'success': false, 'error': 'Error: $e'};
+    }
+  }
+ 
+  /// Fetches the list of pay components (allowances, deductions, loan deductions)
+  /// for a specific employee and payroll period.
+  /// Each item has a payComponent with:
+  ///   type           → ALLOWANCE | DEDUCTION | LOAN_DEDUCTION
+  ///   adjustmentType → CR (credit = Allowance) | DR (debit = Deduction / Loan)
+  Future<Map<String, dynamic>> getPayrollComponents(
+    String token,
+    int employeeId,
+    int periodId,
+  ) async {
+    print('\n🧾 [UserService] GET Payroll Components — employee: $employeeId, period: $periodId');
+ 
+    final currentToken = TokenManager().token ?? token;
+    final url = Uri.parse(
+      '${ApiConfig.baseUrl}${ApiConfig.payrollByEmployeeAndPeriod(employeeId, periodId)}',
+    );
+    print('🌐 [UserService] Request URL: $url');
+ 
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Authorization': 'Bearer $currentToken',
+          'Content-Type': 'application/json',
+        },
+      );
+ 
+      print('📥 [UserService] Components status: ${response.statusCode}');
+      print('📥 [UserService] Components body: ${response.body}');
+ 
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {'success': true, 'data': data};
+      } else {
+        return {
+          'success': false,
+          'error': 'Failed to load payroll components: ${response.statusCode}',
+        };
+      }
+    } catch (e) {
+      print('💥 [UserService] Error fetching payroll components: $e');
+      return {'success': false, 'error': 'Error: $e'};
+    }
+  }
+ 
+  /// Fetches the full payroll summary for a specific employee and payroll period.
+ 
+  Future<Map<String, dynamic>> getPayrollSummary(
+    String token,
+    int employeeId,
+    int periodId,
+  ) async {
+    print('\n💰 [UserService] GET Payroll Summary — employee: $employeeId, period: $periodId');
+ 
+    final currentToken = TokenManager().token ?? token;
+    final url = Uri.parse(
+      '${ApiConfig.baseUrl}${ApiConfig.payrollSummaryEndpoint(employeeId, periodId)}',
+    );
+    print('🌐 [UserService] Request URL: $url');
+ 
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Authorization': 'Bearer $currentToken',
+          'Content-Type': 'application/json',
+        },
+      );
+ 
+      print('📥 [UserService] Summary status: ${response.statusCode}');
+      print('📥 [UserService] Summary body: ${response.body}');
+ 
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {'success': true, 'data': data};
+      } else {
+        return {
+          'success': false,
+          'error':
+              'Failed to load payroll summary for period $periodId: ${response.statusCode}',
+        };
+      }
+    } catch (e) {
+      print('💥 [UserService] Error fetching payroll summary: $e');
+      return {'success': false, 'error': 'Error: $e'};
+    }
+  }
 }

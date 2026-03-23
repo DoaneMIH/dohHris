@@ -4,7 +4,7 @@ class ApiConfig {
   /// For Android emulator: 'http://10.0.2.2:8082'
   /// For Flutter web: 'http://localhost:8082'
   /// For physical device: use local IP (e.g., 'http://192.168.79.55:8082')
-  static const String baseUrl = 'http://192.168.79.55:8082'; 
+  static const String baseUrl = 'http://192.168.130.171:8081'; 
   
   /// Authenticate user with email and password to receive access and refresh tokens.
   static const String loginEndpoint = '/auth/login';
@@ -70,5 +70,16 @@ class ApiConfig {
   static const String addPersonReferenceEndpoint = '/adminuser/person-reference/add-person-reference/';
   static const String updatePersonReferenceEndpoint = '/adminuser/person-reference/update-person-reference/';
   static const String deletePersonReferenceEndpoint = '/adminuser/person-reference/delete-person-reference/';
+
+  // Payroll
+  static const String getPayrollPeriodsEndpoint = '/admin/payroll/active-payroll-periods';
+
+  static String payrollSummaryEndpoint(int employeeId, int periodId) =>
+      '/admin/payroll/summaries/employee/$employeeId/period/$periodId';
+
+  static String payrollByEmployeeAndPeriod(int employeeId, int periodId) =>
+      '/admin/payroll/employee/$employeeId/period/$periodId';
+
+
 }
   
