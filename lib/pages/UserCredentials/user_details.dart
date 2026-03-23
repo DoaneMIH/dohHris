@@ -5,6 +5,8 @@ import 'package:mobile_application/services/auth_service.dart';
 import 'package:mobile_application/services/user_profile_cache.dart';
 import 'package:mobile_application/services/token_manager.dart';
 import 'package:mobile_application/pages/dtr_page.dart';
+import 'package:mobile_application/pages/payroll_page.dart';
+import 'package:mobile_application/pages/loan_page.dart';
 import 'package:mobile_application/pages/UserCredentials/civil_service.dart';
 import 'package:mobile_application/pages/UserCredentials/education_background.dart';
 import 'package:mobile_application/pages/UserCredentials/family_background.dart';
@@ -1640,6 +1642,16 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                     Icons.access_time,
                     _selectedMenu == 'Daily Time Record',
                   ),
+                  _buildDrawerItem(
+                    'Payroll',
+                    Icons.payments_outlined,
+                    _selectedMenu == 'Payroll',
+                  ),
+                  _buildDrawerItem(
+                    'Loan',
+                    Icons.account_balance_outlined,
+                    _selectedMenu == 'Loan',
+                  ),
                 ],
               ),
             
@@ -1891,6 +1903,18 @@ ExpansionTile(
         );
       case 'Daily Time Record':
         return _buildDailyTimeRecordCard();
+      case 'Payroll':
+        return PayrollWidget(
+          token: widget.token,
+          baseUrl: widget.baseUrl,
+          userId: _userDetails?['employee']?['employeeId'] ?? 'N/A',
+        );
+      case 'Loan':
+        return LoanWidget(
+          token: widget.token,
+          baseUrl: widget.baseUrl,
+          userId: _userDetails?['employee']?['employeeId'] ?? 'N/A',
+        );
       default:
         return _buildPersonalInformationCard();
     }
