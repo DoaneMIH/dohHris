@@ -29,7 +29,7 @@ class _PayrollWidgetState extends State<PayrollWidget> {
 
   String? _selectedPeriod;
 
-  final Map<String, bool> _collapsed = {};
+  // final Map<String, bool> _collapsed = {};
 
   // ── Colors ────────────────────────────────────────────────────────────────
   static const Color _grey300      = Color(0xFFE0E0E0);
@@ -40,11 +40,11 @@ class _PayrollWidgetState extends State<PayrollWidget> {
   static const Color _greenAccent  = Color(0xFF43A047);
   static const Color _redAccent    = Color(0xFFEF5350);
   // static const Color _orangeAccent = Color(0xFFFB8C00);
-  static const Color _blueGrey400  = Color(0xFF78909C);
+ 
 
-  static const List<String> _sections = [
-    'Allowances', 'Deductions', 'Adjustments', 'Loan Deductions',
-  ];
+  // static const List<String> _sections = [
+  //   'Allowances', 'Deductions', 'Adjustments', 'Loan Deductions',
+  // ];
 
   List<String> get _availablePeriods =>
       _payrollRecords.map((r) => r['period'] as String).toSet().toList();
@@ -122,7 +122,7 @@ class _PayrollWidgetState extends State<PayrollWidget> {
           _selectedPeriod = records.first['period'] as String?;
         }
         _applyFilters();
-        _collapseAll();
+        // _collapseAll();
         _isLoading = false;
       });
     } catch (e) {
@@ -210,34 +210,65 @@ class _PayrollWidgetState extends State<PayrollWidget> {
                           ?? pc['amount'];
 
       // Resolve display name from the nested sub-object matching the type
-      String name;
+      String? name;
       if (type == 'ALLOWANCE') {
         final allowance = pc['allowance'] as Map<String, dynamic>?;
         name = allowance?['allowanceDescription'] as String?
             ?? allowance?['allowanceCode'] as String?
             ?? 'Allowance';
       } else if (type == 'LOAN_DEDUCTION') {
-        final loanType = pc['loanType'] as Map<String, dynamic>?;
-        name = loanType?['loanTypeName'] as String?
-            ?? loanType?['loanTypeCode'] as String?
-            ?? 'Loan Deduction';
+        final loanType = pc['loan']['loanType'] as Map<String, dynamic>?;
+        name = loanType?['loanTypeDescription'] as String?
+            ?? loanType?['loanTypeCode'] as String?;
       } else {
-        // DEDUCTION or unknown
         final deduction = pc['deduction'] as Map<String, dynamic>?;
         name = deduction?['deductionDescription'] as String?
             ?? deduction?['deductionCode'] as String?
-            ?? pc['name'] as String?
             ?? _formatComponentName(type);
       }
 
-      final item = {'name': name, 'amount': fmt(amount), 'raw': pc};
-
       if (type == 'LOAN_DEDUCTION') {
-        loanItems.add(item);
-      } else if (adjustmentType == 'CR') {
-        allowanceItems.add(item);
-      } else if (adjustmentType == 'DR') {
-        deductionItems.add(item);
+        // final loanType = pc['loanType'] as Map<String, dynamic>?;
+
+        // Principal and interest are fields on the outer payComponent
+        final principal = pc['paymentPrincipal'] ?? pc['expectedPrincipal'];
+        final interest  = pc['paymentInterest']  ?? pc['expectedInterest'];
+
+        // Schedule date: try outer entry first, then payComponent fields
+        // final scheduleRaw = entryMap['scheduledDate']
+        //     ?? pc['scheduledDate']
+        //     ?? pc['scheduleDate']
+        //     ?? pc['dueDate'];
+
+        // Format schedule date: "2026-01-05" → "January 5, 2026"
+        // String? scheduleLabel;
+        // if (scheduleRaw != null) {
+        //   try {
+        //     final d = DateTime.parse(scheduleRaw.toString());
+        //     const months = ['','January','February','March','April','May',
+        //       'June','July','August','September','October','November','December'];
+        //     scheduleLabel = '\${months[d.month]} \${d.day}, \${d.year}';
+        //   } catch (_) {
+        //     scheduleLabel = scheduleRaw.toString();
+        //   }
+        // }
+
+        loanItems.add({
+          'loanTypeDescription': name,
+          'amount':    fmt(amount),
+          'principal': fmt(principal),
+          'interest':  fmt(interest),
+          // 'schedule':  scheduleLabel,
+          'raw':       pc,
+        });
+      } else {
+        final item = {'name': name, 'amount': fmt(amount), 'raw': pc};
+
+        if (adjustmentType == 'CR') {
+          allowanceItems.add(item);
+        } else if (adjustmentType == 'DR') {
+          deductionItems.add(item);
+        }
       }
     }
 
@@ -271,7 +302,7 @@ class _PayrollWidgetState extends State<PayrollWidget> {
       'totalAllowances':   fmt(totalAllowances),
       'phicContribution':  fmt(phicContribution),
       'totalDeductions2':  fmt(totalDeductions),
-      // Component lists for the UI sections
+      'totalLoanDeductions': fmt(totalLoanDeduction),
       'allowanceItems':    allowanceItems,   // CR items → Allowances section
       'deductionItems':    deductionItems,   // DR items → Deductions section
       'loanItems':         loanItems,        // LOAN_DEDUCTION items → Loan Deductions section
@@ -294,24 +325,24 @@ class _PayrollWidgetState extends State<PayrollWidget> {
         .toList();
   }
 
-  void _collapseAll() {
-    for (final record in _payrollRecords) {
-      final String pd = record['periodDate'] ?? '';
-      for (final section in _sections) {
-        _collapsed['${pd}_$section'] = true;
-      }
-    }
-  }
+  // void _collapseAll() {
+  //   for (final record in _payrollRecords) {
+  //     final String pd = record['periodDate'] ?? '';
+  //     for (final section in _sections) {
+  //       _collapsed['${pd}_$section'] = true;
+  //     }
+  //   }
+  // }
 
-  bool _isCollapsed(String pd, String section) =>
-      _collapsed['${pd}_$section'] ?? false;
+  // bool _isCollapsed(String pd, String section) =>
+  //     _collapsed['${pd}_$section'] ?? false;
 
-  void _toggleCollapse(String pd, String section) {
-    setState(() {
-      final key = '${pd}_$section';
-      _collapsed[key] = !(_collapsed[key] ?? false);
-    });
-  }
+  // void _toggleCollapse(String pd, String section) {
+  //   setState(() {
+  //     final key = '${pd}_$section';
+  //     _collapsed[key] = !(_collapsed[key] ?? false);
+  //   });
+  // }
 
   // ─── Filter bottom sheet ──────────────────────────────────────────────────
 
@@ -392,7 +423,7 @@ class _PayrollWidgetState extends State<PayrollWidget> {
 
   // ─── Summary modal ────────────────────────────────────────────────────────
 
-  void _showSummaryModal(Map<String, dynamic> record) {
+   Widget _buildSummaryCardInline(Map<String, dynamic> record) {
     final isDark        = Theme.of(context).brightness == Brightness.dark;
     final Color textColor   = isDark ? Colors.white : Colors.black87;
     final Color subColor    = isDark ? _grey400 : _grey600;
@@ -400,64 +431,79 @@ class _PayrollWidgetState extends State<PayrollWidget> {
     final Color headerColor =
         isDark ? const Color(0xFF587CA5) : Theme.of(context).primaryColor;
 
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      isScrollControlled: true,
-      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.55),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Center(
-              child: Container(
-                width: 40, height: 4,
-                decoration: BoxDecoration(
-                    color: _grey300, borderRadius: BorderRadius.circular(2)),
-              ),
-            ),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                Icon(Icons.summarize_outlined, color: headerColor, size: 18),
-                const SizedBox(width: 8),
-                Text('Payroll Summary',
-                    style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: headerColor)),
-                const Spacer(),
-                Text(record['period'] ?? '',
-                    style: TextStyle(fontSize: 11, color: headerColor)),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Divider(color: divColor),
-            const SizedBox(height: 4),
-            _summaryLine('Monthly Salary',   record['monthlySalary'],  textColor, subColor, headerColor),
-            _summaryLine('Total Earnings',   record['totalEarnings'],  textColor, subColor, headerColor),
-            _summaryLine('Total Deductions', record['totalDeductions'], textColor, subColor, _redAccent),
-            const SizedBox(height: 8),
-            Divider(color: divColor),
-            const SizedBox(height: 6),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Net Income',
-                    style: TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold, color: textColor)),
-                Text(
-                  record['netIncome'] != null ? '₱${record['netIncome']}' : '—',
+    return Container(
+      padding: EdgeInsets.zero,
+      // decoration: BoxDecoration(
+      //   color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+      //   borderRadius: BorderRadius.circular(12),
+      //   border: Border.all(
+      //     color: isDark ? _divDark : _divLight,
+      //     width: 1,
+      //   ),
+      // ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Row(
+          //   children: [
+          //     Icon(Icons.summarize_outlined, color: headerColor, size: 18),
+          //     const SizedBox(width: 8),
+          //     Text('Payroll Summary',
+          //         style: TextStyle(
+          //             fontSize: 15,
+          //             fontWeight: FontWeight.bold,
+          //             color: headerColor)),
+          //   ],
+          // ),
+          // const SizedBox(height: 12),
+          // Divider(color: divColor, height: 1),
+          // const SizedBox(height: 12),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('NET PAY',
                   style: TextStyle(
-                      fontSize: 22, fontWeight: FontWeight.bold, color: headerColor),
-                ),
-              ],
-            ),
-          ],
-        ),
+                      fontSize: 16, fontWeight: FontWeight.bold, color: textColor)),
+              Text(
+                record['netIncome'] != null ? '₱${record['netIncome']}' : '—',
+                style: TextStyle(
+                    fontSize: 22, fontWeight: FontWeight.bold, color: headerColor),
+              ),
+              
+              
+            ],
+          ),
+          // const SizedBox(height: 12),
+          // Divider(color: divColor, height: 1),
+          const SizedBox(height: 12),
+
+          _summaryLine('Monthly Salary',   record['monthlySalary'],  textColor, subColor, headerColor),
+          _summaryLine('Total Earnings',   record['totalEarnings'],  textColor, subColor, headerColor),
+          _summaryLine('Total Deductions', record['totalDeductions'], textColor, subColor, _redAccent),
+         
+          const SizedBox(height: 20),
+          Divider(color: divColor, height: 1),
+          const SizedBox(height: 10),
+          // Row(
+          //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //   children: [
+          //     Text('NET PAY',
+          //         style: TextStyle(
+          //             fontSize: 16, fontWeight: FontWeight.bold, color: textColor)),
+          //     Text(
+          //       record['netIncome'] != null ? '₱${record['netIncome']}' : '—',
+          //       style: TextStyle(
+          //           fontSize: 22, fontWeight: FontWeight.bold, color: headerColor),
+          //     ),
+              
+              
+          //   ],
+          // ),
+          // const SizedBox(height: 12),
+          // Divider(color: divColor, height: 1),
+          // const SizedBox(height: 12),
+        ],
       ),
     );
   }
@@ -520,7 +566,7 @@ class _PayrollWidgetState extends State<PayrollWidget> {
     return Column(
       children: [
         // ── Header bar ──────────────────────────────────────────────────────
-        Container(
+       Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
             color: Theme.of(context).primaryColor,
@@ -543,19 +589,6 @@ class _PayrollWidgetState extends State<PayrollWidget> {
                   GestureDetector(
                     onTap: _showFilterDialog,
                     child: const Icon(Icons.filter_list,
-                        color: Colors.white, size: 20),
-                  ),
-                  const SizedBox(width: 16),
-                  GestureDetector(
-                    onTap: () {
-                      final target = _filteredRecords.isNotEmpty
-                          ? _filteredRecords.first
-                          : _payrollRecords.isNotEmpty
-                              ? _payrollRecords.first
-                              : null;
-                      if (target != null) _showSummaryModal(target);
-                    },
-                    child: const Icon(Icons.summarize_outlined,
                         color: Colors.white, size: 20),
                   ),
                   const SizedBox(width: 16),
@@ -633,7 +666,10 @@ class _PayrollWidgetState extends State<PayrollWidget> {
             ),
           ],
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 25),
+         _buildSummaryCardInline(record), // call for the summary in net pay
+        const SizedBox(height: 15),
+
 
         // ── Allowances (adjustmentType == CR) ────────────────────────────
         _sectionBlock(
@@ -681,15 +717,11 @@ class _PayrollWidgetState extends State<PayrollWidget> {
           rows: loanItems.isEmpty
               ? [_emptyRow('No loan deductions for this period.', subColor)]
               : loanItems
-                  .map((item) => _rowLine(
-                        item['name'] as String,
-                        item['amount'],
-                        textColor,
-                        subColor,
-                      ))
+                  .map((item) => _loanRowLine(item, textColor, subColor))
                   .toList(),
-          totalLabel: null, totalValue: null,
-          totalAccent: _blueGrey400,
+          totalLabel: loanItems.isEmpty ? null : 'Total Loan Deductions',
+          totalValue: record['totalLoanDeductions'],
+          totalAccent: _redAccent,
           textColor: textColor, subColor: subColor,
         ),
         const SizedBox(height: 20),
@@ -713,13 +745,13 @@ class _PayrollWidgetState extends State<PayrollWidget> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final Color headerColor =
         isDark ? const Color(0xFF587CA5) : Theme.of(context).primaryColor;
-    final bool collapsed = _isCollapsed(pd, title);
+    // final bool collapsed = _isCollapsed(pd, title);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         GestureDetector(
-          onTap: () => _toggleCollapse(pd, title),
+          // onTap: () => _toggleCollapse(pd, title),
           behavior: HitTestBehavior.opaque,
           child: Row(
             children: [
@@ -737,16 +769,16 @@ class _PayrollWidgetState extends State<PayrollWidget> {
                     thickness: 1),
               ),
               const SizedBox(width: 6),
-              Icon(
-                collapsed
-                    ? Icons.keyboard_arrow_down_rounded
-                    : Icons.keyboard_arrow_up_rounded,
-                size: 18, color: headerColor,
-              ),
+              // Icon(
+              //   collapsed
+              //       ? Icons.keyboard_arrow_down_rounded
+              //       : Icons.keyboard_arrow_up_rounded,
+              //   size: 18, color: headerColor,
+              // ),
             ],
           ),
         ),
-        if (!collapsed) ...[
+        // if (!collapsed) ...[
           const SizedBox(height: 4),
           ...rows,
           if (totalLabel != null)
@@ -768,9 +800,10 @@ class _PayrollWidgetState extends State<PayrollWidget> {
               ],
             ),
           const SizedBox(height: 10),
-        ] else
-          const SizedBox(height: 4),
       ],
+        // ] else
+        //   const SizedBox(height: 4),
+      // ],
     );
   }
 
@@ -787,6 +820,67 @@ class _PayrollWidgetState extends State<PayrollWidget> {
             value != null ? '₱${value.toString()}' : '—',
             style: TextStyle(
                 fontSize: 13, fontWeight: FontWeight.w500, color: textColor),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Loan row: loan name + total amount on top line,
+  /// then a subtitle with Principal · Interest · Schedule in smaller italic text.
+  Widget _loanRowLine(Map<String, dynamic> item, Color textColor, Color subColor) {
+    print('Loan Item Here check: $item');
+    final String name   = item['loanTypeDescription']   as String? ?? '${item['loanTypeDescription']}';
+    final String amount = item['amount'] != null ? '₱${item['amount']}' : '—';
+
+    // Build subtitle — only include parts that have data
+    final List<String> subtitleParts = [
+      if (item['principal'] != null) 'Principal: ₱${item['principal']}',
+      if (item['interest']  != null) 'Interest: ₱${item['interest']}',
+      if (item['schedule']  != null) 'Schedule: ${item['schedule']}',
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Left side: loan name + subtitle details
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: textColor,
+                  ),
+                ),
+                if (subtitleParts.isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitleParts.join(' · '),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: subColor,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Right side: total loan amount
+          Text(
+            amount,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: textColor,
+            ),
           ),
         ],
       ),

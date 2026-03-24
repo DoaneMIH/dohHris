@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:mobile_application/config/api_config.dart';
-import 'dart:convert';
-import '../services/token_manager.dart';
+// import 'package:http/http.dart' as http;
+// import 'package:mobile_application/config/api_config.dart';
+// import 'dart:convert';
+// import '../services/token_manager.dart';
 
 class LoanWidget extends StatefulWidget {
   final String? token;
@@ -132,7 +132,7 @@ class _LoanWidgetState extends State<LoanWidget> {
     });
   }
 
-  List<String> get _loanTypes { 
+  List<String> get _loanTypes {
     final types = _loanRecords.map((r) => r['loanType'].toString()).toSet().toList();
     types.sort();
     return types;
@@ -178,9 +178,9 @@ class _LoanWidgetState extends State<LoanWidget> {
   /// Collapse / expand all cards for a given loan at once.
   void _toggleAll(String loanType, List<dynamic> schedule) {
     setState(() {
-      final allKey     = _allKey(loanType);
-      final nowAll     = _collapsed[allKey] ?? false;
-      final nextState  = !nowAll;
+      final allKey    = _allKey(loanType);
+      final nowAll    = _collapsed[allKey] ?? false;
+      final nextState = !nowAll;
       _collapsed[allKey] = nextState;
       for (final entry in schedule) {
         final no = (entry as Map)['no'] as int;
@@ -191,170 +191,167 @@ class _LoanWidgetState extends State<LoanWidget> {
 
   // ─── Reusable option picker ───────────────────────────────────────────────
 
- Future<void> _showOptionsBottomSheet({
-  required BuildContext ctx,
-  required String title,
-  required List<String> options,
-  required String? currentValue,
-  required void Function(String) onSelected,
-}) async {
-  final isDark = Theme.of(context).brightness == Brightness.dark;
-  await showModalBottomSheet(
-    context: ctx,
-    backgroundColor: Colors.white,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-    ),
-    constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.6),
-    builder: (sheetCtx) => SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            margin: const EdgeInsets.only(top: 10, bottom: 6),
-            width: 40, height: 4,
-            decoration: BoxDecoration(color: _grey300, borderRadius: BorderRadius.circular(2)),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(title,
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600,
-                      color: Theme.of(context).primaryColor)),
-            ),
-          ),
-          const Divider(height: 1),
-          Flexible(
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: options.length,
-              itemBuilder: (_, i) {
-                final opt = options[i];
-                final sel = opt == currentValue;
-                return InkWell(
-                  onTap: () { onSelected(opt); Navigator.of(sheetCtx).pop(); },
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                    color: sel
-                        ? Theme.of(context).primaryColor  // ← Solid background for white check
-                        : Colors.transparent,
-                    child: Row(
-                      children: [
-                          Expanded(
-                            child: Text(
-                              opt,
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: sel
-                                    ? Colors
-                                          .white 
-                                    : Theme.of(
-                                        context,
-                                      ).textTheme.bodyMedium?.color,
-                                fontWeight: sel
-                                    ? FontWeight.w600
-                                    : FontWeight.normal,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}
+  // Future<void> _showOptionsBottomSheet({
+  //   required BuildContext ctx,
+  //   required String title,
+  //   required List<String> options,
+  //   required String? currentValue,
+  //   required void Function(String) onSelected,
+  // }) async {
+  //   final isDark = Theme.of(context).brightness == Brightness.dark;
+  //   await showModalBottomSheet(
+  //     context: ctx,
+  //     backgroundColor: Colors.white,
+  //     shape: const RoundedRectangleBorder(
+  //       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+  //     ),
+  //     constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.6),
+  //     builder: (sheetCtx) => SafeArea(
+  //       child: Column(
+  //         mainAxisSize: MainAxisSize.min,
+  //         children: [
+  //           Container(
+  //             margin: const EdgeInsets.only(top: 10, bottom: 6),
+  //             width: 40, height: 4,
+  //             decoration: BoxDecoration(color: _grey300, borderRadius: BorderRadius.circular(2)),
+  //           ),
+  //           Padding(
+  //             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+  //             child: Align(
+  //               alignment: Alignment.centerLeft,
+  //               child: Text(title,
+  //                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600,
+  //                       color: Theme.of(context).primaryColor)),
+  //             ),
+  //           ),
+  //           const Divider(height: 1),
+  //           Flexible(
+  //             child: ListView.builder(
+  //               shrinkWrap: true,
+  //               itemCount: options.length,
+  //               itemBuilder: (_, i) {
+  //                 final opt = options[i];
+  //                 final sel = opt == currentValue;
+  //                 return InkWell(
+  //                   onTap: () { onSelected(opt); Navigator.of(sheetCtx).pop(); },
+  //                   child: Container(
+  //                     width: double.infinity,
+  //                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+  //                     color: sel
+  //                         ? Theme.of(context).primaryColor
+  //                         : Colors.transparent,
+  //                     child: Row(
+  //                       children: [
+  //                         Expanded(
+  //                           child: Text(
+  //                             opt,
+  //                             style: TextStyle(
+  //                               fontSize: 14,
+  //                               color: sel
+  //                                   ? Colors.white
+  //                                   : Theme.of(context).textTheme.bodyMedium?.color,
+  //                               fontWeight: sel
+  //                                   ? FontWeight.w600
+  //                                   : FontWeight.normal,
+  //                             ),
+  //                           ),
+  //                         ),
+  //                       ],
+  //                     ),
+  //                   ),
+  //                 );
+  //               },
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
 
   // ─── Filter dialog ────────────────────────────────────────────────────────
 
- void _showFilterDialog() {
-  showModalBottomSheet(
-    context: context,
-    backgroundColor: Theme.of(context).brightness == Brightness.dark
-        ? const Color(0xFF1E1E1E) : Colors.white,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
-    ),
-    isScrollControlled: true, 
-    constraints: BoxConstraints(
-      maxHeight: MediaQuery.of(context).size.height * 0.6,  
-    ),  
-    builder: (ctx) => SafeArea(
-      child: SingleChildScrollView( 
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                width: 40, height: 4,
-                decoration: BoxDecoration(color: _grey300, borderRadius: BorderRadius.circular(2)),
-              ),
-            ),
-            Text('Filter by Loan Type',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold,
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? const Color(0xFF587CA5)
-                        : Theme.of(context).primaryColor)),
-            const SizedBox(height: 14),
-            Column(
-             crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: _loanTypes.map((type) {
-                final selected = _selectedLoanType == type;
-                return Padding(
-                  padding: EdgeInsets.zero,
-                  child: SizedBox(
-                    width: double.infinity,  // ← Full width
-                    child: ChoiceChip(
-                      label: Center(child: Text(type)),  // ← Center type
-                      selected: selected,
-                      showCheckmark: false,  
-                      onSelected: (_) {
-                        setState(() {
-                          _selectedLoanType = selected ? null : type;
-                          _applyFilters();
-                        });
-                        Navigator.pop(ctx);
-                      },
-                      selectedColor: Theme.of(context).primaryColor,
-                      labelStyle: TextStyle(
-                        color: selected
-                            ? Colors.white
-                            : Theme.of(context).brightness == Brightness.dark
-                                ? const Color(0xFF587CA5)
-                                : Theme.of(context).primaryColor,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      side: BorderSide(
+  void _showFilterDialog() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF1E1E1E) : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
+      ),
+      isScrollControlled: true,
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.6,
+      ),
+      builder: (ctx) => SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    width: 40, height: 4,
+                    decoration: BoxDecoration(color: _grey300, borderRadius: BorderRadius.circular(2)),
+                  ),
+                ),
+                Text('Filter by Loan Type',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold,
                         color: Theme.of(context).brightness == Brightness.dark
                             ? const Color(0xFF587CA5)
-                            : Theme.of(context).primaryColor,
+                            : Theme.of(context).primaryColor)),
+                const SizedBox(height: 14),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: _loanTypes.map((type) {
+                    final selected = _selectedLoanType == type;
+                    return Padding(
+                      padding: EdgeInsets.zero,
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ChoiceChip(
+                          label: Center(child: Text(type)),
+                          selected: selected,
+                          showCheckmark: false,
+                          onSelected: (_) {
+                            setState(() {
+                              _selectedLoanType = selected ? null : type;
+                              _applyFilters();
+                            });
+                            Navigator.pop(ctx);
+                          },
+                          selectedColor: Theme.of(context).primaryColor,
+                          labelStyle: TextStyle(
+                            color: selected
+                                ? Colors.white
+                                : Theme.of(context).brightness == Brightness.dark
+                                    ? const Color(0xFF587CA5)
+                                    : Theme.of(context).primaryColor,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          side: BorderSide(
+                            color: Theme.of(context).brightness == Brightness.dark
+                                ? const Color(0xFF587CA5)
+                                : Theme.of(context).primaryColor,
+                          ),
+                          backgroundColor: Colors.transparent,
+                        ),
                       ),
-                      backgroundColor: Colors.transparent,
-                    ),
-                  ),
-                );
-              }).toList(),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 8),
+              ],
             ),
-            const SizedBox(height: 8),
-          ],
+          ),
         ),
       ),
-    ),
-    ),
-  );
-}
+    );
+  }
 
   // ─── Loan details modal ───────────────────────────────────────────────────
 
@@ -621,12 +618,12 @@ class _LoanWidgetState extends State<LoanWidget> {
           final bool collapsed = _isCardCollapsed(loanType, no);
 
           return _buildAmortCard(
-            e:          e,
-            loanType:   loanType,
-            no:         no,
-            collapsed:  collapsed,
-            isDark:     isDark,
-            divColor:   divColor,
+            e:           e,
+            loanType:    loanType,
+            no:          no,
+            collapsed:   collapsed,
+            isDark:      isDark,
+            divColor:    divColor,
             headerColor: headerColor,
           );
         }),
@@ -695,54 +692,42 @@ class _LoanWidgetState extends State<LoanWidget> {
             ),
           ),
 
-          // ── Card body — hidden when collapsed ─────────────────────────
+          // ── Card body — 3-column layout when expanded ─────────────────
           if (!collapsed)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
-              child: Column(
-                children: [
-                  _amortRow(
-                    icon: Icons.payments_outlined,
-                    label: 'Principal',
-                    value: e['principal'],
-                    textColor: textColor,
-                    subColor: subColor,
-                    isDark: isDark,
-                  ),
-                  const SizedBox(height: 6),
-                  _amortRow(
-                    icon: Icons.percent,
-                    label: 'Interest',
-                    value: e['interest'],
-                    textColor: textColor,
-                    subColor: subColor,
-                    isDark: isDark,
-                  ),
-                  const SizedBox(height: 8),
-                  Container(height: 0.8, color: divColor),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            Column(
+              children: [
+                Divider(color: divColor, height: 1, thickness: 0.6),
+                IntrinsicHeight(
+                  child: Row(
                     children: [
-                      Row(
-                        children: [
-                          Icon(Icons.receipt_long, size: 14,
-                              color: isDark ? Colors.white70 : primary),
-                          const SizedBox(width: 6),
-                          Text('Total Payment',
-                              style: TextStyle(fontSize: 13,
-                                  fontWeight: FontWeight.w700, color: textColor)),
-                        ],
+                      _amortizationCol(
+                        'Principal',
+                        e['principal'],
+                        headerColor,
+                        subColor,
+                        textColor,
                       ),
-                      Text(
-                        e['totalPayment'] != null ? '₱${e['totalPayment']}' : '—',
-                        style: TextStyle(fontSize: 14,
-                            fontWeight: FontWeight.bold, color: headerColor),
+                      VerticalDivider(color: divColor, width: 1, thickness: 0.6),
+                      _amortizationCol(
+                        'Interest',
+                        e['interest'],
+                        headerColor,
+                        subColor,
+                        textColor,
+                      ),
+                      VerticalDivider(color: divColor, width: 1, thickness: 0.6),
+                      _amortizationCol(
+                        'Total Payment',
+                        e['totalPayment'],
+                        headerColor,
+                        subColor,
+                        textColor,
+                        isTotal: true,
                       ),
                     ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
 
           // Divider between cards
@@ -752,29 +737,43 @@ class _LoanWidgetState extends State<LoanWidget> {
     );
   }
 
-  Widget _amortRow({
-    required IconData icon,
-    required String label,
-    required dynamic value,
-    required Color textColor,
-    required Color subColor,
-    required bool isDark,
+  // ─── 3-column amortization cell ──────────────────────────────────────────
+
+  Widget _amortizationCol(
+    String label,
+    dynamic value,
+    Color headerColor,
+    Color subColor,
+    Color textColor, {
+    bool isTotal = false,
   }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Row(
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 13, color: subColor),
-            const SizedBox(width: 6),
-            Text(label, style: TextStyle(fontSize: 13, color: subColor)),
+            Text(
+              value != null ? '₱${value.toString()}' : '—',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: isTotal ? headerColor : textColor,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                color: isTotal ? headerColor : subColor,
+              ),
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
-        Text(
-          value != null ? '₱${value.toString()}' : '—',
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: textColor),
-        ),
-      ],
+      ),
     );
   }
 
