@@ -155,11 +155,22 @@ class _PayrollWidgetState extends State<PayrollWidget> {
       } catch (_) { return iso; }
     }
 
+     String fmtDay(String iso) {
+      try { return '${DateTime.parse(iso).day}'; } catch (_) { return iso; }
+    }
+
     String fmtYear(String iso) {
       try { return ', ${DateTime.parse(iso).year}'; } catch (_) { return ''; }
     }
 
-    final periodLabel = '${fmtDate(start)}–${fmtDate(end)}${fmtYear(end)}';
+      // ── Period label — collapse month if same month & year ─────────────────
+    final DateTime? startDt = DateTime.tryParse(start);
+    final DateTime? endDt   = DateTime.tryParse(end);
+
+    final String periodLabel = (startDt != null && endDt != null &&
+        startDt.month == endDt.month && startDt.year == endDt.year)
+        ? '${fmtDate(start)}–${fmtDay(end)}${fmtYear(end)}'
+        : '${fmtDate(start)}–${fmtDate(end)}${fmtYear(end)}';
 
     // Currency formatter: 8041.6 → "8,041.60"
     String? fmt(dynamic v) {
@@ -390,8 +401,9 @@ class _PayrollWidgetState extends State<PayrollWidget> {
                       selected: sel,
                       showCheckmark: false,
                       onSelected: (_) {
+                        if (sel) return; 
                         setState(() {
-                          _selectedPeriod = sel ? null : period;
+                          _selectedPeriod = period;
                           _applyFilters();
                         });
                         Navigator.pop(ctx);
@@ -479,7 +491,7 @@ class _PayrollWidgetState extends State<PayrollWidget> {
           const SizedBox(height: 12),
 
           _summaryLine('Monthly Salary',   record['monthlySalary'],  textColor, subColor, headerColor),
-          _summaryLine('Total Earnings',   record['totalEarnings'],  textColor, subColor, headerColor),
+          _summaryLine('Total Earnings',   record['totalEarnings'],  textColor, subColor, _greenAccent),
           _summaryLine('Total Deductions', record['totalDeductions'], textColor, subColor, _redAccent),
          
           const SizedBox(height: 20),
@@ -763,11 +775,11 @@ class _PayrollWidgetState extends State<PayrollWidget> {
                       fontWeight: FontWeight.w700,
                       color: headerColor)),
               const SizedBox(width: 8),
-              Expanded(
-                child: Divider(
-                    color: isDark ? Colors.grey[700] : Colors.grey[300],
-                    thickness: 1),
-              ),
+              // Expanded(
+              //   child: Divider(
+              //       color: isDark ? Colors.grey[700] : Colors.grey[300],
+              //       thickness: 1),
+              // ),
               const SizedBox(width: 6),
               // Icon(
               //   collapsed

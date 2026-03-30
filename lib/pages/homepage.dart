@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -170,6 +171,10 @@ class _HomepageState extends State<Homepage> {
   Map<String, dynamic>? _userDetails;
   bool _isFetchingPhoto = false;
 
+  // ── Real-time clock ──────────────────────────────────────────────────────
+  DateTime _currentDateTime = DateTime.now();
+  late Timer _timer;
+
   String? get _photoUrl => _userDetails?['employee']?['photoUrl']?.toString();
   String  get _userName => (_userDetails?['name'] ?? 'User').toString();
 
@@ -177,8 +182,26 @@ class _HomepageState extends State<Homepage> {
   void initState() {
     super.initState();
     _fetchUserData();
+
+    // Start real-time clock — updates every second
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() => _currentDateTime = DateTime.now());
+    });
   }
 
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  // ── Date/Time helpers ────────────────────────────────────────────────────
+
+  String _monthName(int m) =>
+      ['January','February','March','April','May','June',
+       'July','August','September','October','November','December'][m - 1];
+
+  // ────────────────────────────────────────────────────────────────────────
   Future<void> _fetchUserData() async {
     if (_isFetchingPhoto) return;
     if (mounted) setState(() => _isFetchingPhoto = true);
@@ -200,6 +223,7 @@ class _HomepageState extends State<Homepage> {
       if (mounted) setState(() => _isFetchingPhoto = false);
     }
   }
+
   // ─── Reset / Change Password Dialog ──────────────────────────────────────
   void _showResetPasswordDialog() {
     final currentPasswordController = TextEditingController();
@@ -362,8 +386,8 @@ class _HomepageState extends State<Homepage> {
 
               if (result['success']) {
                 Navigator.of(dialogContext).pop();
-                ScaffoldMessenger.of(context).showSnackBar( SnackBar(
-                  content: Text('Password changed successfully.'),
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: const Text('Password changed successfully.'),
                   backgroundColor: Theme.of(context).primaryColor,
                 ));
               } else {
@@ -383,9 +407,9 @@ class _HomepageState extends State<Homepage> {
                   // Header
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    decoration:  BoxDecoration(
-                      color:Theme.of(context).primaryColor,
-                      borderRadius: BorderRadius.only(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).primaryColor,
+                      borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(12),
                         topRight: Radius.circular(12),
                       ),
@@ -531,11 +555,13 @@ class _HomepageState extends State<Homepage> {
           PopupMenuItem(
             value: 'reset_password',
             child: Row(children: [
-               Icon(Icons.lock_reset, 
-               color: Theme.of(context).brightness == Brightness.dark
-                    ? Color(0xFF587CA5)                         // ←  in dark
-                    : Theme.of(context).primaryColor,           // ←  in light 
-               size: 20),
+              Icon(
+                Icons.lock_reset,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF587CA5)
+                    : Theme.of(context).primaryColor,
+                size: 20,
+              ),
               const SizedBox(width: 10),
               Text(
                 'Reset Password',
@@ -579,6 +605,152 @@ class _HomepageState extends State<Homepage> {
             );
           },
         ),
+      ),
+    );
+  }
+
+  // ─── Calendar Card ────────────────────────────────────────────────────────
+  Widget _buildDateTimeCard(bool isDark) {
+    final now        = _currentDateTime;
+    final firstDay   = DateTime(now.year, now.month, 1);
+    final daysInMonth = DateTime(now.year, now.month + 1, 0).day;
+    // weekday: Mon=1 … Sun=7 → we want Sun=0 offset
+    final startOffset = (firstDay.weekday % 7); // Sun=0,Mon=1,...,Sat=6
+
+    final prevMonthDays = DateTime(now.year, now.month, 0).day;
+
+    final headerColor = const Color(0xFF1F2A45);
+    final todayColor  = Theme.of(context).primaryColor;
+    const dayHeaders  = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+
+    // Build flat list of cells (leading ghost days + current month days)
+    final totalCells = startOffset + daysInMonth;
+    final rows       = (totalCells / 7).ceil();
+
+    return Card(
+      color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Column(
+        children: [
+          // ── Month / Year header ──────────────────────────────────────
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: headerColor,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.calendar_month, color: Colors.white70, size: 18),
+                const SizedBox(width: 8),
+                Text(
+                  '${_monthName(now.month)} ${now.year}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
+            child: Column(
+              children: [
+                // ── Day-of-week headers ──────────────────────────────
+                Row(
+                  children: dayHeaders.map((d) => Expanded(
+                    child: Center(
+                      child: Text(
+                        d,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: isDark ? Colors.grey[400] : Colors.grey[600],
+                        ),
+                      ),
+                    ),
+                  )).toList(),
+                ),
+                const SizedBox(height: 6),
+                Divider(color: isDark ? Colors.grey[700] : Colors.grey[300], height: 1),
+                const SizedBox(height: 8),
+
+                // ── Day grid ─────────────────────────────────────────
+                for (int r = 0; r < rows; r++) ...[
+                  Row(
+                    children: List.generate(7, (c) {
+                      final cellIndex = r * 7 + c;
+                      final day       = cellIndex - startOffset + 1;
+
+                      // Ghost days from previous/next month
+                      if (day < 1 || day > daysInMonth) {
+                        int ghostDay;
+                        if (day < 1) {
+                          ghostDay = prevMonthDays + day;
+                        } else {
+                          ghostDay = day - daysInMonth;
+                        }
+                        return Expanded(
+                          child: Center(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 6),
+                              child: Text(
+                                '$ghostDay',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: isDark ? Colors.grey[700] : Colors.grey[400],
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+
+                      final isToday = day == now.day;
+
+                      return Expanded(
+                        child: Center(
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(vertical: 3),
+                            width: 34,
+                            height: 34,
+                            decoration: isToday
+                                ? BoxDecoration(
+                                    color: todayColor,
+                                    shape: BoxShape.circle,
+                                  )
+                                : null,
+                            child: Center(
+                              child: Text(
+                                '$day',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: isToday ? FontWeight.w800 : FontWeight.w400,
+                                  color: isToday
+                                      ? Colors.white
+                                      : (isDark ? Colors.grey[300] : Colors.black87),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -639,11 +811,13 @@ class _HomepageState extends State<Homepage> {
               ],
             ),
 
+
+
             // ── Body ──────────────────────────────────────────────────────
-            Container(
+            Padding(
               padding: const EdgeInsets.all(24.0),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Icon(
                     Icons.home_outlined,
@@ -652,85 +826,21 @@ class _HomepageState extends State<Homepage> {
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    'Welcome to Home Page',
+                    'Welcome to Human Resources Information System',
                     style: TextStyle(
-                      fontSize: 24,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: Theme.of(context).textTheme.titleLarge?.color,
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'This is a placeholder for your home page content.',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: isDark ? Colors.grey[400] : Colors.grey.shade600,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 32),
-                  Card(
-                    color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                    elevation: 2,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        children: [
-                          ListTile(
-                            leading: const Icon(Icons.info_outline, color: Colors.blue),
-                            title: Text(
-                              'Coming Soon',
-                              style: TextStyle(
-                                color: Theme.of(context).textTheme.bodyMedium?.color,
-                              ),
-                            ),
-                            subtitle: Text(
-                              'Home page features will be added here',
-                              style: TextStyle(
-                                color: isDark ? Colors.grey[400] : Colors.grey[600],
-                              ),
-                            ),
-                          ),
-                          Divider(color: isDark ? Colors.grey[700] : null),
-                          ListTile(
-                            leading: const Icon(Icons.dashboard, color: Colors.orange),
-                            title: Text(
-                              'Dashboard',
-                              style: TextStyle(
-                                color: Theme.of(context).textTheme.bodyMedium?.color,
-                              ),
-                            ),
-                            subtitle: Text(
-                              'View your statistics and insights',
-                              style: TextStyle(
-                                color: isDark ? Colors.grey[400] : Colors.grey[600],
-                              ),
-                            ),
-                          ),
-                          Divider(color: isDark ? Colors.grey[700] : null),
-                          ListTile(
-                            leading: const Icon(Icons.notifications, color: Colors.red),
-                            title: Text(
-                              'Notifications',
-                              style: TextStyle(
-                                color: Theme.of(context).textTheme.bodyMedium?.color,
-                              ),
-                            ),
-                            subtitle: Text(
-                              'Stay updated with latest alerts',
-                              style: TextStyle(
-                                color: isDark ? Colors.grey[400] : Colors.grey[600],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 80),
+                  const SizedBox(height: 30),
+                  _buildDateTimeCard(isDark),
+                 
                 ],
               ),
+
+              
             ),
           ],
         ),

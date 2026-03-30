@@ -20,15 +20,23 @@ import 'package:mobile_application/services/user_service.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile_application/providers/theme_provider.dart';
 
-// ════════════════════════════════════════════════════════════════════════════
+
 // _DisplayOnlyPhoto
-// ════════════════════════════════════════════════════════════════════════════
+// A private StatefulWidget used exclusively in the AppBar's popup menu avatar.
+// It fetches and displays the employee's profile photo using an authenticated
+// HTTP GET request (Bearer token). Falls back to initials if the image fails
+// to load or if no photo URL is provided.
+
+// NOTE: This widget is NOT the same as AuthenticatedProfilePhoto (which is used
+// in the profile header and supports photo uploading). This one is read-only.
+
 class _DisplayOnlyPhoto extends StatefulWidget {
-  final String? photoUrl;
-  final String? baseUrl;
-  final String? token;
-  final String userName;
-  final double radius;
+  final String? photoUrl;  // Relative or absolute URL of the employee's photo
+  final String? baseUrl;   // Base API URL used to build the full photo URL
+  final String? token;     // Fallback token if TokenManager has no active token
+  final String userName;   // Used to generate initials as a fallback avatar
+  final double radius;     // Controls the size of the CircleAvatar
+
 
   const _DisplayOnlyPhoto({
     required this.photoUrl,
@@ -43,13 +51,14 @@ class _DisplayOnlyPhoto extends StatefulWidget {
 }
 
 class _DisplayOnlyPhotoState extends State<_DisplayOnlyPhoto> {
-  Uint8List? _imageBytes;
+  Uint8List? _imageBytes; // Raw bytes of the fetched image
   bool _isLoading = false;
   bool _hasError = false;
 
   @override
   void initState() {
     super.initState();
+     // Only attempt to load if a valid photo URL is present
     if (widget.photoUrl != null &&
         widget.photoUrl!.isNotEmpty &&
         widget.photoUrl != 'N/A') {
@@ -60,6 +69,7 @@ class _DisplayOnlyPhotoState extends State<_DisplayOnlyPhoto> {
   @override
   void didUpdateWidget(_DisplayOnlyPhoto old) {
     super.didUpdateWidget(old);
+  // Re-Fetch the image if the photo URL changes 
     if (old.photoUrl != widget.photoUrl) {
       _imageBytes = null;
       _hasError = false;
@@ -71,6 +81,11 @@ class _DisplayOnlyPhotoState extends State<_DisplayOnlyPhoto> {
     }
   }
 
+  /// Fetches the employee photo from the server using an authenticated HTTP GET.
+  /// Handles three URL formats:
+  ///   1. Already a full URL (starts with 'http')
+  ///   2. A path starting with '/employee/image/' — prepend baseUrl
+  ///   3. Just a filename — build the full path using baseUrl + '/employee/image/'
   Future<void> _loadImage() async {
     setState(() {
       _isLoading = true;
@@ -88,6 +103,7 @@ class _DisplayOnlyPhotoState extends State<_DisplayOnlyPhoto> {
             '${widget.baseUrl ?? ''}/employee/image/${widget.photoUrl}';
       }
 
+     // Prefer the globally managed token; fall back to the widget's token prop
       final token = TokenManager().token ?? widget.token;
 
       final response = await http.get(
@@ -120,6 +136,7 @@ class _DisplayOnlyPhotoState extends State<_DisplayOnlyPhoto> {
 
   @override
   Widget build(BuildContext context) {
+    // Show a spinner while the image is being fetched
     if (_isLoading) {
       return CircleAvatar(
         radius: widget.radius,
@@ -135,6 +152,7 @@ class _DisplayOnlyPhotoState extends State<_DisplayOnlyPhoto> {
       );
     }
 
+ // Show the fetched image if available and no error occurred
     if (!_hasError && _imageBytes != null) {
       return CircleAvatar(
         radius: widget.radius,
@@ -150,6 +168,7 @@ class _DisplayOnlyPhotoState extends State<_DisplayOnlyPhoto> {
       );
     }
 
+// Fallback: generate initials from the user's name (up to 2 words)
     final initials = widget.userName.isNotEmpty
         ? widget.userName
               .trim()
@@ -176,11 +195,15 @@ class _DisplayOnlyPhotoState extends State<_DisplayOnlyPhoto> {
   }
 }
 
-// UserDetailsPageContent
+
+
+// User Details Page Content
+// This is the main widget for viewing and editing an employee's profile
+
 class UserDetailsPageContent extends StatefulWidget {
-  final String token;
-  final String baseUrl;
-  final GlobalKey<ScaffoldState>? scaffoldKey;
+  final String token;                        // JWT used for all API calls
+  final String baseUrl;                      // Root API URL
+  final GlobalKey<ScaffoldState>? scaffoldKey; // Optional external scaffold key
 
   const UserDetailsPageContent({
     super.key,
@@ -194,16 +217,21 @@ class UserDetailsPageContent extends StatefulWidget {
 }
 
 class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
+  // Internal scaffold key used when no external key is provided
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
+
+/// Allows a parent widget to programmatically open the end drawer
   void openDrawer() {
     _scaffoldKey.currentState?.openDrawer();
   }
 
   final _userService = UserService();
-  Map<String, dynamic>? _userDetails;
+
+  Map<String, dynamic>? _userDetails; // Full API Resposne data for the user
   bool _isLoading = true;
   String? _error;
+
 
   Map<String, dynamic> _personalInfoData = {};
 
@@ -354,7 +382,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Handle bar
+                // Visual drag handle at the top of the sheet
                 Container(
                   margin: const EdgeInsets.only(top: 10, bottom: 6),
                   width: 40,
@@ -383,7 +411,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                   ),
                 ),
                 const Divider(height: 1),
-                // Scrollable Options
+                // Scrollable list of options
                 Flexible(
                   child: ListView(
                     shrinkWrap: true,
@@ -394,7 +422,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                         return InkWell(
                           onTap: () {
                             onSelected(option);
-                            Navigator.of(sheetCtx).pop();
+                            Navigator.of(sheetCtx).pop(); // Auto-dismiss
                           },
                           child: Container(
                             width: double.infinity,
@@ -402,6 +430,7 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                               horizontal: 20,
                               vertical: 14,
                             ),
+                            // Highlight selected row with a subtle tint
                             color: isSelected
                                 ? Theme.of(ctx).primaryColor.withOpacity(0.08)
                                 : Colors.transparent,
@@ -448,24 +477,25 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
 
   /// Builds a tappable field styled identically to buildField (TextFormField/fieldDeco),
   /// but opens a bottom sheet instead of a keyboard.
-  Widget _buildOptionSelector({
-    required String label,
-    required String selectedValue,
-    required List<String> options,
-    required BuildContext ctx,
-    required void Function(String) onChanged,
-  }) {
-    final hasValue = selectedValue.isNotEmpty;
-    return GestureDetector(
-      onTap: () => _showOptionBottomSheet(
-        ctx: ctx,
-        title: 'Select $label',
-        currentValue: selectedValue,
-        options: options,
-        onSelected: onChanged,
-      ),
-      child: InputDecorator(
-        decoration: InputDecoration(
+Widget _buildOptionSelector({
+  required String label,
+  required String selectedValue,
+  required List<String> options,
+  required BuildContext ctx,
+  required void Function(String) onChanged,
+  InputDecoration? decoration, // ← add this
+}) {
+  final hasValue = selectedValue.isNotEmpty;
+  return GestureDetector(
+    onTap: () => _showOptionBottomSheet(
+      ctx: ctx,
+      title: 'Select $label',
+      currentValue: selectedValue,
+      options: options,
+      onSelected: onChanged,
+    ),
+    child: InputDecorator(
+      decoration: decoration ?? InputDecoration(
           labelText: label,
           labelStyle: TextStyle(
             fontSize: 14,
@@ -1073,23 +1103,30 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
     }
 
     Widget buildSelectorField({
-      required String label,
-      required String key,
-      required List<String> options,
-      required void Function(void Function()) setDs,
-      required BuildContext ctx,
-    }) {
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: _buildOptionSelector(
-          label: label,
-          selectedValue: localData[key]?.toString() ?? '',
-          options: options,
-          ctx: ctx,
-          onChanged: (v) => setDs(() => localData[key] = v),
+  required String label,
+  required String key,
+  required List<String> options,
+  required void Function(void Function()) setDs,
+  required BuildContext ctx,
+}) {
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 12),
+    child: _buildOptionSelector(
+      label: label,
+      selectedValue: localData[key]?.toString() ?? '',
+      options: options,
+      ctx: ctx,
+      onChanged: (v) => setDs(() => localData[key] = v),
+      decoration: fieldDeco(label).copyWith( // ← pass fieldDeco here
+        suffixIcon: Icon(
+          Icons.arrow_drop_down,
+          size: 22,
+          color: Theme.of(ctx).dividerColor,
         ),
-      );
-    }
+      ),
+    ),
+  );
+}
 
     Widget sectionHeader(String title, IconData icon) => Padding(
       padding: const EdgeInsets.only(bottom: 10, top: 4),
@@ -1249,10 +1286,14 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                                 LengthLimitingTextInputFormatter(11),
                               ],
                               style: TextStyle(
-  fontSize: 13,
-  color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
-  fontWeight: FontWeight.w600,
-),
+                                fontSize: 13,
+                                color:
+                                    Theme.of(
+                                      context,
+                                    ).textTheme.bodyMedium?.color ??
+                                    Colors.black87,
+                                fontWeight: FontWeight.w600,
+                              ),
                               decoration: fieldDeco('Mobile No.'),
                             ),
                           ),
@@ -1277,8 +1318,12 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                           ),
                           GestureDetector(
                             onTap: () {
-                              setDs(() => sameAddress = !sameAddress);
-                              if (!sameAddress) copyPermToRes(setDs);
+                              final newValue = !sameAddress;
+                              setDs(() => sameAddress = newValue);
+                              if (newValue)
+                                copyPermToRes(
+                                  setDs,
+                                ); // copy when checking the box
                             },
                             child: Container(
                               margin: const EdgeInsets.only(bottom: 12),
@@ -1336,14 +1381,14 @@ class _UserDetailsPageContentState extends State<UserDetailsPageContent> {
                                           sameAddress
                                               ? 'Same as Permanent Address'
                                               : 'Different from Permanent Address',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w600,
-                                            color: sameAddress
-                                                ? Theme.of(context).colorScheme.secondary
-                                                : Theme.of(context).colorScheme.secondary,
-                                          ),
-                                        ),
+                                            style: TextStyle(
+    fontSize: 12,
+    fontWeight: FontWeight.w600,
+    color: Theme.of(context).brightness == Brightness.dark
+        ? Colors.white70          // ← visible in dark mode
+        : Colors.black87,         // ← visible in light mode
+  ),
+),
                                         Text(
                                           sameAddress
                                               ? 'Residential will be copied from permanent'

@@ -319,7 +319,8 @@ class _LoanWidgetState extends State<LoanWidget> {
                           showCheckmark: false,
                           onSelected: (_) {
                             setState(() {
-                              _selectedLoanType = selected ? null : type;
+                              if (selected) return; 
+                              _selectedLoanType = type;
                               _applyFilters();
                             });
                             Navigator.pop(ctx);
